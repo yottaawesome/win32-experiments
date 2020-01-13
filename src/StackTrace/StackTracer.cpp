@@ -22,11 +22,15 @@ void PrintStackTrace()
 	SymInitialize(process, NULL, TRUE);
 	WORD numberOfFrames = CaptureStackBackTrace(0, TRACE_MAX_STACK_FRAMES, stack, NULL);
 	SYMBOL_INFO* symbol = (SYMBOL_INFO*)malloc(sizeof(SYMBOL_INFO) + (TRACE_MAX_FUNCTION_NAME_LENGTH - 1) * sizeof(TCHAR));
+	if (symbol == nullptr)
+		return;
 	memset(symbol, 0, sizeof(SYMBOL_INFO) + (TRACE_MAX_FUNCTION_NAME_LENGTH - 1) * sizeof(TCHAR));
 	symbol->MaxNameLen = TRACE_MAX_FUNCTION_NAME_LENGTH;
 	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 	DWORD displacement;
 	IMAGEHLP_LINE64* line = (IMAGEHLP_LINE64*)malloc(sizeof(IMAGEHLP_LINE64));
+	if (line == nullptr)
+		return;
 	memset(line, 0, sizeof(IMAGEHLP_LINE64));
 	line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
 	for (int i = 0; i < numberOfFrames; i++)

@@ -35,7 +35,8 @@ void printStack(void)
     free(symbol);
 }
 
-// Doesn't work
+// Doesn't work, probably due to this sample being built for x64.
+// I tried adjusting it, but didn't have much luck.
 // From https://stackoverflow.com/questions/22465253/symgetlinefromaddr-not-working-properly
 /*
 int LogStackTrace()
