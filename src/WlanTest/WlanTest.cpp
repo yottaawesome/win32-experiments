@@ -356,5 +356,15 @@ int main()
         pIfList = NULL;
     }
 
+    DWORD bufferSize = 100;
+    wchar_t lpBuffer[100] = { 0 };
+    GetComputerName(lpBuffer, &bufferSize);
+    wprintf(L"\n %s", lpBuffer);
+
+    wchar_t lpBuffer2[100] = { 0 };
+    bufferSize = 100;
+    GetUserName(lpBuffer2, &bufferSize);
+    wprintf(L"\n %s", lpBuffer2);
+
     return dwRetVal;
 }
