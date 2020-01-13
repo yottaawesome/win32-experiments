@@ -246,6 +246,15 @@ int main()
                     case dot11_phy_type_ht:
                         wprintf(L"802.11n PHY type\n");
                         break;
+                    case dot11_phy_type_vht:
+                        wprintf(L"802.11ac PHY type\n");
+                        break;
+                    case dot11_phy_type_dmg:
+                        wprintf(L"802.11ad PHY type\n");
+                        break;
+                    case dot11_phy_type_he:
+                        wprintf(L"802.11ax PHY type\n");
+                        break;
                     default:
                         wprintf(L"Unknown = %lu\n",
                             pConnectInfo->wlanAssociationAttributes.dot11PhyType);
