@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BitsTest", "BitsTest\BitsTe
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StackTrace", "StackTrace\StackTrace.vcxproj", "{7F707098-BA26-4E9B-90AC-B086A1471F26}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WlanTest", "WlanTest\WlanTest.vcxproj", "{29EED3B7-8627-49AB-A16B-7718019EADBC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{7F707098-BA26-4E9B-90AC-B086A1471F26}.Release|x64.Build.0 = Release|x64
 		{7F707098-BA26-4E9B-90AC-B086A1471F26}.Release|x86.ActiveCfg = Release|Win32
 		{7F707098-BA26-4E9B-90AC-B086A1471F26}.Release|x86.Build.0 = Release|Win32
+		{29EED3B7-8627-49AB-A16B-7718019EADBC}.Debug|x64.ActiveCfg = Debug|x64
+		{29EED3B7-8627-49AB-A16B-7718019EADBC}.Debug|x64.Build.0 = Debug|x64
+		{29EED3B7-8627-49AB-A16B-7718019EADBC}.Debug|x86.ActiveCfg = Debug|Win32
+		{29EED3B7-8627-49AB-A16B-7718019EADBC}.Debug|x86.Build.0 = Debug|Win32
+		{29EED3B7-8627-49AB-A16B-7718019EADBC}.Release|x64.ActiveCfg = Release|x64
+		{29EED3B7-8627-49AB-A16B-7718019EADBC}.Release|x64.Build.0 = Release|x64
+		{29EED3B7-8627-49AB-A16B-7718019EADBC}.Release|x86.ActiveCfg = Release|Win32
+		{29EED3B7-8627-49AB-A16B-7718019EADBC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
