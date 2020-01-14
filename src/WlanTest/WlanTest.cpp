@@ -10,16 +10,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <utility>
+
 // Need to link with Wlanapi.lib and Ole32.lib
 #pragma comment(lib, "wlanapi.lib")
 #pragma comment(lib, "ole32.lib")
 
+// Just a random perfect forwarding example...
+class A 
+{
+    public:
+        A(int a, int b) { wprintf(L"\nReceived %d %d\n", a, b); }
+};
+
+class B : public A 
+{
+    public:
+        template<typename...Args>
+        B(Args&&...args) : A(std::forward<Args>(args)...) {}
+};
+
 int main()
 {
+    B b(1, 2);
+
     // Declare and initialize variables.
 
     HANDLE hClient = NULL;
-    DWORD dwMaxClient = 2;      //    
+    DWORD dwMaxClient = 2;
     DWORD dwCurVersion = 0;
     DWORD dwResult = 0;
     DWORD dwRetVal = 0;
