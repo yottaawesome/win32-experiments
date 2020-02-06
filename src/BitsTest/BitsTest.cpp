@@ -7,15 +7,9 @@
 #include <memory>
 #include <vector>
 
-void test(std::vector<int>& v)
-{
-    v.push_back(1);
-}
-
 int main(int argc, char* args)
 try
 {
-    byte* buffer = new byte[11];
     ComHandler comInit;
     std::shared_ptr<IBackgroundCopyManager> bcm =
         comInit.CreateInstance<BackgroundCopyManager, IBackgroundCopyManager>();
