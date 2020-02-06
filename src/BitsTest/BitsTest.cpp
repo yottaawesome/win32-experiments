@@ -3,30 +3,30 @@
 #include <Windows.h>
 #include <bits.h>
 #include "common.h"
-#include "ComInitializer.h"
+#include "ComHandler.h"
+#include <memory>
+#include <vector>
 
-int main(int argc, char* args) try 
+void test(std::vector<int>& v)
 {
-    IBackgroundCopyManager* g_pbcm = nullptr;
-    ComInitializer comInit;
+    v.push_back(1);
+}
 
-    CheckHR(
-        CoCreateInstance(
-            __uuidof(BackgroundCopyManager),
-            nullptr,
-            CLSCTX_LOCAL_SERVER,
-            __uuidof(IBackgroundCopyManager),
-            (void**)&g_pbcm
-        )
-    );
+int main(int argc, char* args)
+try
+{
+    byte* buffer = new byte[11];
+    ComHandler comInit;
+    std::shared_ptr<IBackgroundCopyManager> bcm =
+        comInit.CreateInstance<BackgroundCopyManager, IBackgroundCopyManager>();
 
-    ReleaseCOM(&g_pbcm);
-    if(g_pbcm == nullptr)
+    if(bcm != nullptr)
         std::cout << "Completed successfully\n";
 
     return 0;
 }
-catch (const std::runtime_error& ex) {
+catch (const std::runtime_error& ex)
+{
     std::cout << ex.what() << std::endl;
     return 1;
 }

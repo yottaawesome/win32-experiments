@@ -15,6 +15,7 @@
 // Need to link with Wlanapi.lib and Ole32.lib
 #pragma comment(lib, "wlanapi.lib")
 #pragma comment(lib, "ole32.lib")
+#include <string>
 
 // Just a random perfect forwarding example...
 class A 
@@ -30,10 +31,18 @@ class B : public A
         B(Args&&...args) : A(std::forward<Args>(args)...) {}
 };
 
+void blah(std::wstring_view s)
+{
+    s = L"";
+}
+
 int main()
 {
-    B b(1, 2);
+    blah(L"A");
+    std::wstring m = L"A";
+    blah(m);
 
+    B b(1, 2);
     // Declare and initialize variables.
 
     HANDLE hClient = NULL;
@@ -55,7 +64,7 @@ int main()
     // variables used for WlanQueryInterfaces for opcode = wlan_intf_opcode_current_connection
     PWLAN_CONNECTION_ATTRIBUTES pConnectInfo = NULL;
     DWORD connectInfoSize = sizeof(WLAN_CONNECTION_ATTRIBUTES);
-    WLAN_OPCODE_VALUE_TYPE opCode = wlan_opcode_value_type_invalid;
+    WLAN_OPCODE_VALUE_TYPE opCode = WLAN_OPCODE_VALUE_TYPE::wlan_opcode_value_type_invalid;
 
     dwResult = WlanOpenHandle(dwMaxClient, NULL, &dwCurVersion, &hClient);
     if (dwResult != ERROR_SUCCESS) {

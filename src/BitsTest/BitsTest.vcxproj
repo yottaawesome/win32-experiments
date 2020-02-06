@@ -149,11 +149,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BitsTest.cpp" />
-    <ClCompile Include="ComInitializer.cpp" />
-    <ClCompile Include="common.cpp" />
+    <ClCompile Include="ComHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ComInitializer.h" />
+    <ClInclude Include="ComHandler.h" />
     <ClInclude Include="common.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
