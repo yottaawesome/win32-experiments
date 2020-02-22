@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <iostream>
 #include <Iads.h>
+#include <comdef.h>
 
 #pragma comment(lib,"adsiid.lib")
+#pragma comment(lib,"comsuppw.lib")
 
 int main()
 {
@@ -29,7 +31,9 @@ int main()
     }
     else
     {
-        std::cout << "Failed" << std::endl;
+        _com_error err(hr);
+        LPCTSTR errMsg = err.ErrorMessage();
+        std::wcout << errMsg << std::endl;
     }
 
     hr = pSys->get_ComputerName(&bstr);
@@ -37,17 +41,35 @@ int main()
         printf("Computer: %S\n", bstr);
         SysFreeString(bstr);
     }
+    else
+    {
+        _com_error err(hr);
+        LPCTSTR errMsg = err.ErrorMessage();
+        std::wcout << errMsg << std::endl;
+    }
 
     hr = pSys->get_DomainDNSName(&bstr);
     if (SUCCEEDED(hr)) {
         printf("Domain: %S\n", bstr);
         SysFreeString(bstr);
     }
+    else
+    {
+        _com_error err(hr);
+        LPCTSTR errMsg = err.ErrorMessage();
+        std::wcout << errMsg << std::endl;
+    }
 
     hr = pSys->get_PDCRoleOwner(&bstr);
     if (SUCCEEDED(hr)) {
         printf("PDC Role owner: %S\n", bstr);
         SysFreeString(bstr);
+    }
+    else
+    {
+        _com_error err(hr);
+        LPCTSTR errMsg = err.ErrorMessage();
+        std::wcout << errMsg << std::endl;
     }
 
     if (pSys) {
