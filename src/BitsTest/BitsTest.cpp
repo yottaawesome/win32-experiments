@@ -6,13 +6,18 @@
 #include "ComHandler.h"
 #include <memory>
 #include <vector>
+#include <exception>
+#include <wrl/client.h>
+
+using Microsoft::WRL::ComPtr;
+ComPtr<IBackgroundCopyManager> ptr = nullptr;
 
 int main(int argc, char* args)
 try
 {
     ComHandler comInit;
     std::shared_ptr<IBackgroundCopyManager> bcm =
-        comInit.CreateInstance<BackgroundCopyManager, IBackgroundCopyManager>();
+        comInit.CreateInstance<IBackgroundCopyManager, BackgroundCopyManager>();
 
     if(bcm != nullptr)
         std::cout << "Completed successfully\n";

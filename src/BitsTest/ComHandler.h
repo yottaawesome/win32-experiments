@@ -9,22 +9,22 @@ class ComHandler final
 		ComHandler(COINIT aparthmentThreadingMode = COINIT_MULTITHREADED);
 		~ComHandler();
 		
-		template<typename T, typename U>
-		std::shared_ptr<U> CreateInstance();
+		template<typename I, typename C>
+		std::shared_ptr<I> CreateInstance();
 };
 
-template<typename T, typename U>
-std::shared_ptr<U> ComHandler::CreateInstance()
+template<typename I, typename C>
+std::shared_ptr<I> ComHandler::CreateInstance()
 {
-	U* pOut = nullptr;
+	I* pOut = nullptr;
 	CheckHR(
 		CoCreateInstance(
-			__uuidof(T),
+			__uuidof(C),
 			nullptr,
 			CLSCTX_LOCAL_SERVER,
-			__uuidof(U),
+			__uuidof(I),
 			(void**)&pOut
 		)
 	);
-	return std::shared_ptr<U>(pOut, [](U* ptr) -> void { ptr->Release(); });
+	return std::shared_ptr<I>(pOut, [](I* ptr) -> void { ptr->Release(); });
 }

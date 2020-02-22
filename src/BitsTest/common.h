@@ -2,8 +2,8 @@
 #include <Windows.h>
 #include <stdexcept>
 
-template<typename T>
-inline void ReleaseCOM(T** ptrCom)
+template<typename C>
+inline void ReleaseCOM(C** ptrCom)
 {
     if (ptrCom != nullptr && *ptrCom != nullptr)
     {
