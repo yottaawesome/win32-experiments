@@ -76,7 +76,9 @@ void PrintStackTraceFromExceptionContext(CONTEXT context, DWORD exceptionCode)
 	}
 	HANDLE thread = GetCurrentThread();
 	HANDLE process = GetCurrentProcess();
-	// The image and frame will be set based on the processor architecture. I don't set these addresses at random or through some voodoo; they come from the documentation at http://msdn.microsoft.com/en-us/library/windows/desktop/ms680646(v=vs.85).aspx.
+	// The image and frame will be set based on the processor architecture.
+	// I don't set these addresses at random or through some voodoo;
+	// they come from the documentation at http://msdn.microsoft.com/en-us/library/windows/desktop/ms680646(v=vs.85).aspx.
 	DWORD image;
 #ifdef _M_IX86
 	STACKFRAME* frame = (STACKFRAME*)malloc(sizeof(STACKFRAME));
@@ -177,7 +179,8 @@ LONG WINAPI VectoredExceptionCallback(PEXCEPTION_POINTERS exception)
 	{
 		if (exception->ExceptionRecord->ExceptionCode && exception->ExceptionRecord->ExceptionCode <= 2147483647)
 		{
-			// This is a COM success code and can be ignored according to http://msdn.microsoft.com/en-us/library/windows/desktop/ff485841(v=vs.85).aspx. Anything above that, and you'll want to log it out as an actual exception.
+			// This is a COM success code and can be ignored according to http://msdn.microsoft.com/en-us/library/windows/desktop/ff485841(v=vs.85).aspx.
+			// Anything above that, and you'll want to log it out as an actual exception.
 			tstringstream stream;
 			stream 
 				<< TEXT("Caught COM success code ") 

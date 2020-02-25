@@ -9,16 +9,15 @@
 
 int main()
 {
-    HRESULT hr;
-
-    hr = CoInitialize(NULL);
+    HRESULT hr = CoInitialize(NULL);
 
     IADsADSystemInfo* pSys;
-    hr = CoCreateInstance(CLSID_ADSystemInfo,
+    hr = CoCreateInstance(
+        CLSID_ADSystemInfo,
         NULL,
         CLSCTX_INPROC_SERVER,
-        IID_IADsADSystemInfo,
-        (void**)&pSys);
+        IID_PPV_ARGS(&pSys)
+    );
 
     if (FAILED(hr))
         throw std::runtime_error("Failed to initialize IADsADSystemInfo");
@@ -56,8 +55,7 @@ int main()
     else
     {
         _com_error err(hr);
-        LPCTSTR errMsg = err.ErrorMessage();
-        std::wcout << errMsg << std::endl;
+        std::wcout << err.ErrorMessage() << std::endl;
     }
 
     hr = pSys->get_PDCRoleOwner(&bstr);

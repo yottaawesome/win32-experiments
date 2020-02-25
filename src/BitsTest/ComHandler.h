@@ -26,5 +26,5 @@ std::shared_ptr<I> ComHandler::CreateInstance()
 			(void**)&pOut
 		)
 	);
-	return std::shared_ptr<I>(pOut, [](I* ptr) -> void { ptr->Release(); });
+	return std::shared_ptr<I>(pOut, [](I* ptr) -> void { if(ptr != nullptr) ptr->Release(); });
 }
