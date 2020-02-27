@@ -149,52 +149,60 @@ int Win32RamInfo()
 
 		VARIANT vtProp;
 		hr = pclsObj->Get(L"Manufacturer", 0, &vtProp, 0, 0);
-		std::wcout << " Manufacturer : " << vtProp.bstrVal << std::endl;
+		std::wcout << L" Manufacturer : " << vtProp.bstrVal << std::endl;
 
 		hr = pclsObj->Get(L"Model", 0, &vtProp, 0, 0);
-		std::wcout << " Model : " << GetValue(vtProp.bstrVal) << std::endl;
+		std::wcout << L" Model : " << GetValue(vtProp.bstrVal) << std::endl;
 
 		hr = pclsObj->Get(L"Name", 0, &vtProp, 0, 0);
-		std::wcout << " Name : " << GetValue(vtProp.bstrVal) << std::endl;
+		std::wcout << L" Name : " << GetValue(vtProp.bstrVal) << std::endl;
 
 		hr = pclsObj->Get(L"SerialNumber", 0, &vtProp, 0, 0);
-		std::wcout << " SerialNumber : " << GetValue(vtProp.bstrVal) << std::endl;
+		std::wcout << L" SerialNumber : " << GetValue(vtProp.bstrVal) << std::endl;
+		std::wcout << L" type : " << vtProp.vt << std::endl;
 
 		hr = pclsObj->Get(L"SKU", 0, &vtProp, 0, 0);
-		std::wcout << " SKU : " << GetValue(vtProp.bstrVal) << std::endl;
+		std::wcout << L" SKU : " << GetValue(vtProp.bstrVal) << std::endl;
 
 		hr = pclsObj->Get(L"SMBIOSMemoryType", 0, &vtProp, 0, 0);
-		std::wcout << " SMBIOSMemoryType : " << vtProp.uintVal << std::endl;
+		std::wcout << L" SMBIOSMemoryType : " << vtProp.uintVal << std::endl;
 
 		hr = pclsObj->Get(L"BankLabel", 0, &vtProp, 0, 0);
 		std::wcout << " BankLabel : " << GetValue(vtProp.bstrVal) << std::endl;
 
 		hr = pclsObj->Get(L"TypeDetail", 0, &vtProp, 0, 0);
-		std::wcout << " TypeDetail : " << vtProp.uintVal << std::endl;
+		std::wcout << L" TypeDetail : " << vtProp.uintVal << std::endl;
 
 		hr = pclsObj->Get(L"Status", 0, &vtProp, 0, 0);
-		std::wcout << " Status : " << GetValue(vtProp.bstrVal) << std::endl;
+		std::wcout << L" Status : " << GetValue(vtProp.bstrVal) << std::endl;
+		std::wcout << L" type : " << vtProp.vt << std::endl;
 
 		hr = pclsObj->Get(L"MemoryType", 0, &vtProp, 0, 0);
-		std::wcout << " MemoryType : " << vtProp.uintVal << std::endl;
+		std::wcout << L" MemoryType : " << vtProp.uintVal << std::endl;
 
 		hr = pclsObj->Get(L"PositionInRow", 0, &vtProp, 0, 0);
-		std::wcout << " PositionInRow : " << vtProp.uintVal << std::endl;
+		std::wcout << L" PositionInRow : " << vtProp.uintVal << std::endl;
 
+		VariantClear(&vtProp);
 		hr = pclsObj->Get(L"Capacity", 0, &vtProp, 0, 0);
-		std::wcout << " Capacity : " << vtProp.ulVal << std::endl;
+		if(FAILED(hr))
+			std::wcout << L"Could not determine capacity" << std::endl;
+		std::wcout << L" Capacity : " << vtProp.bstrVal << std::endl;
+		std::wcout << L" type : " << vtProp.vt << std::endl;
+
+		//Get<vtProp.vt>();
 
 		hr = pclsObj->Get(L"Speed", 0, &vtProp, 0, 0);
-		std::wcout << " Speed : " << vtProp.uintVal << std::endl;
+		std::wcout << L" Speed : " << vtProp.uintVal << std::endl;
 
 		hr = pclsObj->Get(L"TotalWidth", 0, &vtProp, 0, 0);
-		std::wcout << " TotalWidth : " << vtProp.uintVal << std::endl;
+		std::wcout << L" TotalWidth : " << vtProp.uintVal << std::endl;
 
 		hr = pclsObj->Get(L"DataWidth", 0, &vtProp, 0, 0);
-		std::wcout << " DataWidth : " << vtProp.uintVal << std::endl;
+		std::wcout << L" DataWidth : " << vtProp.uintVal << std::endl;
 
 		hr = pclsObj->Get(L"Description", 0, &vtProp, 0, 0);
-		std::wcout << " Description : " << GetValue(vtProp.bstrVal) << std::endl;
+		std::wcout << L" Description : " << GetValue(vtProp.bstrVal) << std::endl;
 
 		VariantClear(&vtProp);
 		pclsObj->Release();
