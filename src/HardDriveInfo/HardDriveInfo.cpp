@@ -9,7 +9,8 @@
 // https://social.msdn.microsoft.com/Forums/vstudio/en-US/1d4fda3c-885f-46e2-bc32-80c4426510dc/how-to-enumerate-all-disks-and-their-aggregated-volumes?forum=vcgeneral
 int main(int argc, char** argv)
 {
-	return Win32RamInfo();
+	return Win32RamInfo2();
+	//return Win32RamInfo();
 	//return Win32DiskInfo();
 	//return MsftDiskInfo();
 }

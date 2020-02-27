@@ -231,3 +231,36 @@ int Win32RamInfo()
 
 	return 0;
 }
+
+int Win32RamInfo2()
+{
+	using Microsoft::WRL::ComPtr;
+
+	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+
+	Wmi wmi;
+	WmiServerConnection rootCim2 = wmi.ConnectServer(L"ROOT\\CIMV2");
+	ComPtr<IEnumWbemClassObject> enumerator = rootCim2.Query(L"SELECT * FROM Win32_PhysicalMemory");
+
+	ULONG uReturn = 0;
+	ComPtr<IWbemClassObject> pclsObj;
+
+	while (1)
+	{
+		HRESULT hr = enumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
+		if (uReturn == 0)
+		{
+			break;
+		}
+
+		VARIANT vtProp;
+		hr = pclsObj->Get(L"Capacity", 0, &vtProp, 0, 0);
+		std::wcout << L" Capacity : " << vtProp.bstrVal << std::endl;
+	}
+
+	// Don't call CoUninitalize before the ComPtrs have been released
+	// It's best to manage this through RAII
+	//CoUninitialize();
+
+	return 0;
+}

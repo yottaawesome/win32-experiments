@@ -151,6 +151,7 @@
     <ClCompile Include="Win32DiskInfo.cpp" />
     <ClCompile Include="Win32RamInfo.cpp" />
     <ClCompile Include="Wmi.cpp" />
+    <ClCompile Include="WmiServerConnection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header.hpp" />
