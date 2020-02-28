@@ -7,7 +7,7 @@
 #include <Wbemidl.h>
 #include <stdexcept>
 
-Wmi::Wmi()
+WmiProxy::WmiProxy()
 {
 	HRESULT hres;
 
@@ -70,7 +70,7 @@ Wmi::Wmi()
 	}
 }
 
-WmiServerConnection Wmi::ConnectServer(const std::wstring& server)
+WmiServer WmiProxy::ConnectServer(const std::wstring& server)
 {
 	IWbemServices* pSvc;
 
@@ -123,5 +123,5 @@ WmiServerConnection Wmi::ConnectServer(const std::wstring& server)
 			<< std::endl;
 	}
 
-	return WmiServerConnection(pSvc);
+	return WmiServer(pSvc);
 }

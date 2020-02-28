@@ -236,26 +236,21 @@ int Win32RamInfo2()
 {
 	using Microsoft::WRL::ComPtr;
 
-	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-
-	Wmi wmi;
-	WmiServerConnection rootCim2 = wmi.ConnectServer(L"ROOT\\CIMV2");
-	ComPtr<IEnumWbemClassObject> enumerator = rootCim2.Query(L"SELECT * FROM Win32_PhysicalMemory");
+	WmiProxy wmi;
+	WmiServer rootCim2 = wmi.ConnectServer(L"ROOT\\CIMV2");
+	WmiObjectEnumerator enumerator = rootCim2.Query(L"SELECT * FROM Win32_PhysicalMemory");
 
 	ULONG uReturn = 0;
-	ComPtr<IWbemClassObject> pclsObj;
+	ComPtr<IWbemClassObject> classObj = nullptr;
 
-	while (1)
+	while (classObj = enumerator.Next())
 	{
-		HRESULT hr = enumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
-		if (uReturn == 0)
-		{
-			break;
-		}
-
 		VARIANT vtProp;
-		hr = pclsObj->Get(L"Capacity", 0, &vtProp, 0, 0);
+		HRESULT hr = classObj->Get(L"Capacity", 0, &vtProp, 0, 0);
+		if (FAILED(hr))
+			throw std::runtime_error("Class method get failed");
 		std::wcout << L" Capacity : " << vtProp.bstrVal << std::endl;
+		VariantClear(&vtProp);
 	}
 
 	// Don't call CoUninitalize before the ComPtrs have been released

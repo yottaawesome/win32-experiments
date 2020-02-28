@@ -1,14 +1,14 @@
 #include "Header.hpp"
 #include <stdexcept>
 
-WmiServerConnection::WmiServerConnection(IWbemServices* pSvc)
+WmiServer::WmiServer(IWbemServices* pSvc)
 	: w_wbemService(pSvc)
 {
 	if (pSvc == nullptr)
-		throw std::runtime_error("WmiServerConnection cannot be initialised with a null locator");
+		throw std::runtime_error("WmiServer cannot be initialised with a null locator");
 }
 
-IEnumWbemClassObject* WmiServerConnection::Query(const std::wstring& string)
+WmiObjectEnumerator WmiServer::Query(const std::wstring& string)
 {
 	IEnumWbemClassObject* pEnumerator = nullptr;
 	HRESULT hres = w_wbemService->ExecQuery(
@@ -21,5 +21,5 @@ IEnumWbemClassObject* WmiServerConnection::Query(const std::wstring& string)
 	if (FAILED(hres))
 		throw std::runtime_error("Query failed");
 
-	return pEnumerator;
+	return WmiObjectEnumerator(pEnumerator);
 }

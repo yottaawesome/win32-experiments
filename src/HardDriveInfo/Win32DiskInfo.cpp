@@ -166,10 +166,12 @@ int Win32DiskInfo()
 		}
 
 		VARIANT vtProp;
+		VariantInit(&vtProp);
 
 		// Get the value of the Name property
 		hr = pclsObj->Get(L"Name", 0, &vtProp, 0, 0);
 		std::wcout << " Name : " << vtProp.bstrVal << std::endl;
+
 		hr = pclsObj->Get(L"StartingOffset", 0, &vtProp, 0, 0);
 		std::wcout << " Starting Offset : " << vtProp.uintVal << std::endl;
 		VariantClear(&vtProp);
