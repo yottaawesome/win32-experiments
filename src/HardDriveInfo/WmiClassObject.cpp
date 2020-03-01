@@ -94,3 +94,13 @@ const std::wstring WmiClassObject::String(const std::wstring& name)
 
 	return std::wstring(vtProp.bstrVal);
 }
+
+const std::wstring WmiClassObject::StringOrEmpty(const std::wstring& name)
+{
+	_variant_t vtProp;
+	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
+	if (FAILED(hr))
+		throw new std::runtime_error("Failed ClassObject::Get()");
+
+	return std::wstring(vtProp.bstrVal != nullptr ? vtProp.bstrVal : L"");
+}

@@ -27,6 +27,7 @@ class WmiClassObject
 		const unsigned long long UInt64(const std::wstring& name);
 
 		const std::wstring String(const std::wstring& name);
+		const std::wstring StringOrEmpty(const std::wstring& name);
 
 	private:
 		Microsoft::WRL::ComPtr<IWbemClassObject> m_clsObj;
