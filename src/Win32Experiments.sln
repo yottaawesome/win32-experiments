@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdSystemInfo", "AdSystemInf
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HardDriveInfo", "HardDriveInfo\HardDriveInfo.vcxproj", "{6DD230DA-4F0A-4B6C-B9E1-41E32AD17488}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinHttp", "WinHttp\WinHttp.vcxproj", "{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -71,6 +73,14 @@ Global
 		{6DD230DA-4F0A-4B6C-B9E1-41E32AD17488}.Release|x64.Build.0 = Release|x64
 		{6DD230DA-4F0A-4B6C-B9E1-41E32AD17488}.Release|x86.ActiveCfg = Release|Win32
 		{6DD230DA-4F0A-4B6C-B9E1-41E32AD17488}.Release|x86.Build.0 = Release|Win32
+		{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}.Debug|x64.ActiveCfg = Debug|x64
+		{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}.Debug|x64.Build.0 = Debug|x64
+		{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}.Debug|x86.ActiveCfg = Debug|Win32
+		{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}.Debug|x86.Build.0 = Debug|Win32
+		{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}.Release|x64.ActiveCfg = Release|x64
+		{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}.Release|x64.Build.0 = Release|x64
+		{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}.Release|x86.ActiveCfg = Release|Win32
+		{EDDEDB6A-EDB3-41E9-ADDC-0DCA8A01A8BA}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
