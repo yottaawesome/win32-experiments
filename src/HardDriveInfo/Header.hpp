@@ -11,20 +11,20 @@ int Win32RamInfo();
 int Win32RamInfo2();
 int Win32ProcessorInfo();
 
-class WbemClassObject
+class WmiClassObject
 {
 	public:
-		WbemClassObject(IWbemClassObject* clsObj);
+		WmiClassObject(IWbemClassObject* clsObj);
 
 		const short Short(const std::wstring& name);
 		const int Int32(const std::wstring& name);
 		const long Long(const std::wstring& name);
 		const long long Int64(const std::wstring& name);
 
-		const unsigned short UnsignedShort(const std::wstring& name);
-		const unsigned int UnsignedInt32(const std::wstring& name);
-		const unsigned long UnsignedLong(const std::wstring& name);
-		const unsigned long long UnsignedInt64(const std::wstring& name);
+		const unsigned short UShort(const std::wstring& name);
+		const unsigned int UInt32(const std::wstring& name);
+		const unsigned long ULong(const std::wstring& name);
+		const unsigned long long UInt64(const std::wstring& name);
 
 		const std::wstring String(const std::wstring& name);
 

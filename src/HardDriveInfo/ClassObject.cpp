@@ -1,11 +1,11 @@
 #include "Header.hpp"
 #include <iostream>
 
-WbemClassObject::WbemClassObject(IWbemClassObject* clsObj)
+WmiClassObject::WmiClassObject(IWbemClassObject* clsObj)
 	: m_clsObj(clsObj)
 { }
 
-const short WbemClassObject::Short(const std::wstring& name)
+const short WmiClassObject::Short(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
@@ -15,7 +15,7 @@ const short WbemClassObject::Short(const std::wstring& name)
 	return vtProp.iVal;
 }
 
-const int WbemClassObject::Int32(const std::wstring& name)
+const int WmiClassObject::Int32(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
@@ -25,7 +25,7 @@ const int WbemClassObject::Int32(const std::wstring& name)
 	return vtProp.intVal;
 }
 
-const long WbemClassObject::Long(const std::wstring& name)
+const long WmiClassObject::Long(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
@@ -35,7 +35,7 @@ const long WbemClassObject::Long(const std::wstring& name)
 	return vtProp.lVal;
 }
 
-const long long WbemClassObject::Int64(const std::wstring& name)
+const long long WmiClassObject::Int64(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
@@ -45,7 +45,7 @@ const long long WbemClassObject::Int64(const std::wstring& name)
 	return vtProp.llVal;
 }
 
-const unsigned short WbemClassObject::UnsignedShort(const std::wstring& name)
+const unsigned short WmiClassObject::UShort(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
@@ -55,7 +55,7 @@ const unsigned short WbemClassObject::UnsignedShort(const std::wstring& name)
 	return vtProp.uiVal;
 }
 
-const unsigned int WbemClassObject::UnsignedInt32(const std::wstring& name)
+const unsigned int WmiClassObject::UInt32(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
@@ -65,7 +65,7 @@ const unsigned int WbemClassObject::UnsignedInt32(const std::wstring& name)
 	return vtProp.uintVal;
 }
 
-const unsigned long WbemClassObject::UnsignedLong(const std::wstring& name)
+const unsigned long WmiClassObject::ULong(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
@@ -75,7 +75,7 @@ const unsigned long WbemClassObject::UnsignedLong(const std::wstring& name)
 	return vtProp.ulVal;
 }
 
-const unsigned long long WbemClassObject::UnsignedInt64(const std::wstring& name)
+const unsigned long long WmiClassObject::UInt64(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
@@ -85,7 +85,7 @@ const unsigned long long WbemClassObject::UnsignedInt64(const std::wstring& name
 	return vtProp.ullVal;
 }
 
-const std::wstring WbemClassObject::String(const std::wstring& name)
+const std::wstring WmiClassObject::String(const std::wstring& name)
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name.c_str(), 0, &vtProp, 0, 0);
