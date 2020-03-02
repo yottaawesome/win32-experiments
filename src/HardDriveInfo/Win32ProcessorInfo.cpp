@@ -1,5 +1,6 @@
 #include "Header.hpp"
 #include <iostream>
+#include <map>
 
 int Win32ProcessorInfo()
 {
@@ -39,6 +40,33 @@ int Win32ProcessorInfo()
 			<< std::endl;
 		std::wcout << L"\t DataWidth : "
 			<< classObj.UShort(L"DataWidth")
+			<< std::endl;
+		std::wcout << L"\t SystemName : "
+			<< classObj.StringOrEmpty(L"SystemName")
+			<< std::endl;
+		std::wcout << L"\t UniqueId : "
+			<< classObj.StringOrEmpty(L"UniqueId")
+			<< std::endl;
+		std::wcout << L"\t SocketDesignation : "
+			<< classObj.StringOrEmpty(L"SocketDesignation")
+			<< std::endl;
+		std::wcout << L"\t ProcessorId : "
+			<< classObj.StringOrEmpty(L"ProcessorId")
+			<< std::endl;
+
+		unsigned short archVal = classObj.UShort(L"Architecture");
+		std::map<unsigned short, std::wstring> arch =
+		{
+			{0,L"x86"},
+			{1,L"MIPS"},
+			{2,L"Alpha"},
+			{3,L"PowerPC"},
+			{5,L"ARM"},
+			{6,L"ia64"},
+			{9,L"x64"},
+		};
+		std::wcout << L"\t Architecture : "
+			<< arch[archVal]
 			<< std::endl;
 	}
 

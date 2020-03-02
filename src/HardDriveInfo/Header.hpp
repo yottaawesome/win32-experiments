@@ -16,18 +16,18 @@ class WmiClassObject
 	public:
 		WmiClassObject(IWbemClassObject* clsObj);
 
-		const short Short(const std::wstring& name);
-		const int Int32(const std::wstring& name);
-		const long Long(const std::wstring& name);
-		const long long Int64(const std::wstring& name);
+		[[nodiscard]] const short Short(const std::wstring& name);
+		[[nodiscard]] const int Int32(const std::wstring& name);
+		[[nodiscard]] const long Long(const std::wstring& name);
+		[[nodiscard]] const long long Int64(const std::wstring& name);
 
-		const unsigned short UShort(const std::wstring& name);
-		const unsigned int UInt32(const std::wstring& name);
-		const unsigned long ULong(const std::wstring& name);
-		const unsigned long long UInt64(const std::wstring& name);
+		[[nodiscard]] const unsigned short UShort(const std::wstring& name);
+		[[nodiscard]] const unsigned int UInt32(const std::wstring& name);
+		[[nodiscard]] const unsigned long ULong(const std::wstring& name);
+		[[nodiscard]] const unsigned long long UInt64(const std::wstring& name);
 
-		const std::wstring String(const std::wstring& name);
-		const std::wstring StringOrEmpty(const std::wstring& name);
+		[[nodiscard]] const std::wstring String(const std::wstring& name);
+		[[nodiscard]] const std::wstring StringOrEmpty(const std::wstring& name);
 
 	private:
 		Microsoft::WRL::ComPtr<IWbemClassObject> m_clsObj;
@@ -65,4 +65,11 @@ class WmiProxy
 
 	private:
 		Microsoft::WRL::ComPtr<IWbemLocator> m_wbemLocator;
+};
+
+class ComInitialiser final
+{
+	public:
+		ComInitialiser(COINIT aparthmentThreadingMode = COINIT_MULTITHREADED);
+		~ComInitialiser();
 };
