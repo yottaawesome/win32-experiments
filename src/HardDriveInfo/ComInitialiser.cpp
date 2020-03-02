@@ -43,7 +43,7 @@ ComInitialiser::ComInitialiser(COINIT apartmentThreadingMode)
 {
 	// Initialise COM
 	HRESULT hr = CoInitializeEx(nullptr, apartmentThreadingMode);
-	CheckHr(hr, "Failed to initialise COM.y.");
+	CheckHr(hr, "Failed to initialise COM.");
 
 	// Set general COM security levels. This can only be set once.
 	HRESULT hres = CoInitializeSecurity(

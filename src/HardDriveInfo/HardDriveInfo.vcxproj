@@ -148,9 +148,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ComInitialiser.cpp" />
+    <ClCompile Include="MsftDiskInfo.cpp" />
+    <ClCompile Include="Win32DiskInfo.cpp" />
     <ClCompile Include="WmiClassObject.cpp" />
     <ClCompile Include="HardDriveInfo.cpp" />
-    <ClCompile Include="Win32DiskInfo.cpp" />
     <ClCompile Include="Win32ProcessorInfo.cpp" />
     <ClCompile Include="Win32RamInfo.cpp" />
     <ClCompile Include="WmiObjectEnumerator.cpp" />
@@ -159,7 +160,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header.hpp" />
-    <ClInclude Include="MsftDiskInfo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -279,3 +279,4 @@ int Win32DiskInfo()
 
 	return 0;
 }
+

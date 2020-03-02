@@ -10,9 +10,9 @@
 int main(int argc, char** argv)
 {
 	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-	return Win32ProcessorInfo();
+	//return Win32ProcessorInfo();
 	//return Win32RamInfo2();
 	//return Win32RamInfo();
 	//return Win32DiskInfo();
-	//return MsftDiskInfo();
+	return MsftDiskInfo();
 }
