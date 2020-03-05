@@ -7,6 +7,7 @@
 
 int MsftDiskInfo();
 int Win32DiskInfo();
+int Win32LogicalDisk();
 int Win32RamInfo();
 int Win32RamInfo2();
 int Win32ProcessorInfo();

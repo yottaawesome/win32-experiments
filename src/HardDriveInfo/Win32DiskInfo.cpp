@@ -168,6 +168,12 @@ int Win32DiskInfo()
 		VARIANT vtProp;
 		VariantInit(&vtProp);
 
+		hr = pclsObj->Get(L"DeviceID", 0, &vtProp, 0, 0);
+		std::wcout << " DeviceID : " << vtProp.bstrVal << std::endl;
+
+		hr = pclsObj->Get(L"DiskIndex", 0, &vtProp, 0, 0);
+		std::wcout << " DiskIndex : " << vtProp.uintVal << std::endl;
+
 		// Get the value of the Name property
 		hr = pclsObj->Get(L"Name", 0, &vtProp, 0, 0);
 		std::wcout << " Name : " << vtProp.bstrVal << std::endl;
@@ -261,6 +267,9 @@ int Win32DiskInfo()
 
 		hr = pclsObj->Get(L"Status", 0, &vtProp, 0, 0);
 		std::wcout << " Status : " << vtProp.bstrVal << std::endl;
+
+		hr = pclsObj->Get(L"SCSIPort", 0, &vtProp, 0, 0);
+		std::wcout << " SCSIPort : " << vtProp.uiVal << std::endl;
 
 		VariantClear(&vtProp);
 

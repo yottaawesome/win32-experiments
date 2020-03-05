@@ -150,6 +150,7 @@
     <ClCompile Include="ComInitialiser.cpp" />
     <ClCompile Include="MsftDiskInfo.cpp" />
     <ClCompile Include="Win32DiskInfo.cpp" />
+    <ClCompile Include="Win32LogicalDisk.cpp" />
     <ClCompile Include="WmiClassObject.cpp" />
     <ClCompile Include="HardDriveInfo.cpp" />
     <ClCompile Include="Win32ProcessorInfo.cpp" />

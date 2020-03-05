@@ -1,4 +1,3 @@
-#pragma once
 #include "Header.hpp"
 #include <iostream>
 #include <WTypes.h>
@@ -6,7 +5,7 @@
 #include <comdef.h>
 #include <Wbemidl.h>
 
-int MsftDiskInfo()
+int Win32LogicalDisk()
 {
 	HRESULT hres;
 
@@ -40,6 +39,7 @@ int MsftDiskInfo()
 		NULL                         // Reserved
 	);
 
+
 	if (FAILED(hres))
 	{
 		std::wcout << L"Failed to initialize security. Error code = 0x"
@@ -57,8 +57,7 @@ int MsftDiskInfo()
 		CLSID_WbemLocator,
 		0,
 		CLSCTX_INPROC_SERVER,
-		IID_IWbemLocator,
-		(LPVOID*)&pLoc);
+		IID_IWbemLocator, (LPVOID*)&pLoc);
 
 	if (FAILED(hres))
 	{
@@ -78,7 +77,7 @@ int MsftDiskInfo()
 	// the current user and obtain pointer pSvc
 	// to make IWbemServices calls.
 	hres = pLoc->ConnectServer(
-		_bstr_t(L"ROOT\\MICROSOFT\\WINDOWS\\STORAGE"), // Object path of WMI namespace
+		_bstr_t(L"ROOT\\CIMV2"), // Object path of WMI namespace
 		NULL,                    // User name. NULL = current user
 		NULL,                    // User password. NULL = current
 		0,                       // Locale. NULL indicates current
@@ -97,7 +96,8 @@ int MsftDiskInfo()
 		return 1;                // Program has failed.
 	}
 
-	std::wcout << "Connected to ROOT\\MICROSOFT\\WINDOWS\\STORAGE namespace" << std::endl;
+	std::wcout << "Connected to ROOT\\CIMV2 WMI namespace" << std::endl;
+
 
 	// Step 5: --------------------------------------------------
 	// Set security levels on the proxy -------------------------
@@ -122,18 +122,26 @@ int MsftDiskInfo()
 		return 1;               // Program has failed.
 	}
 
+	// Step 6: --------------------------------------------------
+	// Use the IWbemServices pointer to make requests of WMI ----
+
+	/*
+	* Disk Drive information
+	*/
+
 	// For example, get the name of the operating system
 	IEnumWbemClassObject* pEnumerator = NULL;
 	hres = pSvc->ExecQuery(
 		bstr_t("WQL"),
-		bstr_t("SELECT * FROM MSFT_PhysicalDisk"),
+		bstr_t("SELECT * FROM Win32_LogicalDisk"),
 		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
 		NULL,
 		&pEnumerator);
 
 	if (FAILED(hres))
 	{
-		std::wcout << "Could not query Disk Spindle. Error code = 0x"
+		std::wcout << "Query for operating system name failed."
+			<< " Error code = 0x"
 			<< std::hex << hres << std::endl;
 		pSvc->Release();
 		pLoc->Release();
@@ -141,64 +149,38 @@ int MsftDiskInfo()
 		return 1;               // Program has failed.
 	}
 
+	// Step 7: -------------------------------------------------
+	// Get the data from the query in step 6 -------------------
+
 	IWbemClassObject* pclsObj;
 	ULONG uReturn = 0;
+
 	while (pEnumerator)
 	{
-		HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
+		HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
+			&pclsObj, &uReturn);
+
 		if (0 == uReturn)
 		{
 			break;
 		}
+
 		VARIANT vtProp;
+		VariantInit(&vtProp);
 
-		// Get the value of the Name property
-		hr = pclsObj->Get(L"FriendlyName", 0, &vtProp, 0, 0);
-		std::wcout << " FriendlyName : " << vtProp.bstrVal << std::endl;
-
-		hr = pclsObj->Get(L"MediaType", 0, &vtProp, 0, 0);
-		std::wcout << " MediaType : " << vtProp.intVal << std::endl;
-
-		hr = pclsObj->Get(L"UniqueIdFormat", 0, &vtProp, 0, 0);
-		std::wcout << " UniqueIdFormat : " << vtProp.intVal << std::endl;
-
-		hr = pclsObj->Get(L"DeviceId", 0, &vtProp, 0, 0);
-		std::wcout << " DeviceId : " << vtProp.bstrVal << std::endl;
-
-		//hr = pclsObj->Get(L"Description", 0, &vtProp, 0, 0);
-		//std::wcout << " Description : " << vtProp.bstrVal << std::endl;
-
-		//hr = pclsObj->Get(L"PartNumber", 0, &vtProp, 0, 0);
-		//std::wcout << " PartNumber : " << vtProp.bstrVal << std::endl;
-
-		hr = pclsObj->Get(L"FirmwareVersion", 0, &vtProp, 0, 0);
-		std::wcout << " FirmwareVersion : " << vtProp.bstrVal << std::endl;
-
-		//hr = pclsObj->Get(L"SoftwareVersion", 0, &vtProp, 0, 0);
-		//std::wcout << " SoftwareVersion : " << vtProp.bstrVal << std::endl;
-
-		hr = pclsObj->Get(L"HealthStatus", 0, &vtProp, 0, 0);
-		std::wcout << " HealthStatus : " << vtProp.intVal << std::endl;
-
-		hr = pclsObj->Get(L"SlotNumber", 0, &vtProp, 0, 0);
-		std::wcout << " SlotNumber : " << vtProp.uiVal << std::endl;
-
-		hr = pclsObj->Get(L"SerialNumber", 0, &vtProp, 0, 0);
-		std::wcout << " SerialNumber : " << vtProp.bstrVal << std::endl;
-
-		hr = pclsObj->Get(L"Size", 0, &vtProp, 0, 0);
-		std::wcout << " Size : " << vtProp.bstrVal << std::endl;
-		std::wcout << " Size VT : " << vtProp.vt << std::endl;
+		hr = pclsObj->Get(L"DeviceID", 0, &vtProp, 0, 0);
+		std::wcout << " DeviceID : " << vtProp.bstrVal << std::endl;
 
 		VariantClear(&vtProp);
-
 		pclsObj->Release();
 	}
+
+	// Cleanup
+	// ========
 
 	pSvc->Release();
 	pLoc->Release();
 	pEnumerator->Release();
-	//pclsObj->Release();
 	CoUninitialize();
 
 	return 0;

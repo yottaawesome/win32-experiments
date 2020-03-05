@@ -185,9 +185,10 @@ int Win32RamInfo()
 
 		VariantClear(&vtProp);
 		hr = pclsObj->Get(L"Capacity", 0, &vtProp, 0, 0);
-		if(FAILED(hr))
-			std::wcout << L"Could not determine capacity" << std::endl;
-		std::wcout << L" Capacity : " << vtProp.bstrVal << std::endl;
+		//if(FAILED(hr))
+		//	std::wcout << L"Could not determine capacity" << std::endl;
+		std::wcout << L" Capacity string : " << vtProp.bstrVal << std::endl;
+		std::wcout << L" Capacity ull : " << vtProp.ullVal << std::endl;
 		std::wcout << L" type : " << vtProp.vt << std::endl;
 
 		//Get<vtProp.vt>();
