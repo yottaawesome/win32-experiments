@@ -90,6 +90,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -138,6 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +151,7 @@
   <ItemGroup>
     <ClCompile Include="ComInitialiser.cpp" />
     <ClCompile Include="MsftDiskInfo.cpp" />
+    <ClCompile Include="Util.cpp" />
     <ClCompile Include="Win32DiskInfo.cpp" />
     <ClCompile Include="Win32LogicalDisk.cpp" />
     <ClCompile Include="WmiClassObject.cpp" />

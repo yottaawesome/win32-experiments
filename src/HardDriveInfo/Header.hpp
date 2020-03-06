@@ -4,68 +4,104 @@
 #include <comdef.h>
 #include <Wbemidl.h>
 #include <wrl/client.h>
+#include <vector>
+#include <functional>
+
+namespace Util
+{
+	std::string ConvertWStringToString(const std::wstring& wstr);
+	std::wstring ConvertStringToWString(const std::string& str);
+	void PrintLastError(wchar_t* lpszFunction);
+	std::vector<std::wstring> TokeniseString(const std::wstring& stringToTokenise, const std::wstring& delimiter);
+	std::wstring Replace(std::wstring stringToWorkOn, const std::wstring& whatToReplace, const std::wstring& whatToReplaceWith);
+	
+	using ErrorCallback = std::function<std::string()>;
+	void CheckHr(HRESULT hr, const std::string& msg);
+	void CheckHr(HRESULT hr, ErrorCallback lambda);
+}
 
 int MsftDiskInfo();
 int Win32DiskInfo();
 int Win32LogicalDisk();
 int Win32RamInfo();
-int Win32RamInfo2();
 int Win32ProcessorInfo();
 
 class WmiClassObject
 {
 	public:
 		WmiClassObject(IWbemClassObject* clsObj);
+		WmiClassObject(const WmiClassObject&) = delete;
+		~WmiClassObject();
 
-		[[nodiscard]] const short Short(const std::wstring& name);
-		[[nodiscard]] const int Int32(const std::wstring& name);
-		[[nodiscard]] const long Long(const std::wstring& name);
-		[[nodiscard]] const long long Int64(const std::wstring& name);
+		void operator=(const WmiClassObject&) = delete;
 
-		[[nodiscard]] const unsigned short UShort(const std::wstring& name);
-		[[nodiscard]] const unsigned int UInt32(const std::wstring& name);
-		[[nodiscard]] const unsigned long ULong(const std::wstring& name);
-		[[nodiscard]] const unsigned long long UInt64(const std::wstring& name);
+		[[nodiscard]] const short Short(const wchar_t* name);
+		[[nodiscard]] const int Int32(const wchar_t* name);
+		[[nodiscard]] const long Long(const wchar_t* name);
+		[[nodiscard]] const long long Int64(const wchar_t* name);
 
-		[[nodiscard]] const std::wstring String(const std::wstring& name);
-		[[nodiscard]] const std::wstring StringOrEmpty(const std::wstring& name);
+		[[nodiscard]] const unsigned short UShort(const wchar_t* name);
+		[[nodiscard]] const unsigned int UInt32(const wchar_t* name);
+		[[nodiscard]] const unsigned long ULong(const wchar_t* name);
+		[[nodiscard]] const unsigned long long UInt64(const wchar_t* name);
+
+		[[nodiscard]] const std::wstring String(const wchar_t* name);
+		[[nodiscard]] const uint64_t StringAsUInt64(const wchar_t* name);
+
+		[[nodiscard]] const void* ObjectRef(const wchar_t* name);
 
 	private:
-		Microsoft::WRL::ComPtr<IWbemClassObject> m_clsObj;
+		IWbemClassObject* m_clsObj;
 };
 
 class WmiObjectEnumerator
 {
 	public:
 		WmiObjectEnumerator(IEnumWbemClassObject* wbemEnum);
+		WmiObjectEnumerator(const WmiObjectEnumerator&) = delete;
+		~WmiObjectEnumerator();
+
+		void operator=(const WmiObjectEnumerator&) = delete;
+
+		[[nodiscard]]
 		IWbemClassObject* Next();
 
 	private:
-		Microsoft::WRL::ComPtr<IEnumWbemClassObject> m_wbemEnum;
+		IEnumWbemClassObject* m_wbemEnum;
 };
 
-class WmiServer
+class WmiServer final
 {
 	public:
 		WmiServer(IWbemServices* pSvc);
+		~WmiServer();
+
+		WmiServer(const WmiServer&) = delete;
+		void operator=(const WmiServer&) = delete;
 
 		[[nodiscard]]
 		WmiObjectEnumerator Query(const std::wstring& string);
+		[[nodiscard]]
+		WmiClassObject GetClassObject(const wchar_t* objectPath);
 
 	private:
-		Microsoft::WRL::ComPtr<IWbemServices> w_wbemService;
+		IWbemServices* m_wbemService;
 };
 
-class WmiProxy
+class WmiProxy final
 {
 	public:
 		WmiProxy();
+		WmiProxy(const WmiProxy&) = delete;
+		~WmiProxy();
+
+		void operator=(const WmiProxy&) = delete;
 
 		[[nodiscard]]
 		WmiServer ConnectServer(const std::wstring& server);
 
 	private:
-		Microsoft::WRL::ComPtr<IWbemLocator> m_wbemLocator;
+		IWbemLocator* m_wbemLocator;
 };
 
 class ComInitialiser final

@@ -1,11 +1,12 @@
 #include "Header.hpp"
 #include <vector>
 #include <string>
+#include <string_view>
 #include <iostream>
 
 #pragma comment(lib, "wbemuuid.lib")
 
-std::vector<std::wstring> TokeniseString(std::wstring stringToTokenise, std::wstring delimiter)
+std::vector<std::wstring> TokeniseString(const std::wstring& stringToTokenise, const std::wstring& delimiter)
 {
     std::vector<std::wstring> results;
     size_t position = 0;
@@ -13,24 +14,45 @@ std::vector<std::wstring> TokeniseString(std::wstring stringToTokenise, std::wst
 
 	// If we don't find it at all, add the whole string
 	if (stringToTokenise.find(delimiter, position) == std::string::npos)
+	{
 		results.push_back(stringToTokenise);
+	}
+	else
+	{
+		while ((position = intermediateString.find(delimiter, position)) != std::string::npos)
+		{
+			// split and add to the results
+			std::wstring split = stringToTokenise.substr(0, position);
+			results.push_back(split);
 
-    while ((position = intermediateString.find(delimiter, position)) != std::string::npos)
-    {
-		// split and add to the results
-		std::wstring split = stringToTokenise.substr(0, position);
-		results.push_back(split);
+			// move up our position
+			position += delimiter.length();
+			intermediateString = stringToTokenise.substr(position);
 
-		// move up our position
-		position += delimiter.length();
-		intermediateString = stringToTokenise.substr(position);
-
-		// On the last iteration, enter the remainder
-		if (intermediateString.find(delimiter, position) == std::string::npos)
-			results.push_back(intermediateString);
-    }
+			// On the last iteration, enter the remainder
+			if (intermediateString.find(delimiter, position) == std::string::npos)
+				results.push_back(intermediateString);
+		}
+	}
 
     return results;
+}
+
+std::wstring Replace(std::wstring stringToWorkOn, const std::wstring& whatToReplace, const std::wstring& whatToReplaceWith)
+{
+	std::vector<std::wstring> results = TokeniseString(stringToWorkOn, whatToReplace);
+	if (results.size() == 0)
+		return stringToWorkOn;
+
+	std::wstring updatedString = L"";
+	for (int i = 0; i < results.size() - 1; i++)
+	{
+		updatedString += results.at(i);
+		updatedString += whatToReplaceWith;
+	}
+	updatedString += results.at(results.size() - 1);
+
+	return updatedString;
 }
 
 // https://www.reddit.com/r/PowerShell/comments/8q4tbr/how_to_tell_ssd_from_hdd_via_cimwmi/e0ghf5i/
@@ -40,12 +62,10 @@ std::vector<std::wstring> TokeniseString(std::wstring stringToTokenise, std::wst
 // https://social.msdn.microsoft.com/Forums/vstudio/en-US/1d4fda3c-885f-46e2-bc32-80c4426510dc/how-to-enumerate-all-disks-and-their-aggregated-volumes?forum=vcgeneral
 int main(int argc, char** argv)
 {
-
-	HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+	ComInitialiser co;
 	//return Win32ProcessorInfo();
-	//return Win32RamInfo2();
-	//return Win32RamInfo();
-	return Win32DiskInfo();
+	return Win32RamInfo();
+	//return Win32DiskInfo();
 	//return MsftDiskInfo();
 	//return Win32LogicalDisk();
 }

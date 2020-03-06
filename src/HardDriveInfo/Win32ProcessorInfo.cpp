@@ -4,8 +4,6 @@
 
 int Win32ProcessorInfo()
 {
-	using Microsoft::WRL::ComPtr;
-
 	WmiProxy wmiProxy;
 	WmiServer server = wmiProxy.ConnectServer(L"ROOT\\CIMV2");
 	WmiObjectEnumerator objectEnum = server.Query(L"select * from Win32_Processor");
@@ -42,16 +40,16 @@ int Win32ProcessorInfo()
 			<< classObj.UShort(L"DataWidth")
 			<< std::endl;
 		std::wcout << L"\t SystemName : "
-			<< classObj.StringOrEmpty(L"SystemName")
+			<< classObj.String(L"SystemName")
 			<< std::endl;
 		std::wcout << L"\t UniqueId : "
-			<< classObj.StringOrEmpty(L"UniqueId")
+			<< classObj.String(L"UniqueId")
 			<< std::endl;
 		std::wcout << L"\t SocketDesignation : "
-			<< classObj.StringOrEmpty(L"SocketDesignation")
+			<< classObj.String(L"SocketDesignation")
 			<< std::endl;
 		std::wcout << L"\t ProcessorId : "
-			<< classObj.StringOrEmpty(L"ProcessorId")
+			<< classObj.String(L"ProcessorId")
 			<< std::endl;
 
 		unsigned short archVal = classObj.UShort(L"Architecture");
