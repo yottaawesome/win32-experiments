@@ -1,10 +1,7 @@
 #include "Header.hpp"
 #include <iostream>
-#include <WTypes.h>
-#include <iostream>
-#include <comdef.h>
-#include <Wbemidl.h>
 
+// https://docs.microsoft.com/en-us/windows/win32/cimwin32prov/win32-diskdrive
 int Win32DiskInfo()
 {
 	WmiProxy wmiProxy;
@@ -14,7 +11,6 @@ int Win32DiskInfo()
 	while (IWbemClassObject* pClsObj = objectEnum.Next())
 	{
 		WmiClassObject clsObj(pClsObj);
-
 		std::wcout << "Manufacturer: " << clsObj.String(L"Manufacturer") << std::endl;
 	}
 }

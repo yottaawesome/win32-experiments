@@ -25,6 +25,8 @@ int Win32DiskInfo();
 int Win32LogicalDisk();
 int Win32RamInfo();
 int Win32ProcessorInfo();
+int Win32ComputerSystem();
+int Win32LoggedOnUser();
 
 class WmiClassObject
 {

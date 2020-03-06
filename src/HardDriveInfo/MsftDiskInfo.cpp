@@ -2,6 +2,7 @@
 #include "Header.hpp"
 #include <iostream>
 
+// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/msft-physicaldisk
 int MsftDiskInfo()
 {
 	WmiProxy wmi;
