@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ComInitialiser.cpp" />
+    <ClCompile Include="LogonSession.cpp" />
     <ClCompile Include="MsftDiskInfo.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="Win32ComputerSystem.cpp" />

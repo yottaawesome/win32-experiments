@@ -11,4 +11,6 @@ int Win32LoggedOnUser()
 	{
 		WmiClassObject classObj(wbemClassObj);
 	}
+
+	return 0;
 }

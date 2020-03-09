@@ -13,5 +13,6 @@ int Win32DiskInfo()
 		WmiClassObject clsObj(pClsObj);
 		std::wcout << "Manufacturer: " << clsObj.String(L"Manufacturer") << std::endl;
 	}
-}
 
+	return 0;
+}

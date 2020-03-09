@@ -11,4 +11,6 @@ int Win32ComputerSystem()
 	{
 		WmiClassObject classObj(wbemClassObj);
 	}
+
+	return 0;
 }

@@ -63,8 +63,9 @@ std::wstring Replace(std::wstring stringToWorkOn, const std::wstring& whatToRepl
 int main(int argc, char** argv)
 {
 	ComInitialiser co;
+	return Win32LogonSession();
 	//return Win32ProcessorInfo();
-	return Win32RamInfo();
+	//return Win32RamInfo();
 	//return Win32DiskInfo();
 	//return MsftDiskInfo();
 	//return Win32LogicalDisk();

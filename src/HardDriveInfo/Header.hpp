@@ -27,6 +27,7 @@ int Win32RamInfo();
 int Win32ProcessorInfo();
 int Win32ComputerSystem();
 int Win32LoggedOnUser();
+int Win32LogonSession();
 
 class WmiClassObject
 {
