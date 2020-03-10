@@ -6,6 +6,7 @@
 #include <wrl/client.h>
 #include <vector>
 #include <functional>
+#include "iostream"
 
 namespace Util
 {
@@ -28,34 +29,44 @@ int Win32ProcessorInfo();
 int Win32ComputerSystem();
 int Win32LoggedOnUser();
 int Win32LogonSession();
+int Win32Bios();
+int Win32OperatingSystem();
+int MsftNetworkAdapter();
+int Win32NetworkConnection();
+int Win32VideoController();
 
 class WmiClassObject
 {
 	public:
 		WmiClassObject(IWbemClassObject* clsObj);
-		WmiClassObject(const WmiClassObject&) = delete;
 		~WmiClassObject();
 
+		WmiClassObject(const WmiClassObject&) = delete;
 		void operator=(const WmiClassObject&) = delete;
 
-		[[nodiscard]] const short Short(const wchar_t* name);
-		[[nodiscard]] const int Int32(const wchar_t* name);
-		[[nodiscard]] const long Long(const wchar_t* name);
-		[[nodiscard]] const long long Int64(const wchar_t* name);
-
-		[[nodiscard]] const unsigned short UShort(const wchar_t* name);
-		[[nodiscard]] const unsigned int UInt32(const wchar_t* name);
-		[[nodiscard]] const unsigned long ULong(const wchar_t* name);
-		[[nodiscard]] const unsigned long long UInt64(const wchar_t* name);
-
-		[[nodiscard]] const std::wstring String(const wchar_t* name);
-		[[nodiscard]] const uint64_t StringAsUInt64(const wchar_t* name);
-
-		[[nodiscard]] const void* ObjectRef(const wchar_t* name);
+		[[nodiscard]] const short Short(const wchar_t* name) const;
+		[[nodiscard]] const int Int32(const wchar_t* name) const;
+		[[nodiscard]] const long Long(const wchar_t* name) const;
+		[[nodiscard]] const long long Int64(const wchar_t* name) const;
+		[[nodiscard]] const bool Bool(const wchar_t* name) const;
+		[[nodiscard]] const unsigned short UShort(const wchar_t* name) const;
+		[[nodiscard]] const unsigned int UInt32(const wchar_t* name) const;
+		[[nodiscard]] const unsigned long ULong(const wchar_t* name) const;
+		[[nodiscard]] const unsigned long long UInt64(const wchar_t* name) const;
+		[[nodiscard]] const std::wstring String(const wchar_t* name) const;
+		[[nodiscard]] const uint64_t StringAsUInt64(const wchar_t* name) const;
+		[[nodiscard]] const void* ObjectRef(const wchar_t* name) const;
+		[[nodiscard]] const std::vector<std::wstring> StringVector(const wchar_t* name) const;
 
 	private:
 		IWbemClassObject* m_clsObj;
 };
+
+template<typename T>
+void Log(const wchar_t* name, T field)
+{
+	std::wcout << name << ": " << field << std::endl;
+}
 
 class WmiObjectEnumerator
 {

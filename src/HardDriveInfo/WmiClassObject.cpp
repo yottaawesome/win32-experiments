@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 
+//https://docs.microsoft.com/en-us/windows/win32/api/propidlbase/ns-propidlbase-propvariant
 WmiClassObject::WmiClassObject(IWbemClassObject* clsObj)
 	: m_clsObj(clsObj)
 { }
@@ -12,7 +13,7 @@ WmiClassObject::~WmiClassObject()
 		m_clsObj->Release();
 }
 
-const short WmiClassObject::Short(const wchar_t* name)
+const short WmiClassObject::Short(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
@@ -24,7 +25,19 @@ const short WmiClassObject::Short(const wchar_t* name)
 	return vtProp.iVal;
 }
 
-const int WmiClassObject::Int32(const wchar_t* name)
+const bool WmiClassObject::Bool(const wchar_t* name) const
+{
+	_variant_t vtProp;
+	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
+	if (FAILED(hr))
+		throw new std::runtime_error("Failed ClassObject::Get()");
+	if (vtProp.vt != VT_BOOL)
+		throw new std::runtime_error("WMI value is not typed as a VT_BOOL.");
+
+	return vtProp.iVal;
+}
+
+const int WmiClassObject::Int32(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
@@ -36,7 +49,7 @@ const int WmiClassObject::Int32(const wchar_t* name)
 	return vtProp.intVal;
 }
 
-const long WmiClassObject::Long(const wchar_t* name)
+const long WmiClassObject::Long(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
@@ -48,7 +61,7 @@ const long WmiClassObject::Long(const wchar_t* name)
 	return vtProp.lVal;
 }
 
-const long long WmiClassObject::Int64(const wchar_t* name)
+const long long WmiClassObject::Int64(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
@@ -59,7 +72,7 @@ const long long WmiClassObject::Int64(const wchar_t* name)
 	return vtProp.llVal;
 }
 
-const unsigned short WmiClassObject::UShort(const wchar_t* name)
+const unsigned short WmiClassObject::UShort(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
@@ -70,7 +83,7 @@ const unsigned short WmiClassObject::UShort(const wchar_t* name)
 	return vtProp.uiVal;
 }
 
-const unsigned int WmiClassObject::UInt32(const wchar_t* name)
+const unsigned int WmiClassObject::UInt32(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
@@ -81,7 +94,7 @@ const unsigned int WmiClassObject::UInt32(const wchar_t* name)
 	return vtProp.uintVal;
 }
 
-const unsigned long WmiClassObject::ULong(const wchar_t* name)
+const unsigned long WmiClassObject::ULong(const wchar_t* name) const
 {
 	_variant_t vtProp;
 
@@ -93,7 +106,7 @@ const unsigned long WmiClassObject::ULong(const wchar_t* name)
 	return vtProp.ulVal;
 }
 
-const unsigned long long WmiClassObject::UInt64(const wchar_t* name)
+const unsigned long long WmiClassObject::UInt64(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
@@ -105,13 +118,40 @@ const unsigned long long WmiClassObject::UInt64(const wchar_t* name)
 	return vtProp.ullVal;
 }
 
-const std::wstring WmiClassObject::String(const wchar_t* name)
+const std::vector<std::wstring> WmiClassObject::StringVector(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
-	if (FAILED(hr))
-		throw new std::runtime_error("Failed ClassObject::Get()");
-	if (vtProp.vt != VT_BSTR && vtProp.vt != VT_NULL)
+	Util::CheckHr(hr, "Failed ClassObject::Get()");
+
+	std::vector<std::wstring> results;
+	if (vtProp.vt != (VT_ARRAY | VT_BSTR))
+		throw new std::runtime_error("WMI value is not typed as a BSTR.");
+	
+	SAFEARRAY* addrArray = vtProp.parray;
+	// get array bounds
+	long lowerBound = 0;
+	long upperBound = 0; 
+	SafeArrayGetLBound(addrArray, 1, &lowerBound);
+	SafeArrayGetUBound(addrArray, 1, &upperBound);
+
+	long elementCount = upperBound - lowerBound + 1;
+	for (long i = 0; i < elementCount; i++)
+	{
+		BSTR addr;
+		SafeArrayGetElement(vtProp.parray, &i, &addr);
+		results.push_back(std::wstring(addr, SysStringLen(addr)));
+	}
+
+	return results;
+}
+
+const std::wstring WmiClassObject::String(const wchar_t* name) const
+{
+	_variant_t vtProp;
+	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
+	Util::CheckHr(hr, "Failed ClassObject::Get()");
+	if (vtProp.vt != VT_BSTR && vtProp.vt != VT_NULL && vtProp.vt != VT_EMPTY)
 		throw new std::runtime_error("WMI value is not typed as a BSTR.");
 	if (vtProp.bstrVal == nullptr)
 		return L"";
@@ -120,12 +160,11 @@ const std::wstring WmiClassObject::String(const wchar_t* name)
 }
 
 // TODO ugly, find a better way
-const uint64_t WmiClassObject::StringAsUInt64(const wchar_t* name)
+const uint64_t WmiClassObject::StringAsUInt64(const wchar_t* name) const
 {
 	_variant_t vtProp;
 	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
-	if (FAILED(hr))
-		throw new std::runtime_error("Failed ClassObject::Get()");
+	Util::CheckHr(hr, "Failed ClassObject::Get()");
 	if (vtProp.vt != VT_BSTR)
 		throw new std::runtime_error("WMI value is not typed as a BSTR.");
 	if (vtProp.bstrVal == nullptr)
@@ -148,7 +187,7 @@ const uint64_t WmiClassObject::StringAsUInt64(const wchar_t* name)
 	return returnVal;
 }
 
-const void* WmiClassObject::ObjectRef(const wchar_t* name)
+const void* WmiClassObject::ObjectRef(const wchar_t* name) const
 {
 	VARIANT vtProp;
 	VariantInit(&vtProp);

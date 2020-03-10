@@ -150,13 +150,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ComInitialiser.cpp" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="LogonSession.cpp" />
     <ClCompile Include="MsftDiskInfo.cpp" />
+    <ClCompile Include="NetworkConnection.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="Win32Bios.cpp" />
     <ClCompile Include="Win32ComputerSystem.cpp" />
     <ClCompile Include="Win32DiskInfo.cpp" />
     <ClCompile Include="Win32LoggedOnUser.cpp" />
     <ClCompile Include="Win32LogicalDisk.cpp" />
+    <ClCompile Include="MsftNetAdapter.cpp" />
+    <ClCompile Include="Win32OperatingSystem.cpp" />
+    <ClCompile Include="Win32VideoController.cpp" />
     <ClCompile Include="WmiClassObject.cpp" />
     <ClCompile Include="HardDriveInfo.cpp" />
     <ClCompile Include="Win32ProcessorInfo.cpp" />
