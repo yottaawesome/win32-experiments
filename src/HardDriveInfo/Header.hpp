@@ -34,6 +34,8 @@ int Win32OperatingSystem();
 int MsftNetworkAdapter();
 int Win32NetworkConnection();
 int Win32VideoController();
+int Win32DiskPartition();
+int Win32PerfRawDataPerfProcProcess();
 
 class WmiClassObject
 {
@@ -44,6 +46,7 @@ class WmiClassObject
 		WmiClassObject(const WmiClassObject&) = delete;
 		void operator=(const WmiClassObject&) = delete;
 
+		[[nodiscard]] const BYTE Byte(const wchar_t* name) const;
 		[[nodiscard]] const short Short(const wchar_t* name) const;
 		[[nodiscard]] const int Int32(const wchar_t* name) const;
 		[[nodiscard]] const long Long(const wchar_t* name) const;

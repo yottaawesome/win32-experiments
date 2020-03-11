@@ -49,6 +49,18 @@ const int WmiClassObject::Int32(const wchar_t* name) const
 	return vtProp.intVal;
 }
 
+const BYTE WmiClassObject::Byte(const wchar_t* name) const
+{
+	_variant_t vtProp;
+	HRESULT hr = m_clsObj->Get(name, 0, &vtProp, 0, 0);
+	if (FAILED(hr))
+		throw new std::runtime_error("Failed ClassObject::Get()");
+	if (vtProp.vt != VT_UI1)
+		throw new std::runtime_error("WMI value is not typed as a VT_I1.");
+
+	return vtProp.bVal;
+}
+
 const long WmiClassObject::Long(const wchar_t* name) const
 {
 	_variant_t vtProp;

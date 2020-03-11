@@ -18,9 +18,14 @@ int Win32LogonSession()
 		// 20200310075344.264044+660
 		// YYYYMMDDHHMMSS.xxxxxx±UUU
 		// (year)(month)(day)(hour in 24 hr format)(minutes)(seconds).(milliseconds)(minutes ahead or behind Greenwich Mean Time (GMT))
-		auto result = classObj.String(L"StartTime");
-
-		std::wcout << result << std::endl;
+		Log(L"StartTime", classObj.String(L"StartTime"));
+		Log(L"Name", classObj.String(L"Name"));
+		Log(L"Status", classObj.String(L"Status"));
+		Log(L"LogonId", classObj.String(L"LogonId"));
+		Log(L"Status", classObj.String(L"Status"));
+		Log(L"AuthenticationPackage", classObj.String(L"AuthenticationPackage"));
+		Log(L"Caption", classObj.String(L"Caption"));
+		Log(L"Description", classObj.String(L"Description"));
 	}
 
 	return 0;
