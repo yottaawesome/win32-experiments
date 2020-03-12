@@ -15,13 +15,13 @@ int main(int argc, char** argv)
 {
 	ComInitialiser co;
 
-	//return Win32PerfRawDataPerfProcProcess();
+	return Win32PerfRawDataPerfProcProcess();
 	//return Win32DiskPartition();
 	//return Win32Bios();
 	//return Win32ComputerSystem();
 	//return Win32OperatingSystem();
 	//return Win32NetworkConnection();
-	return Win32VideoController();
+	//return Win32VideoController();
 	//return MsftNetworkAdapter();
 	//return Win32LogonSession();
 	//return Win32LoggedOnUser();

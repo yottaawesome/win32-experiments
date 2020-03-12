@@ -1,6 +1,5 @@
 #include "Header.hpp"
 
-
 int Win32VideoController()
 {
 	WmiProxy wmiProxy;
