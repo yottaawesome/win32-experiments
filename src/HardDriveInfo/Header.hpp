@@ -36,7 +36,11 @@ int Win32NetworkConnection();
 int Win32VideoController();
 int Win32DiskPartition();
 int Win32PerfRawDataPerfProcProcess();
-
+int GetSystemTimesTest();
+int Win32PerfFormattedDataPerfDiskPhysicalDisk();
+int Win32PerfRawDataPerfDiskLogicalDisk();
+int MSStorageDriverFailurePredictStatus();
+//MSStorageDriver_FailurePredictStatus
 class WmiClassObject
 {
 	public:

@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{6DD230DA-4F0A-4B6C-B9E1-41E32AD17488}</ProjectGuid>
+    <ProjectGuid>{D3114B9D-C41E-402E-9A60-63CAB60FB061}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>HardDriveInfo</RootNamespace>
+    <RootNamespace>RegEditor</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -90,7 +90,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,7 +138,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,36 +147,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ComInitialiser.cpp" />
-    <ClCompile Include="Log.cpp" />
-    <ClCompile Include="LogonSession.cpp" />
-    <ClCompile Include="MsftDiskInfo.cpp" />
-    <ClCompile Include="MSStorageDriverFailurePredictStatus.cpp" />
-    <ClCompile Include="NetworkConnection.cpp" />
-    <ClCompile Include="Util.cpp" />
-    <ClCompile Include="Win32Bios.cpp" />
-    <ClCompile Include="Win32ComputerSystem.cpp" />
-    <ClCompile Include="Win32DiskInfo.cpp" />
-    <ClCompile Include="Win32DiskPartition.cpp" />
-    <ClCompile Include="Win32LoggedOnUser.cpp" />
-    <ClCompile Include="Win32LogicalDisk.cpp" />
-    <ClCompile Include="MsftNetAdapter.cpp" />
-    <ClCompile Include="Win32OperatingSystem.cpp" />
-    <ClCompile Include="Win32PerfFormattedDataPerfDiskPhysicalDisk.cpp" />
-    <ClCompile Include="Win32PerfRawDataPerfDiskLogicalDisk.cpp" />
-    <ClCompile Include="Win32PerfRawDataPerfProcProcess.cpp" />
-    <ClCompile Include="Win32VideoController.cpp" />
-    <ClCompile Include="WmiClassObject.cpp" />
-    <ClCompile Include="HardDriveInfo.cpp" />
-    <ClCompile Include="Win32ProcessorInfo.cpp" />
-    <ClCompile Include="Win32RamInfo.cpp" />
-    <ClCompile Include="WmiObjectEnumerator.cpp" />
-    <ClCompile Include="WmiProxy.cpp" />
-    <ClCompile Include="WmiServer.cpp" />
-    <ClCompile Include="GetSystemTimesTest.cpp" />
+    <ClCompile Include="RegEditor.cpp" />
+    <ClCompile Include="RegistryError.cpp" />
+    <ClCompile Include="RegReads.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
 </Project>
