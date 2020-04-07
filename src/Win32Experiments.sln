@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RegEditor", "RegEditor\RegE
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DateTimeFormat", "DateTimeFormat\DateTimeFormat.vcxproj", "{76B55457-07CF-43BD-B409-0080AF7318D2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WTS", "WTS\WTS.vcxproj", "{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -101,6 +103,14 @@ Global
 		{76B55457-07CF-43BD-B409-0080AF7318D2}.Release|x64.Build.0 = Release|x64
 		{76B55457-07CF-43BD-B409-0080AF7318D2}.Release|x86.ActiveCfg = Release|Win32
 		{76B55457-07CF-43BD-B409-0080AF7318D2}.Release|x86.Build.0 = Release|Win32
+		{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}.Debug|x64.ActiveCfg = Debug|x64
+		{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}.Debug|x64.Build.0 = Debug|x64
+		{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}.Debug|x86.ActiveCfg = Debug|Win32
+		{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}.Debug|x86.Build.0 = Debug|Win32
+		{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}.Release|x64.ActiveCfg = Release|x64
+		{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}.Release|x64.Build.0 = Release|x64
+		{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}.Release|x86.ActiveCfg = Release|Win32
+		{A8B38763-F93A-4715-81F4-CC31E9AEA4A0}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
