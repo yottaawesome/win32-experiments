@@ -1,6 +1,8 @@
 #include <iostream>
 #include <Windows.h>
 #include <string>
+#include <conio.h>
+#include <tchar.h>
 
 #define BUF_SIZE 256
 
@@ -34,6 +36,15 @@ int main(int argc, TCHAR* argv[])
 	if (hMapFile)
 	{
 		std::cout << "Server opened handle!" << std::endl;
+		LPCTSTR pBuf;
+		pBuf = (LPTSTR)MapViewOfFile(hMapFile,   // handle to map object
+			FILE_MAP_ALL_ACCESS, // read/write permission
+			0,
+			0,
+			BUF_SIZE);
+		TCHAR szMsg[] = TEXT("Message from first process.");
+		CopyMemory((PVOID)pBuf, szMsg, (_tcslen(szMsg) * sizeof(TCHAR)));
+		UnmapViewOfFile(pBuf);
 	}
 	else
 	{
