@@ -1,0 +1,19 @@
+{
+  "name": "SocketServer",
+  "version": "1.0.0",
+  "description": "Local socket server.",
+  "author": "Vasilios Magriplis",
+  "license": "MIT",
+  "scripts": {
+    "start": "nodemon socket.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "websocket": "^1.0.31",
+    "ws": "^7.2.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}

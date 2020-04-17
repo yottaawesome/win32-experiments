@@ -71,8 +71,6 @@ namespace WTS::Wrapper
 		return message;
 	}
 
-
-
 	std::vector<Session> Querier::QuerySessions()
 	{
 		DWORD dwCount = 0;
