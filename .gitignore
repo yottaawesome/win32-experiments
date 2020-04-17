@@ -36,3 +36,5 @@ Debug/
 .vs/
 *.filters
 *.user
+
+node_modules/
