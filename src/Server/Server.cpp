@@ -131,6 +131,30 @@ BOOL SearchTokenGroupsForSID(HANDLE hToken)
 // https://devblogs.microsoft.com/oldnewthing/20190425-00/?p=102443
 //https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessasuserw
 //https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-createrestrictedtoken
+//https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createprocesswithlogonw
+//https://stackoverflow.com/questions/5629383/createprocess-running-as-user-nt-authority-network-service-without-knowing-th
+//https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-logonuserw
+//https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-logonuserexw
+//https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-impersonateloggedonuser
+//https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-sid_and_attributes
+//https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-gettokeninformation
+//https://docs.microsoft.com/en-us/windows/win32/api/winnt/ne-winnt-token_information_class
+//https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-token_privileges
+//https://docs.microsoft.com/en-us/windows/win32/secauthz/privileges
+// https://docs.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
+//https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocesstoken
+//https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getshellwindow
+//https://docs.microsoft.com/en-us/windows/win32/secbp/changing-privileges-in-a-token
+//https://docs.microsoft.com/en-us/windows/win32/secbp/creating-a-dacl
+//https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lookupprivilegenamew
+//https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocesstoken
+//https://www.oreilly.com/library/view/secure-programming-cookbook/0596003943/ch01s02.html
+//https://docs.microsoft.com/en-us/windows/win32/secauthz/verifying-client-access-with-acls-in-c--
+//https://stackoverflow.com/questions/30970433/do-high-integrity-tokens-have-to-have-the-administrators-group-enabled
+//https://docs.microsoft.com/en-us/windows/win32/secauthz/well-known-sids
+//https://docs.microsoft.com/en-us/windows/win32/secauthz/searching-for-a-sid-in-an-access-token-in-c--
+//https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lookupaccountsida
+
 /*int test(int, char**)
 {
     HWND hwnd = GetShellWindow();

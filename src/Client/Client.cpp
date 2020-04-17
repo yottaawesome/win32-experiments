@@ -58,6 +58,7 @@ int wmain(int argc, wchar_t** args)
 
     std::wcout << "Hello World!" << std::endl;
 
+    //https://docs.microsoft.com/en-us/windows/win32/fileio/opening-a-file-for-reading-or-writing
     HANDLE hFile = CreateFile(
         L"C:\\test.txt",                // name of the write
         GENERIC_WRITE,          // open for writing
