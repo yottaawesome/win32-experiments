@@ -257,29 +257,37 @@ void EnumerateTokenPrivileges(HANDLE hToken)
     }
 }
 
-void Tokens()
+void LaunchRestrictedProcess()
 {
     HANDLE hProcessToken{ 0 };
     HANDLE hRestrictedToken{ 0 };
 
     /* First get a handle to the current process's primary token */
-    if (OpenProcessToken(
+    if (!OpenProcessToken(
         GetCurrentProcess(),
         TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY,
         &hProcessToken))
     {
-
+        throw std::runtime_error("Failed OpenProcessToken()");
     }
 
     BYTE sidBuffer[256];
     PSID pAdminSID = (PSID)sidBuffer;
     SID_IDENTIFIER_AUTHORITY SIDAuth = SECURITY_NT_AUTHORITY;
-    if (!AllocateAndInitializeSid(&SIDAuth, 2,
+    if (!AllocateAndInitializeSid(
+        &SIDAuth,
+        2,
         SECURITY_BUILTIN_DOMAIN_RID,
-        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
+        DOMAIN_ALIAS_RID_ADMINS, 
+        0, 
+        0, 
+        0, 
+        0, 
+        0, 
+        0,
         &pAdminSID))
     {
-
+        throw std::runtime_error("Failed to initialise SID");
     }
     // Change the local administrator’s SID to a deny-only SID.
     SID_AND_ATTRIBUTES SidToDisable[1];
@@ -303,7 +311,7 @@ void Tokens()
     }
     else
     {
-        std::wcout << L"Failed" << std::endl;
+        throw std::runtime_error("Failed CreateRestrictedToken()");
     }
 
     if (pAdminSID)
@@ -339,12 +347,9 @@ void Tokens()
     CloseHandle(hProcessToken);
 }
 
-
-
-
 int main(int argc, char** args)
 {
-    Tokens();
+    LaunchRestrictedProcess();
 
     return 0;
 }
