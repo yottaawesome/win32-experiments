@@ -60,7 +60,7 @@ int wmain(int argc, wchar_t** args)
 
     //https://docs.microsoft.com/en-us/windows/win32/fileio/opening-a-file-for-reading-or-writing
     HANDLE hFile = CreateFile(
-        L"C:\\test.txt",                // name of the write
+        L"C:\\test.txt",                // m_name of the write
         GENERIC_WRITE,          // open for writing
         0,                      // do not share
         NULL,                   // default security

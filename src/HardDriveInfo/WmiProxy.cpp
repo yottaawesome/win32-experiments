@@ -38,7 +38,7 @@ WmiServer WmiProxy::ConnectServer(const std::wstring& server)
 	// to make IWbemServices calls.
 	hres = m_wbemLocator->ConnectServer(
 		_bstr_t(server.c_str()),	// Object path of WMI namespace
-		nullptr,                    // User name. NULL = current user
+		nullptr,                    // User m_name. NULL = current user
 		nullptr,                    // User password. NULL = current
 		0,							// Locale. NULL indicates current
 		0,							// Security flags.
@@ -57,7 +57,7 @@ WmiServer WmiProxy::ConnectServer(const std::wstring& server)
 		wbemServicesProxy,				// Indicates the proxy to set
 		RPC_C_AUTHN_WINNT,				// RPC_C_AUTHN_xxx
 		RPC_C_AUTHZ_NONE,				// RPC_C_AUTHZ_xxx
-		nullptr,                        // Server principal name 
+		nullptr,                        // Server principal m_name 
 		RPC_C_AUTHN_LEVEL_CALL,			// RPC_C_AUTHN_LEVEL_xxx 
 		RPC_C_IMP_LEVEL_IMPERSONATE,	// RPC_C_IMP_LEVEL_xxx
 		nullptr,                        // client identity

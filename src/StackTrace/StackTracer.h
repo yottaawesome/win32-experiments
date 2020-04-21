@@ -36,7 +36,7 @@ Once enabled, StackTracer's methods output to the standard output. Note, you mus
 #define ENABLE_WER_CRASH_DUMPS TRUE
 // Enables or disables stack tracing.
 #define EXCEPTION_STACK_TRACING_ENABLED TRUE
-// Sets the maximum function name of all functions when doing stack tracing.
+// Sets the maximum function m_name of all functions when doing stack tracing.
 #define TRACE_MAX_FUNCTION_NAME_LENGTH 1024
 // Sets the maximum number of stack frames to walk when calling PrintStackTrace().
 #define TRACE_MAX_STACK_FRAMES 1024

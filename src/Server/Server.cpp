@@ -86,7 +86,7 @@ BOOL SearchTokenGroupsForSID(HANDLE hToken)
             std::wstring lpDomain;
             lpName.resize(dwSize);
             lpDomain.resize(dwSize);
-            // Lookup the account name and print it.
+            // Lookup the account m_name and print it.
 
             dwSize = MAX_NAME;
             if (!LookupAccountSid(NULL, pGroupInfo->Groups[i].Sid,
@@ -345,6 +345,7 @@ void LaunchRestrictedProcess()
 
     PROCESS_INFORMATION pi = { 0 };
     STARTUPINFO         si = { 0 };
+    si.cb = sizeof(si);
     wchar_t commandLine[] = L"Client.exe lala";
     /* Create a new process using the restricted token */
     if (CreateProcessAsUser(

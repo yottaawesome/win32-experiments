@@ -208,7 +208,7 @@ int main()
                         break;
                     }
 
-                    wprintf(L"  Profile name used:\t %ws\n", pConnectInfo->strProfileName);
+                    wprintf(L"  Profile m_name used:\t %ws\n", pConnectInfo->strProfileName);
 
                     wprintf(L"  Association Attributes for this connection\n");
                     wprintf(L"    SSID:\t\t ");

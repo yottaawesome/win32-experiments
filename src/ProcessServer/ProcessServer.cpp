@@ -3,6 +3,7 @@
 #include <string>
 #include <conio.h>
 #include <tchar.h>
+#include "ClientServerLib/include/ClientServerLib.hpp"
 
 #define BUF_SIZE 256
 
@@ -25,36 +26,13 @@ int main(int argc, TCHAR* argv[])
 	filePath.shrink_to_fit();
 	std::wcout << filePath << std::endl;
 
-	TCHAR szName[] = TEXT("MyFileMappingObject");
-	HANDLE hMapFile = CreateFileMapping(
-		INVALID_HANDLE_VALUE,    // use paging file
-		NULL,                    // default security
-		PAGE_READWRITE,          // read/write access
-		0,                       // maximum object size (high-order DWORD)
-		BUF_SIZE,                // maximum object size (low-order DWORD)
-		szName);                 // name of mapping object
-	if (hMapFile)
-	{
-		std::cout << "Server opened handle!" << std::endl;
-		LPCTSTR pBuf;
-		pBuf = (LPTSTR)MapViewOfFile(hMapFile,   // handle to map object
-			FILE_MAP_ALL_ACCESS, // read/write permission
-			0,
-			0,
-			BUF_SIZE);
-		TCHAR szMsg[] = TEXT("Message from first process.");
-		CopyMemory((PVOID)pBuf, szMsg, (_tcslen(szMsg) * sizeof(TCHAR)));
-		UnmapViewOfFile(pBuf);
-	}
-	else
-	{
-		std::cout << "Server failed to open handle!" << std::endl;
-	}
+	//ClientServerLib::IntArray mmf(L"MyFileMappingObject", 512 * sizeof(int), true);
+	ClientServerLib::TypedArray<ClientServerLib::Message> mmf(L"MyFileMappingObject", true);
 
 	// https://docs.microsoft.com/en-us/windows/win32/procthread/creating-processes
-	bool successfullyCreatedUpdateProcess =
+	bool successfullyCreatedChild =
 		CreateProcess(
-			L"A:\\Code\\C++\\win32-experiments\\src\\x64\\Debug\\ProcessClient.exe",	// Module name
+			L"A:\\Code\\C++\\win32-experiments\\src\\x64\\Debug\\ProcessClient.exe",	// Module m_name
 			nullptr,				// Command line
 			nullptr,				// Process handle not inheritable
 			nullptr,				// Thread handle not inheritable
@@ -66,7 +44,7 @@ int main(int argc, TCHAR* argv[])
 			&pi						// Pointer to PROCESS_INFORMATION structure
 		);
 
-	if (successfullyCreatedUpdateProcess)
+	if (successfullyCreatedChild)
 	{
 		// Close process and thread handles. 
 		CloseHandle(pi.hProcess);
@@ -77,12 +55,25 @@ int main(int argc, TCHAR* argv[])
 	{
 		std::wcout << "Failed." << GetLastError() << std::endl;
 	}
-
-	Sleep(10000);
-	if (hMapFile)
+	
+	for (int i = 0; i < 10; i++)
 	{
-		CloseHandle(hMapFile);
+		std::wcout << L"iteration: " << i << std::endl;
+		mmf.Add(L"Hello no. " + std::to_wstring(i));
+		//mmf.SetAt(i,i);
+		//std::wstring msg(L"Message number: ");
+		//msg += (std::to_wstring(i));
+		//mmf.Write(msg);
+		Sleep(1000);
 	}
+
+	for (int i = 0; i < 10; i++)
+	{
+		ClientServerLib::Message* msg = mmf[i];
+		std::wcout << msg->GetMsg() << std::endl;
+	}
+
+	Sleep(15000);
 
 	return 0;
 }

@@ -1,36 +1,30 @@
 #include <Windows.h>
 #include <iostream>
+#include "ClientServerLib/include/ClientServerLib.hpp"
 
 #define BUF_SIZE 256
 int main()
 {
-	TCHAR szName[] = TEXT("MyFileMappingObject");
-	HANDLE hMapFile = 
-		OpenFileMapping(
-			FILE_MAP_ALL_ACCESS,   // read/write access
-			true,                 // do not inherit the name
-			szName					// name of mapping object
-		);
+	//ClientServerLib::IntArray mmf(L"MyFileMappingObject", 512 * sizeof(wchar_t), false);
+	ClientServerLib::TypedArray<ClientServerLib::Message> mmf(L"MyFileMappingObject", false);
+	std::wcout << L"Client opened handle!" << std::endl;
 
-	if (hMapFile == nullptr)
+	// Give time for the main process to populate the data.
+	Sleep(5000);
+
+	while (mmf.GetCurrentCount() < 10)
+		Sleep(1000);
+
+	for (int i = 0; i < 10; i++)
 	{
-		std::wcout << L"Client failed to open handle!" << std::endl;
-		return 1;
+		mmf.Lock();
+		ClientServerLib::Message* msg = mmf[i];
+		std::wcout << L"Client read: " << msg->GetMsg() << std::endl;
+		//std::wcout << mmf.GetCurrentCount() << std::endl;
+		mmf.Unlock();
 	}
 
-	std::wcout << L"Client opened handle!" << std::endl;
-	LPCTSTR pBuf;
-	pBuf = (LPTSTR)
-		MapViewOfFile(
-			hMapFile, // handle to map object
-			FILE_MAP_ALL_ACCESS,  // read/write permission
-			0,
-			0,
-			BUF_SIZE
-		);
-	std::wcout << pBuf << std::endl;
-	UnmapViewOfFile(pBuf);
-	CloseHandle(hMapFile);
-
 	std::wcout << L"Client exited!" << std::endl;
+
+	return 0;
 }
