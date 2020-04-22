@@ -148,6 +148,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IcmpTests.cpp" />
+    <ClCompile Include="IcmpTestsFunctions.cpp" />
+    <ClCompile Include="WinSockInitialiser.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="IcmpTests.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

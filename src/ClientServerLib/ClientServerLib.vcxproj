@@ -156,6 +156,7 @@
     <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AnonymousPipe.cpp" />
     <ClCompile Include="src\IntArray.cpp" />
     <ClCompile Include="src\MemoryMappedFile.cpp" />
     <ClCompile Include="src\Message.cpp" />

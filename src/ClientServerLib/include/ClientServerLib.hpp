@@ -6,6 +6,15 @@
 
 namespace ClientServerLib
 {
+	class AnonymousPipe
+	{
+		public:
+			AnonymousPipe(const bool inheritable);
+			virtual ~AnonymousPipe();
+
+	};
+
+
 	class MemoryMappedFile
 	{
 		public:

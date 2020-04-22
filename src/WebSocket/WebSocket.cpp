@@ -12,14 +12,30 @@
 
 std::wstring GetLastErrorAsString()
 {
+	// https://stackoverflow.com/questions/24145038/how-to-get-description-of-winhttp-errors-using-error-codes
 	//Get the error message, if any.
 	DWORD errorMessageID = ::GetLastError();
 	if (errorMessageID == 0)
 		return std::wstring(); //No error message has been recorded
 
 	LPWSTR messageBuffer = nullptr;
-	size_t size = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&messageBuffer, 0, NULL);
+	HMODULE handle = nullptr;
+	DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS;
+	if (errorMessageID >= WINHTTP_ERROR_BASE && errorMessageID <= WINHTTP_ERROR_LAST)
+	{
+		GetModuleHandleEx(0, TEXT("winhttp.dll"), &handle);
+		flags |= FORMAT_MESSAGE_FROM_HMODULE;
+	}
+	size_t size = FormatMessageW(
+		flags,
+		handle,
+		errorMessageID, 
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+		(LPWSTR)&messageBuffer, 
+		0,
+		NULL);
 
 	std::wstring message(messageBuffer, size);
 
