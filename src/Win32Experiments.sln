@@ -56,6 +56,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrintLastError", "PrintLast
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClientServerLib", "ClientServerLib\ClientServerLib.vcxproj", "{66FF1711-B0E0-4975-842C-F5AEF199FEE4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CreateGuid", "CreateGuid\CreateGuid.vcxproj", "{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -224,6 +226,14 @@ Global
 		{66FF1711-B0E0-4975-842C-F5AEF199FEE4}.Release|x64.Build.0 = Release|x64
 		{66FF1711-B0E0-4975-842C-F5AEF199FEE4}.Release|x86.ActiveCfg = Release|Win32
 		{66FF1711-B0E0-4975-842C-F5AEF199FEE4}.Release|x86.Build.0 = Release|Win32
+		{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}.Debug|x64.ActiveCfg = Debug|x64
+		{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}.Debug|x64.Build.0 = Debug|x64
+		{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}.Debug|x86.ActiveCfg = Debug|Win32
+		{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}.Debug|x86.Build.0 = Debug|Win32
+		{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}.Release|x64.ActiveCfg = Release|x64
+		{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}.Release|x64.Build.0 = Release|x64
+		{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}.Release|x86.ActiveCfg = Release|Win32
+		{2F21096C-35F0-426E-9C78-7BF76AAC7D8B}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
