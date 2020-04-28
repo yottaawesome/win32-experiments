@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{4E65FC96-F533-4F7B-97AE-85F092EF7468}</ProjectGuid>
+    <ProjectGuid>{199FCDE9-FC0B-4A95-9655-9F8C1CE754B5}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>WebSocket</RootNamespace>
+    <RootNamespace>WebSocketProto</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -90,7 +90,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,7 +138,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,7 +147,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="WebSocket.cpp" />
+    <ClCompile Include="testmessage.pb.cc" />
+    <ClCompile Include="WebSocketProto.cpp" />
+    <ClCompile Include="WinHttpHandle.cpp" />
+    <ClCompile Include="WinHttpWebSocket.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="testmessage.pb.h" />
+    <ClInclude Include="WinHttp.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
