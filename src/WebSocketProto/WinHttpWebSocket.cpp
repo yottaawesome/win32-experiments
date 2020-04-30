@@ -5,6 +5,11 @@
 
 namespace WinHttp
 {
+	WinHttpWebSocket::~WinHttpWebSocket()
+	{
+		Close();
+	}
+
 	// Adapted from https://stackoverflow.com/a/29752943/7448661
 	std::wstring Replace(std::wstring source, const std::wstring& from, const std::wstring& to)
 	{
@@ -66,7 +71,17 @@ namespace WinHttp
 			);
 	}
 
+	void WinHttpWebSocket::Connect(const std::wstring& path)
+	{
+		InternalConnect(path);
+	}
+
 	void WinHttpWebSocket::Connect()
+	{
+		InternalConnect(L"");
+	}
+
+	void WinHttpWebSocket::InternalConnect(const std::wstring& path)
 	{
 		if (m_status != WinHttpWebSocketStatus::NotInitialised)
 			throw std::runtime_error("WebSocket needs to be in NotInitialised state to connect");
@@ -90,7 +105,7 @@ namespace WinHttp
 		WinHttpHandle m_hRequestHandle = WinHttpOpenRequest(
 			m_hConnect.Get(),
 			L"GET",
-			L"/protocol",
+			path.c_str(),
 			NULL,
 			NULL,
 			NULL,

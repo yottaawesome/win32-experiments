@@ -31,19 +31,24 @@ namespace WinHttp
 			HINTERNET m_handle;
 	};
 
-	class WinHttpWebSocket final
+	class WinHttpWebSocket
 	{
 		public:
+			virtual ~WinHttpWebSocket();
 			WinHttpWebSocket(std::wstring server, const UINT port, const bool ignoreSslErrors);
-			const std::wstring& GetServer();
-			void Connect();
-			void CleanServerString();
-			void SendString(const std::string& msg);
-			void SendBuffer(const std::vector<char>& buffer);
-			bool Receive(std::string& buffer);
-			void SetServer(const std::wstring& newServer, const UINT port, const bool ignoreSslErrors);
-			void Close();
-			WinHttpWebSocketStatus GetStatus();
+			virtual const std::wstring& GetServer();
+			virtual void Connect();
+			virtual void Connect(const std::wstring& path);
+			virtual void CleanServerString();
+			virtual void SendString(const std::string& msg);
+			virtual void SendBuffer(const std::vector<char>& buffer);
+			virtual bool Receive(std::string& buffer);
+			virtual void SetServer(const std::wstring& newServer, const UINT port, const bool ignoreSslErrors);
+			virtual void Close();
+			virtual WinHttpWebSocketStatus GetStatus();
+
+		protected:
+			virtual void InternalConnect(const std::wstring& path);
 
 		protected:
 			WinHttpHandle m_hConnect;
