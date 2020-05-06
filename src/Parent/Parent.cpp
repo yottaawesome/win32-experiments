@@ -93,17 +93,8 @@ int _tmain(int argc, TCHAR* argv[])
 }
 
 void CreateChildProcess()
-// Create a child process that uses the previously created pipes for STDIN and STDOUT.
 {
-    /*
-    --json
---timeout 15
---interval 5
---show-ips
---aslookup
-    */
-    // "mtr --json --mpls --timeout 15 --interval 5 --show-ips --aslookup neptune.twibble.org"
-    TCHAR szCmdline[] = TEXT("mtr --json --timeout 15 --interval 5 --show-ips --aslookup neptune.twibble.org");
+    TCHAR szCmdline[] = TEXT("mtr --json --timeout 15 --interval 5 --show-ips --aslookup www.google.com");
     //TCHAR szCmdline[] = TEXT("child");
     PROCESS_INFORMATION piProcInfo;
     STARTUPINFO siStartInfo;
@@ -158,10 +149,9 @@ void CreateChildProcess()
     }
 }
 
-void WriteToPipe(void)
-
 // Read from a file and write its contents to the pipe for the child's STDIN.
 // Stop when there is no more data. 
+void WriteToPipe(void)
 {
     DWORD dwRead, dwWritten;
     CHAR chBuf[BUFSIZE];
@@ -183,11 +173,10 @@ void WriteToPipe(void)
         //ErrorExit(TEXT("StdInWr CloseHandle"));
 }
 
-void ReadFromPipe(void)
-
 // Read output from the child process's pipe for STDOUT
 // and write to the parent process's pipe for STDOUT. 
 // Stop when there is no more data. 
+void ReadFromPipe(void)
 {
     DWORD dwRead, dwWritten;
     CHAR chBuf[BUFSIZE];
