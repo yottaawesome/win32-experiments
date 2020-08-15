@@ -139,7 +139,7 @@ namespace Util
                 << std::endl
                 << " Error code: 0x" << std::hex << hr
                 << std::endl
-                << " COM error message: " << ce.ErrorMessage()
+                << " COM error message: " << ""// ce.ErrorMessage()
                 << std::endl;
             throw std::runtime_error(ss.str());
         }
