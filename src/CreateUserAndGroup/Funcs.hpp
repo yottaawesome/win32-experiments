@@ -19,3 +19,10 @@ void DeleteLocalUserAndGroup
     const wchar_t* userName,
     const wchar_t* groupName
 );
+
+DWORD CreateLocalGroup(
+    const wchar_t* groupName,
+    const wchar_t* comment
+);
+
+void LogonLocalUser(const wchar_t* lpszUser, const wchar_t* lpszPassword);

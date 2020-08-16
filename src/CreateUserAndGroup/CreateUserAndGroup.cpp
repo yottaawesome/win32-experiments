@@ -1,19 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 #include "Funcs.hpp"
 
 int main()
 {
-    NET_API_STATUS err = 0;
-
-    printf("Calling NetSample.\n");
-    err = NetSampleNoDc(
+    std::wcout << "Calling NetSample." << std::endl;
+    NET_API_STATUS err = NetSampleNoDc(
         L"SampleUser",
         L"SamplePswd",
         L"SampleLG");
-    printf("NetSample returned %d\n", err);
+    std::wcout << "NetSample returned: " << err << std::endl;
+    LogonLocalUser(L"SampleUser", L"SamplePswd");
     DeleteLocalUserAndGroup(L"SampleUser", L"SampleLG");
 
     return 0;
 }
-
