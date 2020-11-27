@@ -65,9 +65,19 @@ int main()
         replyBuffer.size(),
         1000
     );
+    if (result == 0)
+    {
+        std::wcout << "GetLastError(): " << GetLastError() << std::endl;
+    }
+    else
+    {
+        std::wcout << result << std::endl;
+        PICMPV6_ECHO_REPLY pIcmpEchoReply = (PICMPV6_ECHO_REPLY)&replyBuffer[0];
+        std::wcout << pIcmpEchoReply->Status << std::endl;
+        std::wcout << pIcmpEchoReply->RoundTripTime << std::endl;
+    }
 
-    std::wcout << result << std::endl;
-    std::wcout << GetLastError() << std::endl;
+    IcmpCloseHandle(hIcmpFile);
 
     return 0;
 }
