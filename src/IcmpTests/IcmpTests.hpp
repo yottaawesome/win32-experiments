@@ -33,6 +33,7 @@ class IcmpEchoResult final
 };
 
 IcmpEchoResult DoIpV4Ping(const std::wstring& ipAddressToPing);
+IcmpEchoResult DoIpV6Ping(const std::wstring& ipAddressToPing);
 IpAddresses HostNameToAddresses(const std::wstring& serverName, const std::wstring& portString);
 
 int Old();
