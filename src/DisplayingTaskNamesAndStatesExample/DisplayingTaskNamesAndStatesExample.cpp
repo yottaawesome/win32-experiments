@@ -138,6 +138,8 @@ int main()
                 short days = 0;
                 dailyTrigger->get_DaysInterval(&days);
                 printf("\nDays: %d", days);
+                //IRepetitionPattern* pattern = nullptr;
+                //pattern->
             }
         }
         
