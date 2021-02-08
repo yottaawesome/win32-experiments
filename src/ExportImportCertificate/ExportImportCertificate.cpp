@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <vector>
 #include <Windows.h>
 #include <cryptuiapi.h>
 #include <wincrypt.h>
@@ -67,10 +68,35 @@ int main()
 	if (accountRootCertStore == nullptr)
 		return GetLastError();
 
-	std::string name = "localhost";
+	std::wstring name = L"CN = localhost";
+	std::vector<BYTE> byte(500, 0);
+	DWORD encoded = 500;
+	bool succeeded = CertStrToNameW(
+		X509_ASN_ENCODING,
+		name.c_str(),
+		CERT_OID_NAME_STR,
+		nullptr,
+		&byte[0],
+		&encoded,
+		nullptr
+	);
+	if (succeeded == false)
+	{
+		DWORD lastError = GetLastError();
+		std::wstring errorString;
+		GetErrorCodeString(lastError, errorString);
+		std::wcout
+			<< lastError
+			<< ": "
+			<< errorString
+			<< std::endl;
+		return lastError;
+	}
+
+	byte.resize(encoded);
 	CERT_NAME_BLOB blob{
-		.cbData = (DWORD)name.size()*sizeof(char),
-		.pbData = (BYTE*)&name[0]
+		.cbData = (DWORD)byte.size(),
+		.pbData = &byte[0]
 	};
 
 	auto certContext = MakeCertPtr(
@@ -82,14 +108,14 @@ int main()
 			| CERT_FIND_HAS_PRIVATE_KEY,
 			0,
 			
-			//CERT_FIND_SUBJECT_NAME,
+			CERT_FIND_SUBJECT_NAME,
 			//CERT_FIND_ISSUER_NAME,
-			CERT_FIND_SUBJECT_STR,
+			//CERT_FIND_SUBJECT_STR,
 			//CERT_FIND_ISSUER_STR,
 			
-			(void*)L"0331d46883293028",
+			//(void*)L"0331d46883293028",
 			//(void*)L"client.localhost",
-			//&blob,
+			&blob,
 			//(void*)L"Windows Azure Tools",
 			
 			nullptr
@@ -135,7 +161,7 @@ int main()
 	const DWORD CRYPTUI_WIZ_EXPORT_NO_DELETE_PRIVATE_KEY = 0x0200;
 
     // https://docs.microsoft.com/en-us/windows/win32/api/cryptuiapi/nf-cryptuiapi-cryptuiwizexport
-    BOOL succeeded = CryptUIWizExport(
+    succeeded = CryptUIWizExport(
 		CRYPTUI_WIZ_NO_UI,
         nullptr,
 		nullptr,
