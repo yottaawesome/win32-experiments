@@ -38,3 +38,4 @@ Debug/
 *.user
 
 node_modules/
+*.pfx

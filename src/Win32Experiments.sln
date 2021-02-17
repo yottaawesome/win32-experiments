@@ -82,6 +82,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DisplayingTaskNamesAndState
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExportImportCertificate", "ExportImportCertificate\ExportImportCertificate.vcxproj", "{B838B81B-1180-4AF4-A81A-8F067C1C7A8E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CertEncodeDecode", "CertEncodeDecode\CertEncodeDecode.vcxproj", "{C84A2140-C155-49F1-92B4-E19103C2CF98}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -330,6 +332,14 @@ Global
 		{B838B81B-1180-4AF4-A81A-8F067C1C7A8E}.Release|x64.Build.0 = Release|x64
 		{B838B81B-1180-4AF4-A81A-8F067C1C7A8E}.Release|x86.ActiveCfg = Release|Win32
 		{B838B81B-1180-4AF4-A81A-8F067C1C7A8E}.Release|x86.Build.0 = Release|Win32
+		{C84A2140-C155-49F1-92B4-E19103C2CF98}.Debug|x64.ActiveCfg = Debug|x64
+		{C84A2140-C155-49F1-92B4-E19103C2CF98}.Debug|x64.Build.0 = Debug|x64
+		{C84A2140-C155-49F1-92B4-E19103C2CF98}.Debug|x86.ActiveCfg = Debug|Win32
+		{C84A2140-C155-49F1-92B4-E19103C2CF98}.Debug|x86.Build.0 = Debug|Win32
+		{C84A2140-C155-49F1-92B4-E19103C2CF98}.Release|x64.ActiveCfg = Release|x64
+		{C84A2140-C155-49F1-92B4-E19103C2CF98}.Release|x64.Build.0 = Release|x64
+		{C84A2140-C155-49F1-92B4-E19103C2CF98}.Release|x86.ActiveCfg = Release|Win32
+		{C84A2140-C155-49F1-92B4-E19103C2CF98}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
