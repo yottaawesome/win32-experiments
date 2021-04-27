@@ -247,17 +247,21 @@ DWORD CreateLocalGroup(
         case 0:
             std::wcout << ("Local group successfully created.\n");
             break;
+        
         case ERROR_ALIAS_EXISTS:
             std::wcout << ("Local group already exists.\n");
             err = 0;
             break;
+     
         case ERROR_INVALID_PARAMETER:
             std::wcout << "Invalid parameter error adding local group; parameter index = " << parm_err << std::endl;
-            return(err);
+            break;
+        
         default:
             std::wcout << "Error adding local group: " << err << std::endl;
-            return(err);
+            break;
     }
+    return err;
 }
 
 void DeleteLocalUserAndGroup

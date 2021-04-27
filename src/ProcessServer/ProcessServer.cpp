@@ -9,6 +9,10 @@
 
 int main(int argc, TCHAR* argv[])
 {
+	// Only works in the context of a service
+	// HANDLE hToken = nullptr;
+	// LogonUserW(L"NetworkService", L"NT AUTHORITY", nullptr, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, &hToken);
+
 	std::wstring buffer;
 	buffer.resize(150);
 
