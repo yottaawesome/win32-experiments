@@ -52,15 +52,11 @@ void Blah()
 // https://social.msdn.microsoft.com/Forums/vstudio/en-US/1d4fda3c-885f-46e2-bc32-80c4426510dc/how-to-enumerate-all-disks-and-their-aggregated-volumes?forum=vcgeneral
 int main(int argc, char** argv)
 {
-	for (int i = 0; i < 5; i++)
-		Blah();
-	return 0;
-
 	ComInitialiser co;
 
 	//return Win32PerfRawDataPerfDiskLogicalDisk();
 	//return Win32LogicalDisk();
-	return MSStorageDriverFailurePredictStatus();
+	//return MSStorageDriverFailurePredictStatus();
 	//return GetSystemTimesTest();
 	//return Win32PerfRawDataPerfProcProcess();
 	//return Win32DiskPartition();
@@ -73,7 +69,7 @@ int main(int argc, char** argv)
 	//return Win32LogonSession();
 	//return Win32LoggedOnUser();
 	//return Win32ProcessorInfo();
-	//return Win32RamInfo();
+	return Win32RamInfo();
 	//return Win32DiskInfo();
 	//return MsftDiskInfo();
 	//return Win32LogicalDisk();

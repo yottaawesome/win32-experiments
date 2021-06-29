@@ -17,8 +17,14 @@ int Win32RamInfo()
 		WmiClassObject classObj(ptrClsObj);
 
 		std::wstring capacity = classObj.String(L"Capacity");
-		std::wcout << L" Capacity : " << capacity << std::endl;
+		std::wcout 
+			<< L" Capacity : " << capacity 
+			<< std::endl
+			<< L" Bank Label : " << classObj.String(L"BankLabel") 
+			<< std::endl;
 	}
+
+	std::wcout << L"Finished" << std::endl;
 
 	return 0;
 }

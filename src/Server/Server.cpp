@@ -1,7 +1,119 @@
 #include <iostream>
 #include <Windows.h>
+#include <sddl.h>
 
 #define MAX_NAME 256
+
+bool CreateLowProcess()
+{
+    BOOL                  fRet;
+    HANDLE                hToken = NULL;
+    HANDLE                hNewToken = NULL;
+    PSID                  pIntegritySid = NULL;
+    TOKEN_MANDATORY_LABEL TIL = { 0 };
+    PROCESS_INFORMATION   ProcInfo = { 0 };
+    STARTUPINFO           StartupInfo = { 0 };
+
+    // Notepad is used as an example
+    WCHAR wszProcessName[MAX_PATH] =
+        L"C:\\Windows\\System32\\Notepad.exe";
+
+    // Low integrity SID
+    // https://docs.microsoft.com/en-US/troubleshoot/windows-server/identity/security-identifiers-in-windows
+    // Original code is wrong: https://docs.microsoft.com/en-us/previous-versions/dotnet/articles/bb625960(v=msdn.10)?redirectedfrom=MSDN#communication-between-low-integrity-and-higher-integrity-processes
+    //WCHAR wszIntegritySid[20] = L"S-1-16-1024";
+    WCHAR wszIntegritySid[20] = L"S-1-16-4096";
+
+    fRet = OpenProcessToken(GetCurrentProcess(),
+        TOKEN_DUPLICATE |
+        TOKEN_ADJUST_DEFAULT |
+        TOKEN_QUERY |
+        TOKEN_ASSIGN_PRIMARY,
+        &hToken);
+
+    if (!fRet)
+    {
+        goto CleanExit;
+    }
+
+    fRet = DuplicateTokenEx(hToken,
+        0,
+        NULL,
+        SecurityImpersonation,
+        TokenPrimary,
+        &hNewToken);
+
+    if (!fRet)
+    {
+        goto CleanExit;
+    }
+
+    fRet = ConvertStringSidToSid(wszIntegritySid, &pIntegritySid);
+
+    if (!fRet)
+    {
+        goto CleanExit;
+    }
+
+    TIL.Label.Attributes = SE_GROUP_INTEGRITY;
+    TIL.Label.Sid = pIntegritySid;
+
+    //
+    // Set the process integrity level
+    //
+
+    fRet = SetTokenInformation(hNewToken,
+        TokenIntegrityLevel,
+        &TIL,
+        sizeof(TOKEN_MANDATORY_LABEL) + GetLengthSid(pIntegritySid));
+
+    if (!fRet)
+    {
+        goto CleanExit;
+    }
+
+    //
+    // Create the new process at Low integrity
+    //
+
+    fRet = CreateProcessAsUser(hNewToken,
+        NULL,
+        wszProcessName,
+        NULL,
+        NULL,
+        FALSE,
+        0,
+        NULL,
+        NULL,
+        &StartupInfo,
+        &ProcInfo);
+
+CleanExit:
+
+    if (ProcInfo.hProcess != NULL)
+    {
+        CloseHandle(ProcInfo.hProcess);
+    }
+
+    if (ProcInfo.hThread != NULL)
+    {
+        CloseHandle(ProcInfo.hThread);
+    }
+
+    LocalFree(pIntegritySid);
+
+    if (hNewToken != NULL)
+    {
+        CloseHandle(hNewToken);
+    }
+
+    if (hToken != NULL)
+    {
+        CloseHandle(hToken);
+    }
+
+    return fRet;
+}
 
 void RemoveSid()
 {
@@ -296,7 +408,7 @@ void LaunchRestrictedProcess()
     }
 
     BYTE sidBuffer[256];
-    PSID pAdminSID = (PSID)sidBuffer;
+    PSID pAdminSID = nullptr;
     SID_IDENTIFIER_AUTHORITY SIDAuth = SECURITY_NT_AUTHORITY;
     if (!AllocateAndInitializeSid(
         &SIDAuth,
@@ -348,7 +460,23 @@ void LaunchRestrictedProcess()
     si.cb = sizeof(si);
     wchar_t commandLine[] = L"Client.exe lala";
     /* Create a new process using the restricted token */
-    if (CreateProcessAsUser(
+
+    bool succeeded = CreateProcessWithLogonW(
+        L"NetworkService",
+        L"NT AUTHORITY",
+        L"",
+        0,
+        L"A:\\Code\\C++\\win32-experiments\\src\\x64\\Debug\\Client.exe",
+        commandLine,
+        CREATE_UNICODE_ENVIRONMENT,
+        nullptr,
+        nullptr,
+        &si,
+        &pi
+    );
+    std::wcout << GetLastError() << std::endl;
+
+    if (CreateProcessAsUserW(
         hRestrictedToken,
         L"A:\\Code\\C++\\win32-experiments\\src\\x64\\Debug\\Client.exe",
         commandLine,
