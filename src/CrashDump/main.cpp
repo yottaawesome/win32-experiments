@@ -32,6 +32,7 @@ LONG WINAPI HandleException(struct _EXCEPTION_POINTERS* apExceptionInfo)
         nullptr
     );
 
+    // https://docs.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_exception_information
     _MINIDUMP_EXCEPTION_INFORMATION ExInfo;
     ExInfo.ThreadId = ::GetCurrentThreadId();
     ExInfo.ExceptionPointers = apExceptionInfo;
