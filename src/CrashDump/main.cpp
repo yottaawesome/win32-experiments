@@ -18,10 +18,11 @@ typedef bool(WINAPI* MINIDUMPWRITEDUMP)(
 // https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-unhandledexceptionfilter
 LONG WINAPI HandleException(struct _EXCEPTION_POINTERS* apExceptionInfo)
 {
+    // Based on https://stackoverflow.com/a/9020804/7448661
     HMODULE mhLib = LoadLibraryW(L"dbghelp.dll");
     MINIDUMPWRITEDUMP pDump = (MINIDUMPWRITEDUMP)::GetProcAddress(mhLib, "MiniDumpWriteDump");
 
-    HANDLE  hFile = CreateFileW(
+    HANDLE hFile = CreateFileW(
         L"dump_name.dmp", 
         GENERIC_WRITE, 
         FILE_SHARE_WRITE, 
