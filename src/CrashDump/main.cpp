@@ -10,36 +10,55 @@ typedef bool(WINAPI* MINIDUMPWRITEDUMP)(
     DWORD dwPid, 
     HANDLE hFile, 
     MINIDUMP_TYPE DumpType, 
-    const PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
-    const PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
-    const PMINIDUMP_CALLBACK_INFORMATION CallbackParam
+    PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
+    PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
+    PMINIDUMP_CALLBACK_INFORMATION CallbackParam
 );
 
 // https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-unhandledexceptionfilter
-LONG WINAPI HandleException(struct _EXCEPTION_POINTERS* apExceptionInfo)
+long WINAPI HandleException(_EXCEPTION_POINTERS* apExceptionInfo)
 {
     // Based on https://stackoverflow.com/a/9020804/7448661
-    HMODULE mhLib = LoadLibraryW(L"dbghelp.dll");
-    MINIDUMPWRITEDUMP pDump = (MINIDUMPWRITEDUMP)::GetProcAddress(mhLib, "MiniDumpWriteDump");
+    HMODULE dbghelpLib = nullptr;
+    HANDLE dumpFile = nullptr;
+    do
+    {
+        dbghelpLib = LoadLibraryW(L"dbghelp.dll");
+        if (dbghelpLib == nullptr)
+            break;
 
-    HANDLE hFile = CreateFileW(
-        L"dump_name.dmp", 
-        GENERIC_WRITE, 
-        FILE_SHARE_WRITE, 
-        nullptr,
-        CREATE_ALWAYS,
-        FILE_ATTRIBUTE_NORMAL, 
-        nullptr
-    );
+        const MINIDUMPWRITEDUMP pMiniDumpWriteDump = (MINIDUMPWRITEDUMP)GetProcAddress(dbghelpLib, "MiniDumpWriteDump");
+        if (pMiniDumpWriteDump == nullptr)
+            break;
 
-    // https://docs.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_exception_information
-    _MINIDUMP_EXCEPTION_INFORMATION ExInfo;
-    ExInfo.ThreadId = ::GetCurrentThreadId();
-    ExInfo.ExceptionPointers = apExceptionInfo;
-    ExInfo.ClientPointers = FALSE;
+        dumpFile = CreateFileW(
+            L"dump_name.dmp",
+            GENERIC_WRITE,
+            FILE_SHARE_WRITE,
+            nullptr,
+            CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL,
+            nullptr
+        );
+        if (dumpFile == INVALID_HANDLE_VALUE)
+            break;
 
-    pDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &ExInfo, nullptr, nullptr);
-    CloseHandle(hFile);
+        // https://docs.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_exception_information
+        _MINIDUMP_EXCEPTION_INFORMATION exceptionInfo
+        {
+            .ThreadId = GetCurrentThreadId(),
+            .ExceptionPointers = apExceptionInfo,
+            .ClientPointers = false
+        };
+        pMiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dumpFile, MiniDumpNormal, &exceptionInfo, nullptr, nullptr);
+
+    } while (false);
+
+    if (dumpFile && dumpFile != INVALID_HANDLE_VALUE)
+        CloseHandle(dumpFile);
+    if (dbghelpLib)
+        FreeLibrary(dbghelpLib);
+
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
