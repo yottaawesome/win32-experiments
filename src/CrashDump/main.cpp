@@ -51,7 +51,6 @@ long WINAPI HandleException(_EXCEPTION_POINTERS* apExceptionInfo)
             .ClientPointers = false
         };
         pMiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dumpFile, MiniDumpNormal, &exceptionInfo, nullptr, nullptr);
-
     } while (false);
 
     if (dumpFile && dumpFile != INVALID_HANDLE_VALUE)
