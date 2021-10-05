@@ -8,11 +8,81 @@
 
 #pragma comment(lib, "Winhttp.lib")
 
+template<class T, class S>
+using is_string = std::is_same<T, typename S::value_type>;
+
+template<typename STR_T, typename STR_V = STR_T::value_type>
+STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName)
+{
+    static_assert(std::is_same<std::basic_string<char>, STR_T>::value || std::is_same<std::basic_string<wchar_t>, STR_T>::value, __FUNCTION__ "(): STR_T must be either a std::string or std::wstring");
+
+    // Retrieve the system error message for the last-error code
+    void* messageBuffer = nullptr;
+    HMODULE moduleHandle = moduleName.empty() ? nullptr : LoadLibraryW(moduleName.c_str());
+    DWORD flags =
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS;
+    if (moduleHandle)
+        flags |= FORMAT_MESSAGE_FROM_HMODULE;
+
+    if (std::is_same<STR_V, char>::value)
+    {
+        FormatMessageA(
+            flags,
+            moduleHandle,
+            errorCode,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // TODO this is deprecated
+            (char*)&messageBuffer,
+            0,
+            nullptr
+        );
+    }
+    else if (std::is_same<STR_V, wchar_t>::value)
+    {
+        FormatMessageW(
+            flags,
+            moduleHandle,
+            errorCode,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // TODO this is deprecated
+            (wchar_t*)&messageBuffer,
+            0,
+            nullptr
+        );
+    }
+    
+    if (moduleHandle)
+        FreeLibrary(moduleHandle);
+    if (messageBuffer == nullptr)
+        return L"";
+
+    STR_T msg((STR_V*)messageBuffer);
+    LocalFree(messageBuffer);
+
+    return msg;
+}
+
+template<typename T>
+class ErrorUtil
+{
+    typedef T(*PTranslateErrorCode)(const DWORD, const std::wstring&);
+
+    public:
+        static PTranslateErrorCode TranslateErrorCode;
+};
+
+template<typename T>
+ErrorUtil<T>::PTranslateErrorCode ErrorUtil<T>::TranslateErrorCode = ::TranslateErrorCode<T>;
+
+using ErrorUtilW = ErrorUtil<std::wstring>;
+
+
+
+
 std::wstring GetErrorCodeAsWString(const DWORD errorCode, const std::wstring& moduleName)
 {
     // Retrieve the system error message for the last-error code
-    LPVOID lpMsgBuf;
-    LPVOID lpDisplayBuf;
+    void* messageBuffer = nullptr;
     HMODULE moduleHandle = moduleName.empty() ? nullptr : LoadLibraryW(moduleName.c_str());
     DWORD flags =
         FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -26,17 +96,17 @@ std::wstring GetErrorCodeAsWString(const DWORD errorCode, const std::wstring& mo
         moduleHandle,
         errorCode,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // TODO this is deprecated
-        (LPTSTR)&lpMsgBuf,
+        (wchar_t*)&messageBuffer,
         0,
         nullptr
     );
     if (moduleHandle)
         FreeLibrary(moduleHandle);
-    if (lpMsgBuf == nullptr)
+    if (messageBuffer == nullptr)
         return L"";
 
-    std::wstring msg((LPTSTR)lpMsgBuf);
-    LocalFree(lpMsgBuf);
+    std::wstring msg((LPWSTR)messageBuffer); const std::wstring::value_type* x = L"A";
+    LocalFree(messageBuffer);
 
     return msg;
 }
@@ -44,8 +114,7 @@ std::wstring GetErrorCodeAsWString(const DWORD errorCode, const std::wstring& mo
 std::string GetErrorCodeAsString(const DWORD errorCode, const std::wstring& moduleName)
 {
     // Retrieve the system error message for the last-error code
-    LPVOID lpMsgBuf;
-    LPVOID lpDisplayBuf;
+    void* messageBuffer = nullptr;
     HMODULE moduleHandle = moduleName.empty() ? nullptr : LoadLibraryW(moduleName.c_str());
     DWORD flags =
         FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -59,17 +128,17 @@ std::string GetErrorCodeAsString(const DWORD errorCode, const std::wstring& modu
         moduleHandle,
         errorCode,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // TODO this is deprecated
-        (LPSTR)&lpMsgBuf,
+        (char*)&messageBuffer,
         0,
         nullptr
     );
     if (moduleHandle)
         FreeLibrary(moduleHandle);
-    if (lpMsgBuf == nullptr)
+    if (messageBuffer == nullptr)
         return "";
 
-    std::string msg((LPSTR)lpMsgBuf);
-    LocalFree(lpMsgBuf);
+    std::string msg((LPSTR)messageBuffer);
+    LocalFree(messageBuffer);
 
     return msg;
 }
@@ -166,6 +235,9 @@ void ThrowWin32Error(const DWORD errorCode)
 
 int main()
 {
+    //std::wstring s = TranslateErrorCode<std::wstring>(5, L"");
+    ErrorUtilW::TranslateErrorCode(5, L"");
+
     //std::wcout << GetErrorCodeAsWString(5) << std::endl;
     LastErrorToSystemError(ERROR_ACCESS_DENIED);
     LastWinHttpErrorToSystemError(ERROR_WINHTTP_CANNOT_CALL_AFTER_OPEN);
