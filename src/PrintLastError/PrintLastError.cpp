@@ -38,7 +38,7 @@ STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName)
             nullptr
         );
     }
-    else if (std::is_same<STR_V, wchar_t>::value)
+    else
     {
         FormatMessageW(
             flags,

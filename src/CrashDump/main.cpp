@@ -76,13 +76,18 @@ long WINAPI HandleException(_EXCEPTION_POINTERS* apExceptionInfo)
 // (From above) >> "Dumps obtained from Windows Error Reporting typically have a useless current context set on the faulting thread, with a stack deep in WerpReportFault. The actual context at the time of the exception can be retrieved with .ecxr -- which also sets the context in such a way that subsequent commands on the same thread (such as k) return the "correct" information."
 // From the dump generated, you can open it in WinDbg and type .ecxr to set the correct context
 
+// It's also possible to create dumps using Windows Error Reporting (WER)
+// You need to create a key HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\<application name>.exe
+// e.g. HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\CrashDump.exe
+// From there, you can control a few different options, such as the type of dump and number of dumps to keep
+// See https://docs.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps
+
 int main(int argc, char* args[])
 {
     // https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-setunhandledexceptionfilter
     SetUnhandledExceptionFilter(HandleException);
 
-    std::cout << "Triggering exception" << std::endl;
-
+    std::cout << "Triggering STATUS_ACCESS_VIOLATION...";
     char* a = nullptr;
     a[0] = 'b';
 
