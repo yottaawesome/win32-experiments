@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29613.14
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BitsTest", "BitsTest\BitsTest.vcxproj", "{5B0D9911-39E2-4980-98D8-8190E2EAFDA0}"
 EndProject
@@ -85,6 +85,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CertEncodeDecode", "CertEncodeDecode\CertEncodeDecode.vcxproj", "{C84A2140-C155-49F1-92B4-E19103C2CF98}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CrashDump", "CrashDump\CrashDump.vcxproj", "{E6A39EEC-8B0F-4684-B0A3-804E0B29F7C4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConditionVariables", "ConditionVariables\ConditionVariables.vcxproj", "{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -350,6 +352,14 @@ Global
 		{E6A39EEC-8B0F-4684-B0A3-804E0B29F7C4}.Release|x64.Build.0 = Release|x64
 		{E6A39EEC-8B0F-4684-B0A3-804E0B29F7C4}.Release|x86.ActiveCfg = Release|Win32
 		{E6A39EEC-8B0F-4684-B0A3-804E0B29F7C4}.Release|x86.Build.0 = Release|Win32
+		{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}.Debug|x64.ActiveCfg = Debug|x64
+		{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}.Debug|x64.Build.0 = Debug|x64
+		{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}.Debug|x86.ActiveCfg = Debug|Win32
+		{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}.Debug|x86.Build.0 = Debug|Win32
+		{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}.Release|x64.ActiveCfg = Release|x64
+		{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}.Release|x64.Build.0 = Release|x64
+		{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}.Release|x86.ActiveCfg = Release|Win32
+		{26EA1DAC-2E21-48C0-B7AB-DD808AC92F17}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

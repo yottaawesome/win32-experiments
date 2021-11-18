@@ -19,12 +19,11 @@ STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName)
     // Retrieve the system error message for the last-error code
     void* messageBuffer = nullptr;
     HMODULE moduleHandle = moduleName.empty() ? nullptr : LoadLibraryW(moduleName.c_str());
-    DWORD flags =
+    const DWORD flags =
         FORMAT_MESSAGE_ALLOCATE_BUFFER |
         FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS;
-    if (moduleHandle)
-        flags |= FORMAT_MESSAGE_FROM_HMODULE;
+        FORMAT_MESSAGE_IGNORE_INSERTS |
+        (moduleHandle ? FORMAT_MESSAGE_FROM_HMODULE : 0);
 
     if (std::is_same<STR_V, char>::value)
     {
