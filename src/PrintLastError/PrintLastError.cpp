@@ -53,7 +53,7 @@ STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName)
     if (moduleHandle)
         FreeLibrary(moduleHandle);
     if (messageBuffer == nullptr)
-        return L"";
+        return STR_T();
 
     STR_T msg((STR_V*)messageBuffer);
     LocalFree(messageBuffer);
