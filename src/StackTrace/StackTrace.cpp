@@ -18,7 +18,7 @@ void PrintStackWalk64(const unsigned skipFrameCount)
     HANDLE process = GetCurrentProcess();
     if (!SymInitialize(process, nullptr, true))
     {
-        std::cout << "SymInitialize() failed\n";
+        std::cerr << "SymInitialize() failed\n";
         return;
     }
     // https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-rtlcapturecontext
@@ -57,7 +57,7 @@ void PrintStackWalk64(const unsigned skipFrameCount)
         );
         if (!result)
         {
-            std::cout << "StackWalk64() failed\n";
+            std::cerr << "StackWalk64() failed\n";
             break;
         }
         // Skip logging the first frame; it's just this function and we don't care about it
@@ -65,10 +65,9 @@ void PrintStackWalk64(const unsigned skipFrameCount)
             continue;
 
         // https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-symgetlinefromaddr64
-        DWORD64 displacement = 0;
-        if (!SymGetSymFromAddr64(process, (ULONG64)stack.AddrPC.Offset, &displacement, symbol))
+        if (DWORD64 displacement = 0; !SymGetSymFromAddr64(process, (ULONG64)stack.AddrPC.Offset, &displacement, symbol))
         {
-            std::cout << "SymGetSymFromAddr64() failed\n";
+            std::cerr << "SymGetSymFromAddr64() failed\n";
             break;
         }
 
@@ -79,11 +78,10 @@ void PrintStackWalk64(const unsigned skipFrameCount)
         if (!UnDecorateSymbolName(symbol->Name, &undecoratedName[0], static_cast<DWORD>(undecoratedName.size()), UNDNAME_COMPLETE))
             undecoratedName = "<unknown>";
 
-        DWORD symGetLineFromAddr64Displacement = 0;
         std::string fileName = "<unknown>";
         DWORD lineNumber = 0;
         IMAGEHLP_LINE64 line{ .SizeOfStruct = sizeof(IMAGEHLP_LINE64) };
-        if (SymGetLineFromAddr64(process, stack.AddrPC.Offset, &symGetLineFromAddr64Displacement, &line))
+        if (DWORD displacement = 0; SymGetLineFromAddr64(process, stack.AddrPC.Offset, &displacement, &line))
         {
             fileName = line.FileName;
             lineNumber = line.LineNumber;
@@ -93,7 +91,7 @@ void PrintStackWalk64(const unsigned skipFrameCount)
         if (std::string_view(symbol->Name) == "invoke_main")
             break;
         std::cout << std::format(
-            "{}() ({}()): {:#X} in {}:{}\n",
+            "{}() -> {}(): {:#X} in {}:{}\n",
             symbol->Name,
             undecoratedName,
             symbol->Address,
@@ -101,7 +99,8 @@ void PrintStackWalk64(const unsigned skipFrameCount)
             lineNumber);
     }
 
-    SymCleanup(process);
+    if (!SymCleanup(process))
+        std::cerr << "SymCleanup() failed\n";
 }
 
 void PrintStackCpp(const unsigned skipFrameCount)
@@ -110,14 +109,14 @@ void PrintStackCpp(const unsigned skipFrameCount)
     unsigned short frames = RtlCaptureStackBackTrace(0, 100, stack, nullptr);
     if (frames == 0)
     {
-        std::cout << "PrintStackCpp() did not capture any frames\n";
+        std::cerr << "PrintStackCpp() did not capture any frames\n";
         return;
     }
 
     HANDLE process = GetCurrentProcess();
     if (!SymInitialize(process, nullptr, true))
     {
-        std::cout << "SymInitialize() failed\n";
+        std::cerr << "SymInitialize() failed\n";
         return;
     }
 
@@ -128,34 +127,45 @@ void PrintStackCpp(const unsigned skipFrameCount)
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     IMAGEHLP_LINE64 line{ .SizeOfStruct = sizeof(IMAGEHLP_LINE64) };
 
-    DWORD displacement;
     // Skip logging the first frame; it's just this function and we don't care about it
     for (unsigned i = 1; i < frames; i++)
     {
         if (skipFrameCount >= i)
             continue;
+
         DWORD64 address = reinterpret_cast<DWORD64>(stack[i]);
         if (!SymFromAddr(process, address, 0, symbol))
+        {
+            std::cerr << "SymFromAddr() failed\n";
             continue;
-        if (!SymGetLineFromAddr64(process, address, &displacement, &line))
+        }
+        if (DWORD displacement; !SymGetLineFromAddr64(process, address, &displacement, &line))
+        {
+            std::cerr << "SymGetLineFromAddr64() failed\n";
             continue;
+        }
         // Skip logging external frames
         if (std::string_view(symbol->Name) == "invoke_main")
             break;
 
         std::string undecoratedName(MaxFunctionNameLength, '\0');
-        if (!UnDecorateSymbolName(symbol->Name, &undecoratedName[0], static_cast<DWORD>(undecoratedName.size()), UNDNAME_COMPLETE))
-            undecoratedName = "<unknown>";
+        const bool undecoratedSuccessfully = UnDecorateSymbolName(
+            symbol->Name, 
+            &undecoratedName[0], 
+            static_cast<DWORD>(undecoratedName.size()), 
+            UNDNAME_COMPLETE
+        );
         std::cout << std::format(
-            "{}() [{}()]: {:#X} in {}:{}\n",
+            "{}() -> {}(): {:#X} in {}:{}\n",
             symbol->Name,
-            undecoratedName,
+            undecoratedSuccessfully ? undecoratedName : "<unknown>",
             symbol->Address,
             line.FileName,
             line.LineNumber);
     }
 
-    SymCleanup(process);
+    if (!SymCleanup(process))
+        std::cerr << "SymCleanup() failed\n";
 }
 
 
@@ -203,8 +213,8 @@ void PrintStack()
 
 void Blah()
 {
-    PrintStackWalk64(0);
-    //PrintStackCpp(0);
+    //PrintStackWalk64(0);
+    PrintStackCpp(0);
     //PrintStack();
     //PrintStackTrace();
 }
