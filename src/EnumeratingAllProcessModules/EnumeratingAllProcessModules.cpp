@@ -2,6 +2,7 @@
 #include <format>
 #include <string>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 #include <windows.h>
 #include <tchar.h>
@@ -36,7 +37,7 @@ int PrintModules(DWORD processID)
         DWORD bytesNeeded;
         // https://docs.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-enumprocessmodules
         if (!EnumProcessModules(hProcess.get(), &modules[0], modulesByteSize, &bytesNeeded))
-            return 1;
+            throw std::runtime_error("EnumProcessModules() failed");
         modules.resize(bytesNeeded / sizeof(HMODULE));
         if (bytesNeeded <= modulesByteSize)
             break;
@@ -47,35 +48,47 @@ int PrintModules(DWORD processID)
         std::wstring moduleName(MAX_PATH, '\0');
         // Get the full path to the module's file.
         // https://docs.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getmodulefilenameexw
-        if (GetModuleFileNameEx(hProcess.get(), procModule, &moduleName[0], moduleName.size()))
-            std::wcout << std::format(L"{}\n", moduleName);
+        if (!GetModuleFileNameEx(hProcess.get(), procModule, &moduleName[0], moduleName.size()))
+            throw std::runtime_error("GetModuleFileNameEx() failed");
+        std::wcout << std::format(L"\t{}\n", moduleName);
     }
 
     return 0;
 }
 
-int AllProcesses()
+void AllProcesses()
 {
     // Get the list of process identifiers.
     DWORD aProcesses[1024];
     DWORD cbNeeded;
     // https://docs.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-enumprocesses
     if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
-        return 1;
+        throw std::runtime_error("EnumProcesses() failed");
 
     // Calculate how many process identifiers were returned.
     DWORD cProcesses = cbNeeded / sizeof(DWORD);
 
     // Print the names of the modules for each process.
-    for (int i = 0; i < cProcesses; i++)
+    for (int i = 0; i < cProcesses; i++) try
     {
         PrintModules(aProcesses[i]);
     }
-    return 1;
+    catch (const std::exception& ex)
+    {
+        std::wcerr << ex.what() << std::endl;
+    }
 }
 
 int main(int argc, char* args[])
 {
-    PrintModules(GetCurrentProcessId());
+    try
+    {
+        AllProcesses();
+    }
+    catch (const std::exception& ex)
+    {
+        std::wcerr << ex.what() << std::endl;
+    }
+    //PrintModules(GetCurrentProcessId());
     return 0;
 }
