@@ -19,18 +19,18 @@ void PrintStackWalk64(const unsigned skipFrameCount)
     HANDLE process = GetCurrentProcess();
     if (!SymInitialize(process, nullptr, true))
     {
-        std::cerr << "SymInitialize() failed\n";
+        std::wcerr << "SymInitialize() failed\n";
         return;
     }
+
     // https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-rtlcapturecontext
     CONTEXT context;
     RtlCaptureContext(&context);
-    HANDLE thread = GetCurrentThread();
 
-    constexpr int MaxFunctionNameLength = 256;
-    std::vector<std::byte> symbolInfoBytes(sizeof(SYMBOL_INFO) + MaxFunctionNameLength * sizeof(char));
-    SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(&symbolInfoBytes[0]);
-    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    constexpr static int MaxFunctionNameLength = 256;
+    std::vector<std::byte> symbolInfoBytes(sizeof(SYMBOL_INFOW) + MaxFunctionNameLength * sizeof(wchar_t));
+    SYMBOL_INFOW* symbol = reinterpret_cast<SYMBOL_INFOW*>(&symbolInfoBytes[0]);
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFOW);
     symbol->MaxNameLen = MaxFunctionNameLength;
 
     // https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/ns-dbghelp-stackframe64
@@ -42,7 +42,8 @@ void PrintStackWalk64(const unsigned skipFrameCount)
     stack.AddrFrame.Offset = context.Rdi;
     stack.AddrFrame.Mode = AddrModeFlat;
 
-    for (unsigned frame = 0; ; frame++)
+    HANDLE thread = GetCurrentThread();
+    for (unsigned frame = 0;; frame++)
     {
         const bool result = StackWalk64
         (
@@ -58,7 +59,7 @@ void PrintStackWalk64(const unsigned skipFrameCount)
         );
         if (!result)
         {
-            std::cerr << "StackWalk64() failed\n";
+            std::wcerr << "StackWalk64() failed\n";
             break;
         }
         // Skip logging the first frame; it's just this function and we don't care about it
@@ -67,42 +68,49 @@ void PrintStackWalk64(const unsigned skipFrameCount)
 
         // SymGetSymFromAddr64() is deprecated
         // https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-symfromaddr
-        if (DWORD64 displacement = 0; !SymFromAddr(process, stack.AddrPC.Offset, &displacement, symbol))
+        if (DWORD64 displacement = 0; !SymFromAddrW(process, stack.AddrPC.Offset, &displacement, symbol))
         {
-            std::cerr << "SymGetSymFromAddr64() failed\n";
+            std::wcerr << "SymGetSymFromAddr64() failed\n";
             break;
         }
 
         // Not sure if we need this, except for DLLs
         // See SYMOPT_UNDNAME in https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-symsetoptions
         // https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-undecoratesymbolname
-        std::string undecoratedName(MaxFunctionNameLength, '\0');
-        if (!UnDecorateSymbolName(symbol->Name, &undecoratedName[0], static_cast<DWORD>(undecoratedName.size()), UNDNAME_COMPLETE))
-            undecoratedName = "<unknown>";
+        std::wstring undecoratedName(MaxFunctionNameLength, '\0');
+        const bool undecoratedSuccessfully = UnDecorateSymbolNameW(
+            symbol->Name, 
+            &undecoratedName[0], 
+            static_cast<DWORD>(undecoratedName.size()), 
+            UNDNAME_COMPLETE
+        );
+        if (!undecoratedSuccessfully)
+            undecoratedName = L"<unknown>";
 
-        std::string fileName = "<unknown>";
+        std::wstring fileName = L"<unknown>";
         DWORD lineNumber = 0;
-        IMAGEHLP_LINE64 line{ .SizeOfStruct = sizeof(IMAGEHLP_LINE64) };
-        if (DWORD displacement = 0; SymGetLineFromAddr64(process, stack.AddrPC.Offset, &displacement, &line))
+        IMAGEHLP_LINEW64 line{ .SizeOfStruct = sizeof(IMAGEHLP_LINEW64) };
+        if (DWORD displacement = 0; SymGetLineFromAddrW64(process, stack.AddrPC.Offset, &displacement, &line))
         {
             fileName = line.FileName;
             lineNumber = line.LineNumber;
         }
 
         // Skip logging external frames
-        if (std::string_view(symbol->Name) == "invoke_main")
+        if (std::wstring_view(symbol->Name) == L"invoke_main")
             break;
-        std::cout << std::format(
-            "{}() -> {}(): {:#X} in {}:{}\n",
+        std::wcout << std::format(
+            L"{}() -> {}(): {:#X} in {}:{}\n",
             symbol->Name,
-            undecoratedName,
+            undecoratedSuccessfully ? undecoratedName : L"<unknown>",
             symbol->Address,
             fileName,
-            lineNumber);
+            lineNumber
+        );
     }
 
     if (!SymCleanup(process))
-        std::cerr << "SymCleanup() failed\n";
+        std::wcerr << "SymCleanup() failed\n";
 }
 
 void PrintStackCpp(const unsigned skipFrameCount)
@@ -122,8 +130,8 @@ void PrintStackCpp(const unsigned skipFrameCount)
         return;
     }
 
-    constexpr unsigned MaxFunctionNameLength = 256; // 255 + 1 terminating null
-    // Don't use a smart pointer typed as SYMBOL_INFO, as memory would be leaked
+    constexpr static unsigned MaxFunctionNameLength = 256; // 255 + 1 terminating null
+    // Don't use a smart pointer typed as SYMBOL_INFO, as memory would be leaked due to SYMBOL_INFOW::Name
     std::vector<std::byte> symbolInfoBytes(sizeof(SYMBOL_INFOW) + MaxFunctionNameLength * sizeof(wchar_t));
     SYMBOL_INFOW* symbol = reinterpret_cast<SYMBOL_INFOW*>(&symbolInfoBytes[0]);
     symbol->MaxNameLen = MaxFunctionNameLength;
@@ -139,7 +147,7 @@ void PrintStackCpp(const unsigned skipFrameCount)
         const DWORD64 address = reinterpret_cast<DWORD64>(stack[i]);
         if (!SymFromAddrW(process, address, 0, symbol))
         {
-            std::cerr << "SymFromAddr() failed\n";
+            std::wcerr << "SymFromAddr() failed\n";
             continue;
         }
         if (DWORD displacement; !SymGetLineFromAddrW64(process, address, &displacement, &line))
@@ -172,58 +180,16 @@ void PrintStackCpp(const unsigned skipFrameCount)
         std::wcerr << L"SymCleanup() failed\n";
 }
 
-
-// From https://stackoverflow.com/questions/5693192/win32-backtrace-from-c-code
-void PrintStack()
-{
-    constexpr int MaxFunctionNameLength = 255;
-    void* stack[100];
-    unsigned short frames = CaptureStackBackTrace(0, 100, stack, nullptr);
-
-    HANDLE process = GetCurrentProcess();
-    SymInitialize(process, nullptr, true);
-
-    // These two lines are equivalent
-    SYMBOL_INFO* symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + (MaxFunctionNameLength + 1) * sizeof(char), 1);
-    //SYMBOL_INFO* symbol = (SYMBOL_INFO*)calloc(1, sizeof(SYMBOL_INFO) + (MaxFunctionNameLength + 1) * sizeof(char));
-    if (symbol == nullptr)
-        return;
-    
-    symbol->MaxNameLen = MaxFunctionNameLength;
-    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-    IMAGEHLP_LINE64* line = (IMAGEHLP_LINE64*)malloc(sizeof(IMAGEHLP_LINE64));
-    if (line == nullptr)
-        return;
-
-    memset(line, 0, sizeof(IMAGEHLP_LINE64));
-    line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-
-    DWORD displacement;
-    for (unsigned int i = 0; i < frames; i++)
-    {
-        DWORD64 address = (DWORD64)(stack[i]);
-        SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
-        if (SymGetLineFromAddr64(process, address, &displacement, line))
-            std::cout << "Symbol: " << symbol->Name << " in " << line->FileName << ": line: " << std::dec << line->LineNumber << ": address: " << std::hex << symbol->Address << std::endl;
-        else
-            std::cout << "Failed! " << GetLastError() << std::endl;
-        //printf("%i: %s - 0x%I64X\n", frames - i - 1, symbol->Name, symbol->Address);
-    }
-
-    free(line);
-    free(symbol);
-    SymCleanup(process);
-}
-
 void Blah()
 {
-    //PrintStackWalk64(0);
-    PrintStackCpp(0);
+    PrintStackWalk64(0);
+    //PrintStackCpp(0);
     //PrintStack();
     //PrintStackTrace();
 }
 
-int main()
+int main(int argc, char* args[])
 {
     Blah();
+    return 0;
 }

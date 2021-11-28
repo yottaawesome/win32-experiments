@@ -148,6 +148,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Old.cpp" />
     <ClCompile Include="StackTrace.cpp" />
     <ClCompile Include="StackTracer.cpp" />
   </ItemGroup>
