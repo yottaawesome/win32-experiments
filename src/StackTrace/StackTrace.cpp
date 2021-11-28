@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Windows.h>
 #include <vector>
+#include <memory>
 #include <algorithm>
 #include <format>
 #include <dbghelp.h>
@@ -33,7 +34,7 @@ void PrintStackWalk64(const unsigned skipFrameCount)
     symbol->MaxNameLen = MaxFunctionNameLength;
 
     // https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/ns-dbghelp-stackframe64
-    STACKFRAME64        stack{ 0 };
+    STACKFRAME64 stack{ 0 };
     stack.AddrPC.Offset = context.Rip;
     stack.AddrPC.Mode = AddrModeFlat;
     stack.AddrStack.Offset = context.Rsp;
@@ -122,6 +123,7 @@ void PrintStackCpp(const unsigned skipFrameCount)
     }
 
     constexpr unsigned MaxFunctionNameLength = 256; // 255 + 1 terminating null
+    // Don't use a smart pointer typed as SYMBOL_INFO, as memory would be leaked
     std::vector<std::byte> symbolInfoBytes(sizeof(SYMBOL_INFO) + MaxFunctionNameLength * sizeof(char));
     SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(&symbolInfoBytes[0]);
     symbol->MaxNameLen = MaxFunctionNameLength;
@@ -215,8 +217,8 @@ void PrintStack()
 
 void Blah()
 {
-    PrintStackWalk64(0);
-    //PrintStackCpp(0);
+    //PrintStackWalk64(0);
+    PrintStackCpp(0);
     //PrintStack();
     //PrintStackTrace();
 }
