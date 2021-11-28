@@ -11,7 +11,7 @@
 template<class T, class S>
 using is_string = std::is_same<T, typename S::value_type>;
 
-template<typename STR_T, typename STR_V = STR_T::value_type>
+template<typename STR_T>
 STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName)
 {
     static_assert(std::is_same<std::basic_string<char>, STR_T>::value || std::is_same<std::basic_string<wchar_t>, STR_T>::value, __FUNCTION__ "(): STR_T must be either a std::string or std::wstring");
@@ -25,7 +25,7 @@ STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName)
         FORMAT_MESSAGE_IGNORE_INSERTS |
         (moduleHandle ? FORMAT_MESSAGE_FROM_HMODULE : 0);
 
-    if (std::is_same<STR_V, char>::value)
+    if (std::is_same<STR_T::value_type, char>::value)
     {
         FormatMessageA(
             flags,
@@ -55,7 +55,7 @@ STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName)
     if (messageBuffer == nullptr)
         return STR_T();
 
-    STR_T msg((STR_V*)messageBuffer);
+    STR_T msg(static_cast<STR_T::value_type*>(messageBuffer));
     LocalFree(messageBuffer);
 
     return msg;
@@ -234,8 +234,9 @@ void ThrowWin32Error(const DWORD errorCode)
 
 int main()
 {
-    //std::wstring s = TranslateErrorCode<std::wstring>(5, L"");
-    ErrorUtilW::TranslateErrorCode(5, L"");
+    std::wstring s = TranslateErrorCode<std::wstring>(5, L"");
+    std::string s2 = TranslateErrorCode<std::string>(5, L"");
+    //ErrorUtilW::TranslateErrorCode(5, L"");
 
     //std::wcout << GetErrorCodeAsWString(5) << std::endl;
     LastErrorToSystemError(ERROR_ACCESS_DENIED);
