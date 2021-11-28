@@ -111,24 +111,24 @@ void PrintStackCpp(const unsigned skipFrameCount)
     unsigned short frames = RtlCaptureStackBackTrace(0, 100, stack, nullptr);
     if (frames == 0)
     {
-        std::cerr << "PrintStackCpp() did not capture any frames\n";
+        std::wcerr << L"PrintStackCpp() did not capture any frames\n";
         return;
     }
 
     HANDLE process = GetCurrentProcess();
     if (!SymInitialize(process, nullptr, true))
     {
-        std::cerr << "SymInitialize() failed\n";
+        std::wcerr << L"SymInitialize() failed\n";
         return;
     }
 
     constexpr unsigned MaxFunctionNameLength = 256; // 255 + 1 terminating null
     // Don't use a smart pointer typed as SYMBOL_INFO, as memory would be leaked
-    std::vector<std::byte> symbolInfoBytes(sizeof(SYMBOL_INFO) + MaxFunctionNameLength * sizeof(char));
-    SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(&symbolInfoBytes[0]);
+    std::vector<std::byte> symbolInfoBytes(sizeof(SYMBOL_INFOW) + MaxFunctionNameLength * sizeof(wchar_t));
+    SYMBOL_INFOW* symbol = reinterpret_cast<SYMBOL_INFOW*>(&symbolInfoBytes[0]);
     symbol->MaxNameLen = MaxFunctionNameLength;
-    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-    IMAGEHLP_LINE64 line{ .SizeOfStruct = sizeof(IMAGEHLP_LINE64) };
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFOW);
+    IMAGEHLP_LINEW64 line{ .SizeOfStruct = sizeof(IMAGEHLP_LINEW64) };
 
     // Skip logging the first frame; it's just this function and we don't care about it
     for (unsigned i = 1; i < frames; i++)
@@ -137,31 +137,31 @@ void PrintStackCpp(const unsigned skipFrameCount)
             continue;
 
         const DWORD64 address = reinterpret_cast<DWORD64>(stack[i]);
-        if (!SymFromAddr(process, address, 0, symbol))
+        if (!SymFromAddrW(process, address, 0, symbol))
         {
             std::cerr << "SymFromAddr() failed\n";
             continue;
         }
-        if (DWORD displacement; !SymGetLineFromAddr64(process, address, &displacement, &line))
+        if (DWORD displacement; !SymGetLineFromAddrW64(process, address, &displacement, &line))
         {
-            std::cerr << "SymGetLineFromAddr64() failed\n";
+            std::wcerr << "SymGetLineFromAddr64() failed\n";
             continue;
         }
         // Skip logging external frames
-        if (std::string_view(symbol->Name) == "invoke_main")
+        if (std::wstring_view(symbol->Name) == L"invoke_main")
             break;
 
-        std::string undecoratedName(MaxFunctionNameLength, '\0');
-        const bool undecoratedSuccessfully = UnDecorateSymbolName(
+        std::wstring undecoratedName(MaxFunctionNameLength, '\0');
+        const bool undecoratedSuccessfully = UnDecorateSymbolNameW(
             symbol->Name, 
             &undecoratedName[0], 
             static_cast<DWORD>(undecoratedName.size()), 
             UNDNAME_COMPLETE
         );
-        std::cout << std::format(
-            "{}() -> {}(): {:#X} in {}:{}\n",
+        std::wcout << std::format(
+            L"{}() -> {}(): {:#X} in {}:{}\n",
             symbol->Name,
-            undecoratedSuccessfully ? undecoratedName : "<unknown>",
+            undecoratedSuccessfully ? undecoratedName : L"<unknown>",
             symbol->Address,
             line.FileName,
             line.LineNumber
@@ -169,7 +169,7 @@ void PrintStackCpp(const unsigned skipFrameCount)
     }
 
     if (!SymCleanup(process))
-        std::cerr << "SymCleanup() failed\n";
+        std::wcerr << L"SymCleanup() failed\n";
 }
 
 
