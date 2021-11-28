@@ -10,9 +10,11 @@
 #pragma comment(lib, "dbghelp.lib")
 
 // See https://stackoverflow.com/questions/6205981/windows-c-stack-trace-from-a-running-app
+// https://docs.microsoft.com/en-us/windows/win32/debug/using-dbghelp
 // https://stackoverflow.com/questions/590160/how-to-log-stack-frames-with-windows-x64
 // https://stackoverflow.com/questions/136752/how-do-you-make-stackwalk64-work-successfully-on-x64?rq=1
 // https://stackoverflow.com/questions/5705650/stackwalk64-on-windows-get-symbol-name
+// https://docs.microsoft.com/en-us/windows/win32/debug/retrieving-symbol-information-by-address
 void PrintStackWalk64(const unsigned skipFrameCount)
 {
     // https://docs.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-syminitialize
@@ -116,6 +118,7 @@ void PrintStackWalk64(const unsigned skipFrameCount)
 void PrintStackCpp(const unsigned skipFrameCount)
 {
     void* stack[100];
+    // https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-rtlcapturestackbacktrace
     unsigned short frames = RtlCaptureStackBackTrace(0, 100, stack, nullptr);
     if (frames == 0)
     {
