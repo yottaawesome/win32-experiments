@@ -122,7 +122,7 @@ void PrintStackCpp(const unsigned skipFrameCount)
     }
 
     constexpr unsigned MaxFunctionNameLength = 256; // 255 + 1 terminating null
-    std::vector<std::byte> symbolInfoBytes(sizeof(SYMBOL_INFO) + (MaxFunctionNameLength) * sizeof(char));
+    std::vector<std::byte> symbolInfoBytes(sizeof(SYMBOL_INFO) + MaxFunctionNameLength * sizeof(char));
     SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(&symbolInfoBytes[0]);
     symbol->MaxNameLen = MaxFunctionNameLength;
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
