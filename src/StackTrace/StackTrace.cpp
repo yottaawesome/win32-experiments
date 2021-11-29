@@ -24,7 +24,6 @@ void PrintStackWalk64(const unsigned skipFrameCount)
         std::wcerr << "SymInitialize() failed\n";
         return;
     }
-
     // https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-rtlcapturecontext
     CONTEXT context;
     RtlCaptureContext(&context);
@@ -119,7 +118,8 @@ void PrintStackCpp(const unsigned skipFrameCount)
 {
     void* stack[100];
     // https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-rtlcapturestackbacktrace
-    unsigned short frames = RtlCaptureStackBackTrace(0, 100, stack, nullptr);
+    // Skip logging the first frame; it's just this function and we don't care about it
+    unsigned short frames = RtlCaptureStackBackTrace(1 + skipFrameCount, 100, stack, nullptr);
     if (frames == 0)
     {
         std::wcerr << L"PrintStackCpp() did not capture any frames\n";
@@ -141,12 +141,8 @@ void PrintStackCpp(const unsigned skipFrameCount)
     symbol->SizeOfStruct = sizeof(SYMBOL_INFOW);
     IMAGEHLP_LINEW64 line{ .SizeOfStruct = sizeof(IMAGEHLP_LINEW64) };
 
-    // Skip logging the first frame; it's just this function and we don't care about it
-    for (unsigned i = 1; i < frames; i++)
+    for (unsigned i = 0; i < frames; i++)
     {
-        if (skipFrameCount >= i)
-            continue;
-
         const DWORD64 address = reinterpret_cast<DWORD64>(stack[i]);
         if (!SymFromAddrW(process, address, 0, symbol))
         {
