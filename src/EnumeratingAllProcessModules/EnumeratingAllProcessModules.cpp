@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 #include <windows.h>
+#include <winnt.h>
 #include <tchar.h>
 #include <stdio.h>
 #include <psapi.h>
@@ -69,9 +70,9 @@ void AllProcesses()
     DWORD cProcesses = cbNeeded / sizeof(DWORD);
 
     // Print the names of the modules for each process.
-    for (int i = 0; i < cProcesses; i++) try
+    for (const DWORD process : aProcesses) try
     {
-        PrintModules(aProcesses[i]);
+        PrintModules(process);
     }
     catch (const std::exception& ex)
     {
@@ -81,6 +82,8 @@ void AllProcesses()
 
 int main(int argc, char* args[])
 {
+    __fastfail(FAST_FAIL_UNSAFE_REGISTRY_ACCESS);
+
     try
     {
         AllProcesses();

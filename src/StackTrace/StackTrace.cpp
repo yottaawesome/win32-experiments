@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <format>
 #include <dbghelp.h>
+#include <winnt.h>
 #include "StackTracer.h"
 
 #pragma comment(lib, "dbghelp.lib")
