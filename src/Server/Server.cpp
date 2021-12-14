@@ -306,7 +306,7 @@ BOOL SearchTokenGroupsForSID(HANDLE hToken)
 
 void Logon()
 {
-    HANDLE hToken;
+    HANDLE hToken = nullptr;
 
     //SYSTEM:NT AUTHORITY -> LocalSystem :: Only services can run with this user
     //LocalService:NT AUTHORITY -> LocalService :: https://docs.microsoft.com/en-us/windows/win32/services/localservice-account. Can only be logged on via a process running in the contect of SYSTEM.
@@ -315,13 +315,13 @@ void Logon()
     if (LogonUser(L"SYSTEM", L"NT AUTHORITY", NULL, LOGON32_LOGON_SERVICE, LOGON32_PROVIDER_DEFAULT, &hToken))
     {
         std::wcout << L"Succeeded" << std::endl;
+        CloseHandle(hToken);
     }
     else
     {
         std::wcout << L"Failed " << GetLastError() << std::endl;
     }
 
-    CloseHandle(hToken);
 }
 
 void Logon2()
