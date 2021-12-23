@@ -6,7 +6,7 @@ This repo is to experiment with Win32 code.
 
 ## Building
 
-You'll need Visual Studio 2022 Community Edition or above with the _Desktop development with C++_ workload installed. Some samples use [boost](https://www.boost.org/) and [node](https://nodejs.org/en/). You can either configure your environment to have boost (e.g. via [vcpkg](https://vcpkg.io/)) and node or remove these samples from the solution file if you don't want them.
+You'll need Visual Studio 2022 Community Edition or above with the _Desktop development with C++_ workload installed. Some samples use [boost](https://www.boost.org/) and [node](https://nodejs.org/en/) (Visual Studio 2019 will also probably work). You can either configure your environment to have boost (e.g. via [vcpkg](https://vcpkg.io/)) and node or remove these samples from the solution file if you don't want them.
 
 ## Considerations
 
