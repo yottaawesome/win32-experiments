@@ -12,7 +12,7 @@ You'll need Visual Studio 2022 Community Edition or above with the _Desktop deve
 
 The code is mostly adapted from existing MSDN samples or StackOverflow answers, with some minor changes and the occasional bugfix, as some MSDN samples do not even compile or have memory leaks. As such, it should not be assumed to be production quality and may suffer from bugs or other issues, such as lack of error checking, intermingling of C and C++ IO, and security/deprecation problems. There may also be better ways of accomplishing the same functionality using other APIs or libraries. This repo is merely intended to demonstrate and test general Win32 concepts and API use in a quick and dirty fashion, without necessarily getting bogged down in the details (although some samples may be more elaborate then others). Security and robustness has not been considered for these samples, so make sure to review the relevant MSDN API entry for any hidden gotchas.
 
-Some samples may use features only recently added in Windows, so no guarantee is given that all samples will run on all versions of Windows.
+Some samples may use features only recently added in Windows, so no guarantee is given that all samples will run on all versions of Windows. Only x64 builds of the samples have been tested and run, the status and behaviour of x86 builds of the samples is unknown.
 
 ## Additional resources
 
