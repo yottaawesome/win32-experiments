@@ -6,7 +6,7 @@ This repo is just to test out some experimental Win32 code.
 
 ## Considerations
 
-The code is mostly adapted from existing MSDN samples or StackOverflow answers, with some minor changes and the occasional bugfix, as some MSDN samples do not even compile or have memory leaks. The code here is not production quality and may suffer from bugs or other issues, such as lack of error checking and intermingling of C and C++ IO, and there may be better ways of accomplishing the same functionality. This repo is merely intended to demonstrate and test general Win32 concepts and API use in a quick and dirty fashion, without necessarily getting bogged down in the details (although some samples may be more elaborate then others). Security and robustness has not been considered for these samples, so make sure to review the relevant MSDN API entry for any hidden gotchas.
+The code is mostly adapted from existing MSDN samples or StackOverflow answers, with some minor changes and the occasional bugfix, as some MSDN samples do not even compile or have memory leaks. As such, it's not production quality and may suffer from bugs or other issues, such as lack of error checking, intermingling of C and C++ IO, and security/deprecation problems. There may also be better ways of accomplishing the same functionality using other APIs or libraries. This repo is merely intended to demonstrate and test general Win32 concepts and API use in a quick and dirty fashion, without necessarily getting bogged down in the details (although some samples may be more elaborate then others). Security and robustness has not been considered for these samples, so make sure to review the relevant MSDN API entry for any hidden gotchas.
 
 ## Additional resources
 
