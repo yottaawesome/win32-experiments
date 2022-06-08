@@ -11,8 +11,8 @@
 template<class T, class S>
 using is_string = std::is_same<T, typename S::value_type>;
 
-template<typename STR_T>
-STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName)
+template<typename STR_T> requires (std::is_same<std::basic_string<char>, STR_T>::value || std::is_same<std::basic_string<wchar_t>, STR_T>::value)
+STR_T TranslateErrorCode(const DWORD errorCode, const std::wstring& moduleName) 
 {
     static_assert(std::is_same<std::basic_string<char>, STR_T>::value || std::is_same<std::basic_string<wchar_t>, STR_T>::value, __FUNCTION__ "(): STR_T must be either a std::string or std::wstring");
 
@@ -234,14 +234,14 @@ void ThrowWin32Error(const DWORD errorCode)
 
 int main()
 {
-    std::wstring s = TranslateErrorCode<std::wstring>(5, L"");
-    std::string s2 = TranslateErrorCode<std::string>(5, L"");
-    //ErrorUtilW::TranslateErrorCode(5, L"");
+    //std::wstring s = TranslateErrorCode<std::wstring>(5, L"");
+    //std::string s2 = TranslateErrorCode<std::string>(5, L"");
+    ////ErrorUtilW::TranslateErrorCode(5, L"");
 
-    //std::wcout << GetErrorCodeAsWString(5) << std::endl;
-    LastErrorToSystemError(ERROR_ACCESS_DENIED);
-    LastWinHttpErrorToSystemError(ERROR_WINHTTP_CANNOT_CALL_AFTER_OPEN);
-    ThrowWin32Error(ERROR_READ_FAULT);
+    ////std::wcout << GetErrorCodeAsWString(5) << std::endl;
+    //LastErrorToSystemError(ERROR_ACCESS_DENIED);
+    //LastWinHttpErrorToSystemError(ERROR_WINHTTP_CANNOT_CALL_AFTER_OPEN);
+    //ThrowWin32Error(ERROR_READ_FAULT);
 
     return 0;
 }

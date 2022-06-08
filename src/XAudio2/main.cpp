@@ -23,6 +23,9 @@
 
 //#pragma comment(lib, "XAUDIO2_9.lib")
 
+// https://docs.microsoft.com/en-us/windows/win32/xaudio2/how-to--use-engine-callbacks
+// https://docs.microsoft.com/en-us/windows/win32/xaudio2/how-to--use-source-voice-callbacks
+// https://docs.microsoft.com/en-us/windows/win32/xaudio2/callbacks
 class VoiceCallback : public IXAudio2VoiceCallback
 {
 public:
