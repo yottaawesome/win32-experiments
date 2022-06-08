@@ -215,9 +215,10 @@ int main(int argc, char* argv)
             WLAN_BSS_ENTRY* bssEntry = &pWlanBssList->wlanBssEntries[bssIndex];            
             std::string ssidForBss(reinterpret_cast<char*>(bssEntry->dot11Ssid.ucSSID));
             std::wcerr << std::format(
-                L"BSS uLinkQuality on SSID {}: {}\n",
+                L"BSS quality metrics for SSID {}\nu--LinkQuality: {}\n--lRssi: {}\n",
                 ConvertString(ssidForBss),
-                bssEntry->uLinkQuality
+                bssEntry->uLinkQuality,
+                bssEntry->lRssi
             );
         }
     }
