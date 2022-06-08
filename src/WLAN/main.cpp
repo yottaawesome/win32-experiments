@@ -122,7 +122,7 @@ int main(int argc, char* argv)
     );
     if (status != ERROR_SUCCESS)
     {
-        std::wcerr << std::format(L"WlanOpenHandle() format: {}\n", status);
+        std::wcerr << std::format(L"WlanOpenHandle() failed: {}\n", status);
         return status;
     }
     UniquePtrWlanHandle wlanSession = UniquePtrWlanHandle(wlanHandle);
@@ -164,7 +164,7 @@ int main(int argc, char* argv)
             std::string ssid = std::string(reinterpret_cast<char*>(pConnectionAttributes->wlanAssociationAttributes.dot11Ssid.ucSSID));
             connectionAttributes = UniquePtrWlanMemory(pConnectionAttributes);
             std::wcerr << std::format(
-                L"Signal Quality on {} (ssid {}) is {}\n",
+                L"Signal Quality on {} (SSID {}) is {}\n",
                 GuidToStringW(interfaceInfo->InterfaceGuid),
                 ConvertString(ssid),
                 pConnectionAttributes->wlanAssociationAttributes.wlanSignalQuality
