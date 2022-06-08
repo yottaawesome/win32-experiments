@@ -69,8 +69,8 @@ int main(int argc, char* argv)
 
     for (DWORD index = 0; index < pIfList->dwNumberOfItems; index++)
     {
-        //if (pIfList->InterfaceInfo[index].isState != wlan_interface_state_connected)
-        //    continue;
+        if (pIfList->InterfaceInfo[index].isState != wlan_interface_state_connected)
+            continue;
 
         PWLAN_INTERFACE_INFO interfaceInfo = &pIfList->InterfaceInfo[index];
 
@@ -91,6 +91,11 @@ int main(int argc, char* argv)
         if (status == ERROR_SUCCESS)
         {
             connectionAttributes = UniquePtrWlanMemory(pConnectionAttributes);
+            std::wcerr << std::format(
+                L"Signal Quality on {} is {}\n",
+                GuidToStringW(interfaceInfo->InterfaceGuid),
+                pConnectionAttributes->wlanAssociationAttributes.wlanSignalQuality
+            );
         }
         else
         {
