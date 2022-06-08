@@ -13,7 +13,9 @@ struct WlanHandleDeleter
 {
     void operator()(HANDLE handle)
     {
-        WlanCloseHandle(handle, 0);
+        // https://docs.microsoft.com/en-us/windows/win32/api/wlanapi/nf-wlanapi-wlanclosehandle
+        if (DWORD status = WlanCloseHandle(handle, 0) != ERROR_SUCCESS)
+            std::wcerr << std::format(L"WlanCloseHandle() failed: {}\n", status);
     }
 };
 using UniquePtrWlanHandle = std::unique_ptr<std::remove_pointer<HANDLE>::type, WlanHandleDeleter>;
@@ -22,6 +24,7 @@ struct WlanMemorDeleter
 {
     void operator()(void* handle)
     {
+        // https://docs.microsoft.com/en-us/windows/win32/api/wlanapi/nf-wlanapi-wlanfreememory
         WlanFreeMemory(handle);
     }
 };
