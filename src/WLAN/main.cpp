@@ -164,7 +164,7 @@ int main(int argc, char* argv)
         UniquePtrWlanMemory connectionAttributes;
         if (status == ERROR_SUCCESS)
         {
-            std::string ssid = std::string(reinterpret_cast<char*>(pConnectionAttributes->wlanAssociationAttributes.dot11Ssid.ucSSID));
+            std::string ssid(reinterpret_cast<char*>(pConnectionAttributes->wlanAssociationAttributes.dot11Ssid.ucSSID));
             connectionAttributes = UniquePtrWlanMemory(pConnectionAttributes);
             std::wcerr << std::format(
                 L"Signal Quality on {} (SSID {}) is {}\n",
@@ -213,7 +213,7 @@ int main(int argc, char* argv)
         for (DWORD bssIndex = 0; bssIndex < pWlanBssList->dwNumberOfItems; bssIndex++)
         {
             WLAN_BSS_ENTRY* bssEntry = &pWlanBssList->wlanBssEntries[bssIndex];            
-            std::string ssidForBss = std::string(reinterpret_cast<char*>(bssEntry->dot11Ssid.ucSSID));
+            std::string ssidForBss(reinterpret_cast<char*>(bssEntry->dot11Ssid.ucSSID));
             std::wcerr << std::format(
                 L"BSS uLinkQuality on SSID {}: {}\n",
                 ConvertString(ssidForBss),
