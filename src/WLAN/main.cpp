@@ -136,7 +136,7 @@ int main(int argc, char* argv)
     status = WlanEnumInterfaces(wlanSession.get(), nullptr, &pIfList);
     if (status != ERROR_SUCCESS)
     {
-        std::wcerr << std::format(L"WlanEnumInterfaces() format: {}\n", status);
+        std::wcerr << std::format(L"WlanEnumInterfaces() failed: {}\n", status);
         return status;
     }
     UniquePtrWlanMemory interfaceList = UniquePtrWlanMemory(pIfList);
