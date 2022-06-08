@@ -210,8 +210,10 @@ int main(int argc, char* argv)
         for (DWORD bssIndex = 0; bssIndex < pWlanBssList->dwNumberOfItems; bssIndex++)
         {
             WLAN_BSS_ENTRY* bssEntry = &pWlanBssList->wlanBssEntries[bssIndex];            
+            std::string ssidForBss = std::string(reinterpret_cast<char*>(bssEntry->dot11Ssid.ucSSID));
             std::wcerr << std::format(
-                L"BSS uLinkQuality: {}\n",
+                L"BSS uLinkQuality on SSID {}: {}\n",
+                ConvertString(ssidForBss),
                 bssEntry->uLinkQuality
             );
         }
