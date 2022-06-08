@@ -1,5 +1,6 @@
 #include <iostream>
 #include <format>
+#include <stdexcept>
 #include <memory>
 #include <source_location>
 #include <Windows.h>
@@ -34,6 +35,76 @@ std::wstring GuidToStringW(const GUID& guid)
         throw std::runtime_error("StringFromGUID2() failed");
     stringGuid.resize(numberOfChars - 1);
     return stringGuid;
+}
+
+std::string ConvertString(const std::wstring_view wstr)
+{
+    if (wstr.empty())
+        return "";
+
+    // https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte
+    // Returns the size in bytes, this differs from MultiByteToWideChar, which returns the size in characters
+    const int sizeInBytes = WideCharToMultiByte(
+        CP_UTF8,										// CodePage
+        WC_NO_BEST_FIT_CHARS,							// dwFlags 
+        &wstr[0],										// lpWideCharStr
+        static_cast<int>(wstr.size()),					// cchWideChar 
+        nullptr,										// lpMultiByteStr
+        0,												// cbMultiByte
+        nullptr,										// lpDefaultChar
+        nullptr											// lpUsedDefaultChar
+    );
+    if (sizeInBytes == 0)
+        throw std::runtime_error("WideCharToMultiByte() [1] failed");
+
+    std::string strTo(sizeInBytes / sizeof(char), '\0');
+    const int status = WideCharToMultiByte(
+        CP_UTF8,										// CodePage
+        WC_NO_BEST_FIT_CHARS,							// dwFlags 
+        &wstr[0],										// lpWideCharStr
+        static_cast<int>(wstr.size()),					// cchWideChar 
+        &strTo[0],										// lpMultiByteStr
+        static_cast<int>(strTo.size() * sizeof(char)),	// cbMultiByte
+        nullptr,										// lpDefaultChar
+        nullptr											// lpUsedDefaultChar
+    );
+    if (status == 0)
+        throw std::runtime_error("WideCharToMultiByte() [2] failed");
+
+    return strTo;
+}
+
+std::wstring ConvertString(const std::string_view str)
+{
+    if (str.empty())
+        return L"";
+
+    // https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-multibytetowidechar
+    // Returns the size in characters, this differs from WideCharToMultiByte, which returns the size in bytes
+    const int sizeInCharacters = MultiByteToWideChar(
+        CP_UTF8,									// CodePage
+        0,											// dwFlags
+        &str[0],									// lpMultiByteStr
+        static_cast<int>(str.size() * sizeof(char)),// cbMultiByte
+        nullptr,									// lpWideCharStr
+        0											// cchWideChar
+    );
+    if (sizeInCharacters == 0)
+        throw std::runtime_error("MultiByteToWideChar() [1] failed");
+
+    std::wstring wstrTo(sizeInCharacters, '\0');
+    const int status = MultiByteToWideChar(
+        CP_UTF8,									// CodePage
+        0,											// dwFlags
+        &str[0],									// lpMultiByteStr
+        static_cast<int>(str.size() * sizeof(char)),	// cbMultiByte
+        &wstrTo[0],									// lpWideCharStr
+        static_cast<int>(wstrTo.size())				// cchWideChar
+    );
+    if (status == 0)
+        throw std::runtime_error("MultiByteToWideChar() [2] failed");
+
+    return wstrTo;
 }
 
 int main(int argc, char* argv)
@@ -90,10 +161,12 @@ int main(int argc, char* argv)
         UniquePtrWlanMemory connectionAttributes;
         if (status == ERROR_SUCCESS)
         {
+            std::string ssid = std::string(reinterpret_cast<char*>(pConnectionAttributes->wlanAssociationAttributes.dot11Ssid.ucSSID));
             connectionAttributes = UniquePtrWlanMemory(pConnectionAttributes);
             std::wcerr << std::format(
-                L"Signal Quality on {} is {}\n",
+                L"Signal Quality on {} (ssid {}) is {}\n",
                 GuidToStringW(interfaceInfo->InterfaceGuid),
+                ConvertString(ssid),
                 pConnectionAttributes->wlanAssociationAttributes.wlanSignalQuality
             );
         }
