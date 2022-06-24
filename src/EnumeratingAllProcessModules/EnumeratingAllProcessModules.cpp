@@ -16,6 +16,47 @@ struct HandleDeleter final
 };
 using HandleUniquePtr = std::unique_ptr<std::remove_pointer<HANDLE>::type, HandleDeleter>;
 
+template<typename...Args>
+void Log(const std::wstring_view str, const Args&... arg)
+{
+    std::wcout << std::vformat(str, std::make_wformat_args(arg...)) << std::endl;
+}
+
+void PrintProcessTime(const DWORD processID)
+{
+    HandleUniquePtr hProcess(OpenProcess(
+        PROCESS_QUERY_INFORMATION,
+        false,
+        processID
+    ));
+    if (!hProcess)
+    {
+        Log(L"OpenProcess() failed:  {}", GetLastError());
+        return;
+    }
+
+    FILETIME ftCreationTime{ 0 };
+    FILETIME ftExitTime{ 0 };
+    FILETIME ftKernelTime{ 0 };
+    FILETIME ftUserTime{ 0 };
+
+    const bool success = GetProcessTimes(
+        hProcess.get(), 
+        &ftCreationTime, 
+        &ftExitTime, 
+        &ftKernelTime, 
+        &ftUserTime
+    );
+    if (!success)
+    {
+        Log(L"GetProcessTimes() failed:  {}", GetLastError());
+        return;
+    }
+    size_t kernelTime = ULARGE_INTEGER{ ftKernelTime.dwLowDateTime, ftKernelTime.dwHighDateTime }.QuadPart;
+    size_t userTime = ULARGE_INTEGER{ ftUserTime.dwLowDateTime, ftUserTime.dwHighDateTime }.QuadPart;
+    Log(L"Process ID: {}, process time: {}", processID, userTime + kernelTime);
+}
+
 // https://docs.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-enumprocessmodules
 int PrintModules(DWORD processID)
 {
@@ -72,7 +113,8 @@ void AllProcesses()
     // Print the names of the modules for each process.
     for (const DWORD process : aProcesses) try
     {
-        PrintModules(process);
+        PrintProcessTime(process);
+        //PrintModules(process);
     }
     catch (const std::exception& ex)
     {
@@ -82,7 +124,7 @@ void AllProcesses()
 
 int main(int argc, char* args[])
 {
-    __fastfail(FAST_FAIL_UNSAFE_REGISTRY_ACCESS);
+    //__fastfail(FAST_FAIL_UNSAFE_REGISTRY_ACCESS);
 
     try
     {
