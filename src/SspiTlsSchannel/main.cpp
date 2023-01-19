@@ -630,16 +630,9 @@ cleanup:
 
 /*****************************************************************************/
 static SECURITY_STATUS CreateCredentials(LPSTR pszUser, PCredHandle phCreds)
-{ //                                                in                     out
-    TimeStamp        tsExpiry;
-    SECURITY_STATUS  Status;
-    DWORD            cSupportedAlgs = 0;
-    ALG_ID           rgbSupportedAlgs[16];
-    PCCERT_CONTEXT   pCertContext = NULL;
-
-
+{
     // Open the "MY" certificate store, where IE stores client certificates.
-        // Windows maintains 4 stores -- MY, CA, ROOT, SPC.
+    // Windows maintains 4 stores -- MY, CA, ROOT, SPC.
     if (hMyCertStore == NULL)
     {
         hMyCertStore = CertOpenSystemStoreA(0, "MY");
@@ -653,23 +646,27 @@ static SECURITY_STATUS CreateCredentials(LPSTR pszUser, PCredHandle phCreds)
 
     // If a user name is specified, then attempt to find a client
     // certificate. Otherwise, just create a NULL credential.
+    PCCERT_CONTEXT   pCertContext = NULL;
     if (pszUser)
     {
         // Find client certificate. Note that this sample just searches for a
         // certificate that contains the user name somewhere in the subject name.
         // A real application should be a bit less casual.
-        pCertContext = CertFindCertificateInStore(hMyCertStore,                     // hCertStore
+        pCertContext = CertFindCertificateInStore(
+            hMyCertStore,                     // hCertStore
             X509_ASN_ENCODING,             // dwCertEncodingType
             0,                                             // dwFindFlags
             CERT_FIND_SUBJECT_STR_A,// dwFindType
             pszUser,                         // *pvFindPara
-            NULL);                                 // pPrevCertContext
+            NULL
+        );                                 // pPrevCertContext
 
 
         if (pCertContext == NULL)
         {
             printf("**** Error 0x%x returned by CertFindCertificateInStore\n", GetLastError());
-            if (GetLastError() == CRYPT_E_NOT_FOUND) printf("CRYPT_E_NOT_FOUND - property doesn't exist\n");
+            if (GetLastError() == CRYPT_E_NOT_FOUND) 
+                printf("CRYPT_E_NOT_FOUND - property doesn't exist\n");
             return SEC_E_NO_CREDENTIALS;
         }
     }
@@ -689,7 +686,10 @@ static SECURITY_STATUS CreateCredentials(LPSTR pszUser, PCredHandle phCreds)
 
     SchannelCred.grbitEnabledProtocols = dwProtocol;
 
-    if (aiKeyExch) rgbSupportedAlgs[cSupportedAlgs++] = aiKeyExch;
+    DWORD            cSupportedAlgs = 0;
+    ALG_ID           rgbSupportedAlgs[16];
+    if (aiKeyExch) 
+        rgbSupportedAlgs[cSupportedAlgs++] = aiKeyExch;
 
     if (cSupportedAlgs)
     {
@@ -709,8 +709,11 @@ static SECURITY_STATUS CreateCredentials(LPSTR pszUser, PCredHandle phCreds)
     SchannelCred.dwFlags |= SCH_CRED_MANUAL_CRED_VALIDATION;
 
 
+    SECURITY_STATUS  Status;
+    TimeStamp        tsExpiry;
     // Create an SSPI credential.
-    Status = AcquireCredentialsHandleA(NULL,                 // Name of principal    
+    Status = AcquireCredentialsHandleA(
+        NULL,                 // Name of principal    
         (LPSTR)UNISP_NAME_A,         // Name of package
         SECPKG_CRED_OUTBOUND, // Flags indicating use
         NULL,                 // Pointer to logon ID
@@ -720,10 +723,12 @@ static SECURITY_STATUS CreateCredentials(LPSTR pszUser, PCredHandle phCreds)
         phCreds,              // (out) Cred Handle
         &tsExpiry);          // (out) Lifetime (optional)
 
-    if (Status != SEC_E_OK) printf("**** Error 0x%x returned by AcquireCredentialsHandle\n", Status);
+    if (Status != SEC_E_OK) 
+        printf("**** Error 0x%x returned by AcquireCredentialsHandle\n", Status);
 
     // cleanup: Free the certificate context. Schannel has already made its own copy.
-    if (pCertContext) CertFreeCertificateContext(pCertContext);
+    if (pCertContext) 
+        CertFreeCertificateContext(pCertContext);
 
     return Status;
 }
@@ -909,40 +914,47 @@ cleanup:
 /*****************************************************************************/
 static void GetNewClientCredentials(CredHandle* phCreds, CtxtHandle* phContext)
 {
-
-    CredHandle                                            hCreds;
     SecPkgContext_IssuerListInfoEx    IssuerListInfo;
-    PCCERT_CHAIN_CONTEXT                        pChainContext;
-    CERT_CHAIN_FIND_BY_ISSUER_PARA    FindByIssuerPara;
-    PCCERT_CONTEXT                                    pCertContext;
-    TimeStamp                                                tsExpiry;
-    SECURITY_STATUS                                    Status;
-
-
     // Read list of trusted issuers from schannel.
-    Status = g_pSSPI->QueryContextAttributes(phContext, SECPKG_ATTR_ISSUER_LIST_EX, (PVOID)&IssuerListInfo);
-    if (Status != SEC_E_OK) { printf("Error 0x%x querying issuer list info\n", Status); return; }
+    SECURITY_STATUS Status = g_pSSPI->QueryContextAttributes(
+        phContext, 
+        SECPKG_ATTR_ISSUER_LIST_EX, 
+        (PVOID)&IssuerListInfo
+    );
+    if (Status != SEC_E_OK) 
+    { 
+        printf("Error 0x%x querying issuer list info\n", Status); 
+        return; 
+    }
 
     // Enumerate the client certificates.
+    CERT_CHAIN_FIND_BY_ISSUER_PARA    FindByIssuerPara;
     ZeroMemory(&FindByIssuerPara, sizeof(FindByIssuerPara));
-
     FindByIssuerPara.cbSize = sizeof(FindByIssuerPara);
     FindByIssuerPara.pszUsageIdentifier = szOID_PKIX_KP_CLIENT_AUTH;
     FindByIssuerPara.dwKeySpec = 0;
     FindByIssuerPara.cIssuer = IssuerListInfo.cIssuers;
     FindByIssuerPara.rgIssuer = IssuerListInfo.aIssuers;
 
-    pChainContext = NULL;
-
-    while (TRUE)
+    PCCERT_CHAIN_CONTEXT pChainContext = NULL;
+    PCCERT_CONTEXT pCertContext;
+    CredHandle hCreds;
+    TimeStamp tsExpiry;
+    while (true)
     {   // Find a certificate chain.
-        pChainContext = CertFindChainInStore(hMyCertStore,
+        pChainContext = CertFindChainInStore(
+            hMyCertStore,
             X509_ASN_ENCODING,
             0,
             CERT_CHAIN_FIND_BY_ISSUER,
             &FindByIssuerPara,
-            pChainContext);
-        if (pChainContext == NULL) { printf("Error 0x%x finding cert chain\n", GetLastError()); break; }
+            pChainContext
+        );
+        if (pChainContext == NULL) 
+        { 
+            printf("Error 0x%x finding cert chain\n", GetLastError()); 
+            break; 
+        }
 
         printf("\ncertificate chain found\n");
 
@@ -954,17 +966,23 @@ static void GetNewClientCredentials(CredHandle* phCreds, CtxtHandle* phContext)
         SchannelCred.cCreds = 1;
         SchannelCred.paCred = &pCertContext;
 
-        Status = AcquireCredentialsHandleA(NULL,                   // Name of principal
-            (LPSTR)UNISP_NAME_A,           // Name of package
+        Status = AcquireCredentialsHandleA(
+            NULL,                   // Name of principal
+            (LPSTR)UNISP_NAME_A,    // Name of package
             SECPKG_CRED_OUTBOUND,   // Flags indicating use
             NULL,                   // Pointer to logon ID
             &SchannelCred,          // Package specific data
             NULL,                   // Pointer to GetKey() func
             NULL,                   // Value to pass to GetKey()
             &hCreds,                // (out) Cred Handle
-            &tsExpiry);            // (out) Lifetime (optional)
+            &tsExpiry               // (out) Lifetime (optional)
+        );            
 
-        if (Status != SEC_E_OK) { printf("**** Error 0x%x returned by AcquireCredentialsHandle\n", Status); continue; }
+        if (Status != SEC_E_OK) 
+        { 
+            printf("**** Error 0x%x returned by AcquireCredentialsHandle\n", Status); 
+            continue; 
+        }
 
         printf("\nnew schannel credential created\n");
 
