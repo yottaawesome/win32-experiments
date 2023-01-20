@@ -100,6 +100,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sspi", "Sspi", "{A5B955FE-F
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SspiWinSockClient", "SspiWinSockClient\SspiWinSockClient.vcxproj", "{39B4FC8D-E87E-4B8E-BA94-E26A75A22468}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SspiWinSockServer", "SspiWinSockServer\SspiWinSockServer.vcxproj", "{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -404,6 +406,14 @@ Global
 		{39B4FC8D-E87E-4B8E-BA94-E26A75A22468}.Release|x64.Build.0 = Release|x64
 		{39B4FC8D-E87E-4B8E-BA94-E26A75A22468}.Release|x86.ActiveCfg = Release|Win32
 		{39B4FC8D-E87E-4B8E-BA94-E26A75A22468}.Release|x86.Build.0 = Release|Win32
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}.Debug|x64.ActiveCfg = Debug|x64
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}.Debug|x64.Build.0 = Debug|x64
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}.Debug|x86.ActiveCfg = Debug|Win32
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}.Debug|x86.Build.0 = Debug|Win32
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}.Release|x64.ActiveCfg = Release|x64
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}.Release|x64.Build.0 = Release|x64
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}.Release|x86.ActiveCfg = Release|Win32
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -448,6 +458,7 @@ Global
 		{3CD8D4AD-6073-4B53-A58C-3E165402F4A7} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{8DB51840-0E86-407D-8C17-CBBECA92BD18} = {A5B955FE-F529-4C8E-90E6-324041791A63}
 		{39B4FC8D-E87E-4B8E-BA94-E26A75A22468} = {A5B955FE-F529-4C8E-90E6-324041791A63}
+		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9} = {A5B955FE-F529-4C8E-90E6-324041791A63}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
