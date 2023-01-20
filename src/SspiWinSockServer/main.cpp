@@ -1,4 +1,4 @@
-// https://learn.microsoft.com/en-us/windows/win32/secauthn/using-sspi-with-a-windows-sockets-server
+// Adapted from https://learn.microsoft.com/en-us/windows/win32/secauthn/using-sspi-with-a-windows-sockets-server
 //--------------------------------------------------------------------
 //  This is a server-side SSPI Windows Sockets program.
 
