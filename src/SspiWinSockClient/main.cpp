@@ -25,7 +25,7 @@
 #pragma comment(lib, "Secur32.lib")
 
 CredHandle hCred;
-struct _SecHandle  hcText;
+SecHandle  hcText;
 
 //  The following #define statement must be changed. ServerName must
 //  be defined as the name of the computer running the server sample.
@@ -37,7 +37,7 @@ struct _SecHandle  hcText;
 BOOL ConnectAuthSocket(
     SOCKET* s,
     CredHandle* hCred,
-    struct _SecHandle* hcText);
+    SecHandle* hcText);
 BOOL DoAuthentication(SOCKET s);
 BOOL GenClientContext(
     BYTE* pIn,
@@ -47,16 +47,16 @@ BOOL GenClientContext(
     BOOL* pfDone,
     SEC_WCHAR* pszTarget,
     CredHandle* hCred,
-    struct _SecHandle* hcText);
+    SecHandle* hcText);
 PBYTE DecryptThis(
     PBYTE              pBuffer,
     LPDWORD            pcbMessage,
-    struct _SecHandle* hCtxt,
+    SecHandle* hCtxt,
     ULONG              cbSecurityTrailer);
 PBYTE VerifyThis(
     PBYTE   pBuffer,
     LPDWORD pcbMessage,
-    struct _SecHandle* hCtxt,
+    SecHandle* hCtxt,
     ULONG   cbMaxSignature);
 void PrintHexDump(
     DWORD length,
@@ -89,14 +89,14 @@ int main(int argc, char* argv[])
     PCHAR             pMessage;
     WSADATA           wsaData;
     CredHandle        hCred;
-    struct _SecHandle hCtxt;
+    SecHandle hCtxt;
     SECURITY_STATUS   ss;
     DWORD             cbRead;
     ULONG             cbMaxSignature;
     ULONG             cbSecurityTrailer;
     SecPkgContext_Sizes            SecPkgContextSizes;
     SecPkgContext_NegotiationInfo  SecPkgNegInfo;
-    BOOL DoAuthentication(SOCKET s);
+
 
     //-------------------------------------------------------------------
     //  Initialize the socket and the SSP security package.
@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
 BOOL ConnectAuthSocket(
     SOCKET* s,
     CredHandle* hCred,
-    struct _SecHandle* hcText)
+    SecHandle* hcText)
 {
     unsigned long  ulAddress;
     struct hostent* pHost;
@@ -350,7 +350,7 @@ BOOL GenClientContext(
     BOOL* pfDone,
     SEC_WCHAR* pszTarget,
     CredHandle* hCred,
-    struct _SecHandle* hcText)
+    SecHandle* hcText)
 {
     SECURITY_STATUS   ss;
     TimeStamp         Lifetime;
@@ -469,7 +469,7 @@ BOOL GenClientContext(
 PBYTE DecryptThis(
     PBYTE              pBuffer,
     LPDWORD            pcbMessage,
-    struct _SecHandle* hCtxt,
+    SecHandle* hCtxt,
     ULONG              cbSecurityTrailer)
 {
     SECURITY_STATUS   ss;
@@ -546,7 +546,7 @@ PBYTE DecryptThis(
 PBYTE VerifyThis(
     PBYTE   pBuffer,
     LPDWORD pcbMessage,
-    struct _SecHandle* hCtxt,
+    SecHandle* hCtxt,
     ULONG   cbMaxSignature)
 {
 

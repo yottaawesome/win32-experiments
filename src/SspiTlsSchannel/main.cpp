@@ -865,7 +865,8 @@ static LONG DisconnectFromServer(SOCKET Socket, PCredHandle phCreds, CtxtHandle*
     OutBuffer.pBuffers = OutBuffers;
     OutBuffer.ulVersion = SECBUFFER_VERSION;
 
-    Status = InitializeSecurityContextA(phCreds,
+    Status = InitializeSecurityContextA(
+        phCreds,
         phContext,
         NULL,
         dwSSPIFlags,
@@ -1238,7 +1239,8 @@ static SECURITY_STATUS PerformClientHandshake(SOCKET          Socket,        // 
     OutBuffer.pBuffers = OutBuffers;
     OutBuffer.ulVersion = SECBUFFER_VERSION;
 
-    scRet = InitializeSecurityContextA(phCreds,
+    scRet = InitializeSecurityContextA(
+        phCreds,
         NULL,
         pszServerName,
         dwSSPIFlags,
