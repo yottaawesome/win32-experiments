@@ -110,6 +110,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Memory", "Memory", "{790467
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VirtualAllocReserving", "VirtualAllocReserving\VirtualAllocReserving.vcxproj", "{BB394A00-C005-4311-8A81-65A5407D25C7}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GuardPages", "GuardPages\GuardPages.vcxproj", "{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -438,6 +440,14 @@ Global
 		{BB394A00-C005-4311-8A81-65A5407D25C7}.Release|x64.Build.0 = Release|x64
 		{BB394A00-C005-4311-8A81-65A5407D25C7}.Release|x86.ActiveCfg = Release|Win32
 		{BB394A00-C005-4311-8A81-65A5407D25C7}.Release|x86.Build.0 = Release|Win32
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}.Debug|x64.ActiveCfg = Debug|x64
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}.Debug|x64.Build.0 = Debug|x64
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}.Debug|x86.ActiveCfg = Debug|Win32
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}.Debug|x86.Build.0 = Debug|Win32
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}.Release|x64.ActiveCfg = Release|x64
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}.Release|x64.Build.0 = Release|x64
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}.Release|x86.ActiveCfg = Release|Win32
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -485,6 +495,7 @@ Global
 		{9BA04CA3-2AF3-49F3-8EB2-098BF75866D9} = {A5B955FE-F529-4C8E-90E6-324041791A63}
 		{CD3F662A-58EF-4DE5-BE75-3298A663DEF2} = {EE65B2BC-F2F4-4665-8E63-BA8364708F67}
 		{BB394A00-C005-4311-8A81-65A5407D25C7} = {790467AD-DA18-461B-BF5E-E309FE93517C}
+		{D92AE10A-3942-4A0C-99DE-C79B0A627BBE} = {790467AD-DA18-461B-BF5E-E309FE93517C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
