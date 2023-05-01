@@ -1,3 +1,4 @@
+// Adapted from https://learn.microsoft.com/en-us/windows/win32/seccrypto/example-c-program-listing-system-and-physical-stores
 #include <stdio.h>
 #include <windows.h>
 #include <Wincrypt.h>
