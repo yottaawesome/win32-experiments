@@ -116,6 +116,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PdhQuery", "PdhQuery\PdhQue
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BrowsePdhCounters", "BrowsePdhCounters\BrowsePdhCounters.vcxproj", "{089F4076-5788-46DD-972C-FFCF2A8C359E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CabinetExtract", "CabinetExtract\CabinetExtract.vcxproj", "{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -468,6 +470,14 @@ Global
 		{089F4076-5788-46DD-972C-FFCF2A8C359E}.Release|x64.Build.0 = Release|x64
 		{089F4076-5788-46DD-972C-FFCF2A8C359E}.Release|x86.ActiveCfg = Release|Win32
 		{089F4076-5788-46DD-972C-FFCF2A8C359E}.Release|x86.Build.0 = Release|Win32
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}.Debug|x64.ActiveCfg = Debug|x64
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}.Debug|x64.Build.0 = Debug|x64
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}.Debug|x86.ActiveCfg = Debug|Win32
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}.Debug|x86.Build.0 = Debug|Win32
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}.Release|x64.ActiveCfg = Release|x64
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}.Release|x64.Build.0 = Release|x64
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}.Release|x86.ActiveCfg = Release|Win32
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -518,6 +528,7 @@ Global
 		{7F2ED5D6-434B-4A81-84DA-CA5CAF7038A6} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{D1EC0CBD-5C8A-4AE2-92F1-CD969768921E} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{089F4076-5788-46DD-972C-FFCF2A8C359E} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
+		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
