@@ -120,6 +120,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CabinetExtract", "CabinetEx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CabinetCreate", "CabinetCreate\CabinetCreate.vcxproj", "{0AC2F861-4FF3-4B04-99D2-E6436F14AC03}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GetNameInfo", "GetNameInfo\GetNameInfo.vcxproj", "{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -488,6 +490,14 @@ Global
 		{0AC2F861-4FF3-4B04-99D2-E6436F14AC03}.Release|x64.Build.0 = Release|x64
 		{0AC2F861-4FF3-4B04-99D2-E6436F14AC03}.Release|x86.ActiveCfg = Release|Win32
 		{0AC2F861-4FF3-4B04-99D2-E6436F14AC03}.Release|x86.Build.0 = Release|Win32
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}.Debug|x64.ActiveCfg = Debug|x64
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}.Debug|x64.Build.0 = Debug|x64
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}.Debug|x86.ActiveCfg = Debug|Win32
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}.Debug|x86.Build.0 = Debug|Win32
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}.Release|x64.ActiveCfg = Release|x64
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}.Release|x64.Build.0 = Release|x64
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}.Release|x86.ActiveCfg = Release|Win32
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -540,6 +550,7 @@ Global
 		{089F4076-5788-46DD-972C-FFCF2A8C359E} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{3201829B-2E0A-4A18-B6C3-9AF10054B2F7} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{0AC2F861-4FF3-4B04-99D2-E6436F14AC03} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
+		{B9EF29EB-0AC4-4961-A12B-85F7496EC2E3} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
