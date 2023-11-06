@@ -62,7 +62,6 @@ int main(int argc, char* argv[])
         FILE_ATTRIBUTE_READONLY,
         nullptr
     );
-
     if (hInputFile == INVALID_HANDLE_VALUE)
         ErrorExit(L"CreateFile");
 
