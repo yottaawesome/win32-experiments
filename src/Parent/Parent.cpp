@@ -24,39 +24,32 @@ int main(int argc, char* argv[])
 
     std::cout << ("\n->Start of parent execution.\n");
 
-    // Set the bInheritHandle flag so pipe handles are inherited. 
-
+    // Set the bInheritHandle flag so pipe handles are inherited.
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
     saAttr.bInheritHandle = TRUE;
     saAttr.lpSecurityDescriptor = nullptr;
 
     // Create a pipe for the child process's STDOUT. 
-
     if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0))
         ErrorExit(TEXT("StdoutRd CreatePipe"));
 
     // Ensure the read handle to the pipe for STDOUT is not inherited.
-
     if (!SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
         ErrorExit(TEXT("Stdout SetHandleInformation"));
 
     // Create a pipe for the child process's STDIN. 
-
     if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0))
         ErrorExit(TEXT("Stdin CreatePipe"));
 
     // Ensure the write handle to the pipe for STDIN is not inherited. 
-
     if (!SetHandleInformation(hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0))
         ErrorExit(TEXT("Stdin SetHandleInformation"));
 
     // Create the child process. 
-
     CreateChildProcess(hChildStd_OUT_Wr, hChildStd_IN_Rd);
 
     // Get a handle to an input file for the parent. 
     // This example assumes a plain text file and uses string output to verify data flow. 
-
     if (argc == 1)
         ErrorExit(TEXT("Please specify an input file.\n"));
 
@@ -67,7 +60,8 @@ int main(int argc, char* argv[])
         nullptr,
         OPEN_EXISTING,
         FILE_ATTRIBUTE_READONLY,
-        nullptr);
+        nullptr
+    );
 
     if (hInputFile == INVALID_HANDLE_VALUE)
         ErrorExit(TEXT("CreateFile"));
@@ -75,12 +69,10 @@ int main(int argc, char* argv[])
     // Write to the pipe that is the standard input for a child process. 
     // Data is written to the pipe's buffers, so it is not necessary to wait
     // until the child process is running before writing data.
-
     WriteToPipe(hInputFile, hChildStd_IN_Wr);
     std::cout << std::format("\n->Contents of {} written to child STDIN pipe.\n", argv[1]);
 
     // Read from pipe that is the standard output for child process. 
-
     std::cout << ("\n->Contents of child process STDOUT:\n\n");
     ReadFromPipe(hChildStd_OUT_Rd);
 
@@ -88,15 +80,14 @@ int main(int argc, char* argv[])
 
     // The remaining open handles are cleaned up when this process terminates. 
     // To avoid resource leaks in a larger application, close handles explicitly. 
-
     return 0;
 }
 
+// Create a child process that uses the previously created pipes for STDIN and STDOUT.
 void CreateChildProcess(
     HANDLE hChildStd_OUT_Wr,
     HANDLE hChildStd_IN_Rd
 )
-// Create a child process that uses the previously created pipes for STDIN and STDOUT.
 {
     TCHAR szCmdline[] = TEXT("child");
     PROCESS_INFORMATION piProcInfo;
@@ -104,12 +95,10 @@ void CreateChildProcess(
     BOOL bSuccess = false;
 
     // Set up members of the PROCESS_INFORMATION structure. 
-
     ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
 
     // Set up members of the STARTUPINFO structure. 
     // This structure specifies the STDIN and STDOUT handles for redirection.
-
     ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
     siStartInfo.cb = sizeof(STARTUPINFO);
     siStartInfo.hStdError = hChildStd_OUT_Wr;
@@ -118,7 +107,6 @@ void CreateChildProcess(
     siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
     // Create the child process. 
-
     bSuccess = CreateProcess(
         nullptr,
         szCmdline,     // command line 
@@ -129,35 +117,31 @@ void CreateChildProcess(
         nullptr,          // use parent's environment 
         nullptr,          // use parent's current directory 
         &siStartInfo,  // STARTUPINFO pointer 
-        &piProcInfo);  // receives PROCESS_INFORMATION 
+        &piProcInfo     // receives PROCESS_INFORMATION 
+    );
 
     // If an error occurs, exit the application. 
     if (!bSuccess)
         ErrorExit(TEXT("CreateProcess"));
-    else
-    {
-        // Close handles to the child process and its primary thread.
-        // Some applications might keep these handles to monitor the status
-        // of the child process, for example. 
 
-        CloseHandle(piProcInfo.hProcess);
-        CloseHandle(piProcInfo.hThread);
+    // Close handles to the child process and its primary thread.
+    // Some applications might keep these handles to monitor the status
+    // of the child process, for example. 
+    CloseHandle(piProcInfo.hProcess);
+    CloseHandle(piProcInfo.hThread);
 
-        // Close handles to the stdin and stdout pipes no longer needed by the child process.
-        // If they are not explicitly closed, there is no way to recognize that the child process has ended.
-
-        CloseHandle(hChildStd_OUT_Wr);
-        CloseHandle(hChildStd_IN_Rd);
-    }
+    // Close handles to the stdin and stdout pipes no longer needed by the child process.
+    // If they are not explicitly closed, there is no way to recognize that the child process has ended.
+    CloseHandle(hChildStd_OUT_Wr);
+    CloseHandle(hChildStd_IN_Rd);
 }
 
+// Read from a file and write its contents to the pipe for the child's STDIN.
+// Stop when there is no more data. 
 void WriteToPipe(
     HANDLE hInputFile,
     HANDLE hChildStd_IN_Wr
 )
-
-// Read from a file and write its contents to the pipe for the child's STDIN.
-// Stop when there is no more data. 
 {
     DWORD dwRead, dwWritten;
     CHAR chBuf[BUFSIZE];
@@ -207,18 +191,16 @@ void ReadFromPipe(HANDLE hChildStd_OUT_Rd)
     }
 }
 
-void ErrorExit(const wchar_t* lpszFunction)
-
 // Format a readable error message, display a message box, 
 // and exit from the application.
+void ErrorExit(const wchar_t* lpszFunction)
 {
     LPVOID lpMsgBuf;
     DWORD dw = GetLastError();
 
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
+    std::wstring error;
+    DWORD charCount = FormatMessageW(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         nullptr,
         dw,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
@@ -226,11 +208,14 @@ void ErrorExit(const wchar_t* lpszFunction)
         0, 
         nullptr
     );
-
-    std::wstring error = std::format(L"{} failed with error {}: {}", lpszFunction, dw, (const wchar_t*)lpMsgBuf);
+    if (charCount)
+    {
+        error = std::format(L"{} failed with error {}: {}", lpszFunction, dw, (const wchar_t*)lpMsgBuf);
+        LocalFree(lpMsgBuf);
+    }
+    else error = L"An unknown error occurred";
 
     MessageBox(nullptr, error.c_str(), TEXT("Error"), MB_OK);
 
-    LocalFree(lpMsgBuf);
     ExitProcess(1);
 }
