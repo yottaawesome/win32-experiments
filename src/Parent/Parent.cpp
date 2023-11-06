@@ -213,11 +213,63 @@ namespace DemoA
         // The remaining open handles are cleaned up when this process terminates. 
         // To avoid resource leaks in a larger application, close handles explicitly. 
     }
+
+    void RunCmd(const std::wstring& cmd)
+    {
+        // Get a handle to an input file for the parent. 
+        // This example assumes a plain text file and uses string output to verify data flow. 
+        if (cmd.empty())
+            ErrorExit(L"Please specify an input file.\n");
+
+        HANDLE hChildStd_IN_Rd = nullptr;
+        HANDLE hChildStd_IN_Wr = nullptr;
+        HANDLE hChildStd_OUT_Rd = nullptr;
+        HANDLE hChildStd_OUT_Wr = nullptr;
+        HANDLE hInputFile = nullptr;
+
+        std::cout << ("\n->Start of parent execution.\n");
+
+        // Set the bInheritHandle flag so pipe handles are inherited.
+        SECURITY_ATTRIBUTES saAttr{
+            .nLength = sizeof(SECURITY_ATTRIBUTES),
+            .lpSecurityDescriptor = nullptr,
+            .bInheritHandle = true
+        };
+
+        // Create a pipe for the child process's STDOUT. 
+        if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0))
+            ErrorExit(L"StdoutRd CreatePipe");
+
+        // Ensure the read handle to the pipe for STDOUT is not inherited.
+        if (!SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
+            ErrorExit(L"Stdout SetHandleInformation");
+
+        // Create a pipe for the child process's STDIN. 
+        if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0))
+            ErrorExit(L"Stdin CreatePipe");
+
+        // Ensure the write handle to the pipe for STDIN is not inherited. 
+        if (!SetHandleInformation(hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0))
+            ErrorExit(L"Stdin SetHandleInformation");
+
+        // Create the child process. 
+        CreateChildProcess(LR"(C:\Windows\System32\cmd.exe)", cmd, hChildStd_OUT_Wr, hChildStd_IN_Rd);
+
+        // Read from pipe that is the standard output for child process. 
+        std::cout << ("\n->Contents of child process STDOUT:\n\n");
+        ReadFromPipe(hChildStd_OUT_Rd);
+
+        std::cout << ("\n->End of parent execution.\n");
+
+        // The remaining open handles are cleaned up when this process terminates. 
+        // To avoid resource leaks in a larger application, close handles explicitly. 
+    }
 }
 
 
 int main(int argc, char* argv[])
 {
-    DemoA::Run(argc, argv);   
+    DemoA::Run(argc, argv);
+    DemoA::RunCmd(LR"(C:\Windows\System32\cmd.exe /c wmic bios get serialnumber)");
     return 0;
 }
