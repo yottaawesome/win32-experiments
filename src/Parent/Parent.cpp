@@ -1,8 +1,10 @@
-#include <windows.h> 
+// Based on https://learn.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <tchar.h>
 #include <stdio.h> 
 #include <strsafe.h>
-#include <stdexcept>
 
 #define BUFSIZE 4096 
 
@@ -10,12 +12,13 @@ HANDLE g_hChildStd_IN_Rd = NULL;
 HANDLE g_hChildStd_IN_Wr = NULL;
 HANDLE g_hChildStd_OUT_Rd = NULL;
 HANDLE g_hChildStd_OUT_Wr = NULL;
+
 HANDLE g_hInputFile = NULL;
 
 void CreateChildProcess(void);
 void WriteToPipe(void);
 void ReadFromPipe(void);
-void ErrorExit(PTSTR);
+void ErrorExit(const wchar_t*);
 
 int _tmain(int argc, TCHAR* argv[])
 {
@@ -32,22 +35,22 @@ int _tmain(int argc, TCHAR* argv[])
     // Create a pipe for the child process's STDOUT. 
 
     if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0))
-        return 1;//ErrorExit(TEXT("StdoutRd CreatePipe"));
+        ErrorExit(TEXT("StdoutRd CreatePipe"));
 
     // Ensure the read handle to the pipe for STDOUT is not inherited.
 
     if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
-        return 1;//ErrorExit(TEXT("Stdout SetHandleInformation"));
+        ErrorExit(TEXT("Stdout SetHandleInformation"));
 
     // Create a pipe for the child process's STDIN. 
 
     if (!CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &saAttr, 0))
-        return 1;//ErrorExit(TEXT("Stdin CreatePipe"));
+        ErrorExit(TEXT("Stdin CreatePipe"));
 
     // Ensure the write handle to the pipe for STDIN is not inherited. 
 
     if (!SetHandleInformation(g_hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0))
-        return 1;//ErrorExit(TEXT("Stdin SetHandleInformation"));
+        ErrorExit(TEXT("Stdin SetHandleInformation"));
 
     // Create the child process. 
 
@@ -56,12 +59,11 @@ int _tmain(int argc, TCHAR* argv[])
     // Get a handle to an input file for the parent. 
     // This example assumes a plain text file and uses string output to verify data flow. 
 
-    //if (argc == 1)
-    //    return 1;//ErrorExit(TEXT("Please specify an input file.\n"));
+    if (argc == 1)
+        ErrorExit(TEXT("Please specify an input file.\n"));
 
-    std::wstring file(L"file.txt");
     g_hInputFile = CreateFile(
-        file.c_str(),//argv[1],
+        argv[1],
         GENERIC_READ,
         0,
         NULL,
@@ -70,18 +72,18 @@ int _tmain(int argc, TCHAR* argv[])
         NULL);
 
     if (g_hInputFile == INVALID_HANDLE_VALUE)
-        return 1;//ErrorExit(TEXT("CreateFile"));
+        ErrorExit(TEXT("CreateFile"));
 
     // Write to the pipe that is the standard input for a child process. 
     // Data is written to the pipe's buffers, so it is not necessary to wait
     // until the child process is running before writing data.
 
-    //WriteToPipe();
-    printf("\n->Contents of %s written to child STDIN pipe.\n", file.c_str());
+    WriteToPipe();
+    printf("\n->Contents of %S written to child STDIN pipe.\n", argv[1]);
 
     // Read from pipe that is the standard output for child process. 
 
-    printf("\n->Contents of child process STDOUT:\n\n", file.c_str());
+    printf("\n->Contents of child process STDOUT:\n\n");
     ReadFromPipe();
 
     printf("\n->End of parent execution.\n");
@@ -93,9 +95,9 @@ int _tmain(int argc, TCHAR* argv[])
 }
 
 void CreateChildProcess()
+// Create a child process that uses the previously created pipes for STDIN and STDOUT.
 {
-    TCHAR szCmdline[] = TEXT("mtr --json --timeout 15 --interval 5 --show-ips --aslookup www.google.com");
-    //TCHAR szCmdline[] = TEXT("child");
+    TCHAR szCmdline[] = TEXT("child");
     PROCESS_INFORMATION piProcInfo;
     STARTUPINFO siStartInfo;
     BOOL bSuccess = FALSE;
@@ -116,8 +118,7 @@ void CreateChildProcess()
 
     // Create the child process. 
 
-    bSuccess = CreateProcess(
-        NULL,
+    bSuccess = CreateProcess(NULL,
         szCmdline,     // command line 
         NULL,          // process security attributes 
         NULL,          // primary thread security attributes 
@@ -128,10 +129,9 @@ void CreateChildProcess()
         &siStartInfo,  // STARTUPINFO pointer 
         &piProcInfo);  // receives PROCESS_INFORMATION 
 
-     // If an error occurs, exit the application. 
+    // If an error occurs, exit the application. 
     if (!bSuccess)
-        throw std::runtime_error("CreateProcess");
-        //ErrorExit(TEXT("CreateProcess"));
+        ErrorExit(TEXT("CreateProcess"));
     else
     {
         // Close handles to the child process and its primary thread.
@@ -149,9 +149,10 @@ void CreateChildProcess()
     }
 }
 
+void WriteToPipe(void)
+
 // Read from a file and write its contents to the pipe for the child's STDIN.
 // Stop when there is no more data. 
-void WriteToPipe(void)
 {
     DWORD dwRead, dwWritten;
     CHAR chBuf[BUFSIZE];
@@ -169,14 +170,14 @@ void WriteToPipe(void)
     // Close the pipe handle so the child process stops reading. 
 
     if (!CloseHandle(g_hChildStd_IN_Wr))
-        throw std::runtime_error("StdInWr CloseHandle");
-        //ErrorExit(TEXT("StdInWr CloseHandle"));
+        ErrorExit(TEXT("StdInWr CloseHandle"));
 }
+
+void ReadFromPipe(void)
 
 // Read output from the child process's pipe for STDOUT
 // and write to the parent process's pipe for STDOUT. 
 // Stop when there is no more data. 
-void ReadFromPipe(void)
 {
     DWORD dwRead, dwWritten;
     CHAR chBuf[BUFSIZE];
@@ -194,7 +195,7 @@ void ReadFromPipe(void)
     }
 }
 
-void ErrorExit(PTSTR lpszFunction)
+void ErrorExit(const wchar_t* lpszFunction)
 
 // Format a readable error message, display a message box, 
 // and exit from the application.
