@@ -26,24 +26,24 @@ int main(int argc, char* argv[])
 
     // Set the bInheritHandle flag so pipe handles are inherited.
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    saAttr.bInheritHandle = TRUE;
+    saAttr.bInheritHandle = true;
     saAttr.lpSecurityDescriptor = nullptr;
 
     // Create a pipe for the child process's STDOUT. 
     if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0))
-        ErrorExit(TEXT("StdoutRd CreatePipe"));
+        ErrorExit(L"StdoutRd CreatePipe");
 
     // Ensure the read handle to the pipe for STDOUT is not inherited.
     if (!SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
-        ErrorExit(TEXT("Stdout SetHandleInformation"));
+        ErrorExit(L"Stdout SetHandleInformation");
 
     // Create a pipe for the child process's STDIN. 
     if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0))
-        ErrorExit(TEXT("Stdin CreatePipe"));
+        ErrorExit(L"Stdin CreatePipe");
 
     // Ensure the write handle to the pipe for STDIN is not inherited. 
     if (!SetHandleInformation(hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0))
-        ErrorExit(TEXT("Stdin SetHandleInformation"));
+        ErrorExit(L"Stdin SetHandleInformation");
 
     // Create the child process. 
     CreateChildProcess(hChildStd_OUT_Wr, hChildStd_IN_Rd);
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
     // Get a handle to an input file for the parent. 
     // This example assumes a plain text file and uses string output to verify data flow. 
     if (argc == 1)
-        ErrorExit(TEXT("Please specify an input file.\n"));
+        ErrorExit(L"Please specify an input file.\n");
 
     hInputFile = CreateFileA(
         argv[1],
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
     );
 
     if (hInputFile == INVALID_HANDLE_VALUE)
-        ErrorExit(TEXT("CreateFile"));
+        ErrorExit(L"CreateFile");
 
     // Write to the pipe that is the standard input for a child process. 
     // Data is written to the pipe's buffers, so it is not necessary to wait
@@ -89,22 +89,16 @@ void CreateChildProcess(
     HANDLE hChildStd_IN_Rd
 )
 {
-    TCHAR szCmdline[] = TEXT("child");
-    PROCESS_INFORMATION piProcInfo;
-    STARTUPINFO siStartInfo;
-    BOOL bSuccess = false;
-
-    // Set up members of the PROCESS_INFORMATION structure. 
-    ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
-
-    // Set up members of the STARTUPINFO structure. 
-    // This structure specifies the STDIN and STDOUT handles for redirection.
-    ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
-    siStartInfo.cb = sizeof(STARTUPINFO);
-    siStartInfo.hStdError = hChildStd_OUT_Wr;
-    siStartInfo.hStdOutput = hChildStd_OUT_Wr;
-    siStartInfo.hStdInput = hChildStd_IN_Rd;
-    siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+    wchar_t szCmdline[] = L"child";
+    PROCESS_INFORMATION piProcInfo{ 0 };
+    STARTUPINFO siStartInfo{
+        .cb = sizeof(STARTUPINFO),
+        .dwFlags = STARTF_USESTDHANDLES,
+        .hStdInput = hChildStd_IN_Rd,
+        .hStdOutput = hChildStd_OUT_Wr,
+        .hStdError = hChildStd_OUT_Wr,
+    };
+    bool bSuccess = false;
 
     // Create the child process. 
     bSuccess = CreateProcess(
@@ -122,7 +116,7 @@ void CreateChildProcess(
 
     // If an error occurs, exit the application. 
     if (!bSuccess)
-        ErrorExit(TEXT("CreateProcess"));
+        ErrorExit(L"CreateProcess");
 
     // Close handles to the child process and its primary thread.
     // Some applications might keep these handles to monitor the status
@@ -144,8 +138,8 @@ void WriteToPipe(
 )
 {
     DWORD dwRead, dwWritten;
-    CHAR chBuf[BUFSIZE];
-    BOOL bSuccess = false;
+    char chBuf[BUFSIZE];
+    bool bSuccess = false;
 
     for (;;)
     {
@@ -159,7 +153,7 @@ void WriteToPipe(
     // Close the pipe handle so the child process stops reading. 
 
     if (!CloseHandle(hChildStd_IN_Wr))
-        ErrorExit(TEXT("StdInWr CloseHandle"));
+        ErrorExit(L"StdInWr CloseHandle");
 }
 
 void ReadFromPipe(HANDLE hChildStd_OUT_Rd)
@@ -169,8 +163,8 @@ void ReadFromPipe(HANDLE hChildStd_OUT_Rd)
 // Stop when there is no more data. 
 {
     DWORD dwRead, dwWritten;
-    CHAR chBuf[BUFSIZE];
-    BOOL bSuccess = false;
+    char chBuf[BUFSIZE];
+    bool bSuccess = false;
     HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
     for (;;)
@@ -195,7 +189,7 @@ void ReadFromPipe(HANDLE hChildStd_OUT_Rd)
 // and exit from the application.
 void ErrorExit(const wchar_t* lpszFunction)
 {
-    LPVOID lpMsgBuf;
+    void* lpMsgBuf;
     DWORD dw = GetLastError();
 
     std::wstring error;
@@ -204,7 +198,7 @@ void ErrorExit(const wchar_t* lpszFunction)
         nullptr,
         dw,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR)&lpMsgBuf,
+        (LPWSTR)&lpMsgBuf,
         0, 
         nullptr
     );
@@ -215,7 +209,7 @@ void ErrorExit(const wchar_t* lpszFunction)
     }
     else error = L"An unknown error occurred";
 
-    MessageBox(nullptr, error.c_str(), TEXT("Error"), MB_OK);
+    MessageBox(nullptr, error.c_str(), L"Error", MB_OK);
 
     ExitProcess(1);
 }
