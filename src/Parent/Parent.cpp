@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
 
     // Create the child process. 
     CreateChildProcess({}, L"child", hChildStd_OUT_Wr, hChildStd_IN_Rd);
+    //CreateChildProcess(LR"(C:\Windows\System32\cmd.exe)", LR"(C:\Windows\System32\cmd.exe /c wmic bios get serialnumber)", hChildStd_OUT_Wr, hChildStd_IN_Rd);
 
     hInputFile = CreateFileA(
         argv[1],
