@@ -7,7 +7,12 @@
 
 constexpr int BUFSIZE = 4096;
 
-void CreateChildProcess(HANDLE hChildStd_OUT_Wr, HANDLE hChildStd_IN_Rd);
+void CreateChildProcess(
+    const std::wstring& path,
+    const std::wstring& cmdline,
+    HANDLE hChildStd_OUT_Wr, 
+    HANDLE hChildStd_IN_Rd
+);
 void WriteToPipe(HANDLE hInputFile, HANDLE hChildStd_IN_Wr);
 void ReadFromPipe(HANDLE hChildStd_OUT_Rd);
 void ErrorExit(const wchar_t*);
@@ -51,7 +56,7 @@ int main(int argc, char* argv[])
         ErrorExit(L"Stdin SetHandleInformation");
 
     // Create the child process. 
-    CreateChildProcess(hChildStd_OUT_Wr, hChildStd_IN_Rd);
+    CreateChildProcess({}, L"child", hChildStd_OUT_Wr, hChildStd_IN_Rd);
 
     hInputFile = CreateFileA(
         argv[1],
@@ -84,11 +89,12 @@ int main(int argc, char* argv[])
 
 // Create a child process that uses the previously created pipes for STDIN and STDOUT.
 void CreateChildProcess(
+    const std::wstring& path,
+    const std::wstring& cmdline,
     HANDLE hChildStd_OUT_Wr,
     HANDLE hChildStd_IN_Rd
 )
 {
-    wchar_t szCmdline[] = L"child";
     PROCESS_INFORMATION piProcInfo{ 0 };
     STARTUPINFO siStartInfo{
         .cb = sizeof(STARTUPINFO),
@@ -101,8 +107,8 @@ void CreateChildProcess(
 
     // Create the child process. 
     bSuccess = CreateProcess(
-        nullptr,
-        szCmdline,     // command line 
+        path.empty() ? nullptr : const_cast<wchar_t*>(path.c_str()),
+        const_cast<wchar_t*>(cmdline.c_str()),     // command line 
         nullptr,          // process security attributes 
         nullptr,          // primary thread security attributes 
         true,          // handles are inherited 
