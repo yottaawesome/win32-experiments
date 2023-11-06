@@ -128,6 +128,7 @@ namespace DemoA
 
         for (;;)
         {
+            // can just use std::cout here instead of doing all this
             bSuccess = ReadFile(hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, nullptr);
             if (!bSuccess || dwRead == 0)
                 break;
@@ -214,6 +215,112 @@ namespace DemoA
         // To avoid resource leaks in a larger application, close handles explicitly. 
     }
 
+    
+}
+
+namespace DemoB
+{
+    constexpr int BUFSIZE = 4096;
+
+    // Format a readable error message, display a message box, 
+    // and exit from the application.
+    void ErrorExit(const wchar_t* lpszFunction)
+    {
+        DWORD dw = GetLastError();
+
+        void* lpMsgBuf;
+        DWORD charCount = FormatMessageW(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            nullptr,
+            dw,
+            0,
+            (LPWSTR)&lpMsgBuf,
+            0,
+            nullptr
+        );
+
+        std::wstring error;
+        if (charCount)
+        {
+            error = std::format(L"{} failed with error {}: {}", lpszFunction, dw, (const wchar_t*)lpMsgBuf);
+            LocalFree(lpMsgBuf);
+        }
+        else
+            error = L"An unknown error occurred";
+
+        MessageBox(nullptr, error.c_str(), L"Error", MB_OK);
+
+        ExitProcess(1);
+    }
+
+    std::string ReadFromPipe(HANDLE hChildStd_OUT_Rd)
+    {
+        DWORD dwRead;
+        char chBuf[BUFSIZE];
+        bool bSuccess = false;
+        HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+        std::string result;
+        for (;;)
+        {
+            bSuccess = ReadFile(hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, nullptr);
+            if (!bSuccess || dwRead == 0)
+                break;
+
+            result += std::string(chBuf, dwRead);
+        }
+        //Comes out as "SerialNumber  \r\r\n{serialnumber} \r\r\n\r\r\n"
+        std::cout << result;
+        return result;
+    }
+
+    void CreateChildProcess(
+        const std::wstring& path,
+        const std::wstring& cmdline,
+        HANDLE hChildStd_OUT_Wr,
+        HANDLE hChildStd_IN_Rd
+    )
+    {
+        PROCESS_INFORMATION piProcInfo{ 0 };
+        STARTUPINFO siStartInfo{
+            .cb = sizeof(STARTUPINFO),
+            .dwFlags = STARTF_USESTDHANDLES,
+            .hStdInput = hChildStd_IN_Rd,
+            .hStdOutput = hChildStd_OUT_Wr,
+            .hStdError = hChildStd_OUT_Wr,
+        };
+        bool bSuccess = false;
+
+        // Create the child process. 
+        bSuccess = CreateProcess(
+            path.empty() ? nullptr : const_cast<wchar_t*>(path.c_str()),
+            const_cast<wchar_t*>(cmdline.c_str()),     // command line 
+            nullptr,          // process security attributes 
+            nullptr,          // primary thread security attributes 
+            true,          // handles are inherited 
+            0,             // creation flags 
+            nullptr,          // use parent's environment 
+            nullptr,          // use parent's current directory 
+            &siStartInfo,  // STARTUPINFO pointer 
+            &piProcInfo     // receives PROCESS_INFORMATION 
+        );
+
+        // If an error occurs, exit the application. 
+        if (!bSuccess)
+            ErrorExit(L"CreateProcess");
+
+        // Close handles to the child process and its primary thread.
+        // Some applications might keep these handles to monitor the status
+        // of the child process, for example. 
+        CloseHandle(piProcInfo.hProcess);
+        CloseHandle(piProcInfo.hThread);
+
+        // Close handles to the stdin and stdout pipes no longer needed by the child process.
+        // If they are not explicitly closed, there is no way to recognize that the child process has ended.
+        CloseHandle(hChildStd_OUT_Wr);
+        CloseHandle(hChildStd_IN_Rd);
+    }
+
     void RunCmd(const std::wstring& cmd)
     {
         // Get a handle to an input file for the parent. 
@@ -266,10 +373,9 @@ namespace DemoA
     }
 }
 
-
 int main(int argc, char* argv[])
 {
-    DemoA::Run(argc, argv);
-    DemoA::RunCmd(LR"(C:\Windows\System32\cmd.exe /c wmic bios get serialnumber)");
+    //DemoA::Run(argc, argv);
+    DemoB::RunCmd(LR"(C:\Windows\System32\cmd.exe /c wmic bios get serialnumber)");
     return 0;
 }
