@@ -399,6 +399,14 @@ namespace DemoB
             }
             nextLine = token.starts_with("SerialNumber");
         }
+        
+        // Seems to come with two extra spaces at the end
+        if (serialNumber.size() > 2)
+        {
+            serialNumber.pop_back();
+            serialNumber.pop_back();
+        }
+        
         Strings::Trim(serialNumber);
         std::cout << std::format("Your BIOS serial number is \"{}\".", serialNumber);
     }
