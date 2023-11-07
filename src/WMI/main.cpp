@@ -36,15 +36,15 @@ namespace GettingWMIDataFromLocalComputer
         // Set general COM security levels --------------------------
 
         hres = CoInitializeSecurity(
-            NULL,
+            nullptr,
             -1,                          // COM authentication
-            NULL,                        // Authentication services
-            NULL,                        // Reserved
+            nullptr,                        // Authentication services
+            nullptr,                        // Reserved
             RPC_C_AUTHN_LEVEL_DEFAULT,   // Default authentication 
             RPC_C_IMP_LEVEL_IMPERSONATE, // Default Impersonation  
-            NULL,                        // Authentication info
+            nullptr,                        // Authentication info
             EOAC_NONE,                   // Additional capabilities 
-            NULL                         // Reserved
+            nullptr                         // Reserved
         );
 
 
@@ -59,7 +59,7 @@ namespace GettingWMIDataFromLocalComputer
         // Step 3: ---------------------------------------------------
         // Obtain the initial locator to WMI -------------------------
 
-        IWbemLocator* pLoc = NULL;
+        IWbemLocator* pLoc = nullptr;
 
         hres = CoCreateInstance(
             CLSID_WbemLocator,
@@ -79,17 +79,17 @@ namespace GettingWMIDataFromLocalComputer
         // Step 4: -----------------------------------------------------
         // Connect to WMI through the IWbemLocator::ConnectServer method
 
-        IWbemServices* pSvc = NULL;
+        IWbemServices* pSvc = nullptr;
 
         // Connect to the root\cimv2 namespace with
         // the current user and obtain pointer pSvc
         // to make IWbemServices calls.
         hres = pLoc->ConnectServer(
             _bstr_t(L"ROOT\\CIMV2"), // Object path of WMI namespace
-            NULL,                    // User name. NULL = current user
-            NULL,                    // User password. NULL = current
+            nullptr,                    // User name. NULL = current user
+            nullptr,                    // User password. NULL = current
             0,                       // Locale. NULL indicates current
-            NULL,                    // Security flags.
+            0,                    // Security flags.
             0,                       // Authority (for example, Kerberos)
             0,                       // Context object 
             &pSvc                    // pointer to IWbemServices proxy
@@ -114,10 +114,10 @@ namespace GettingWMIDataFromLocalComputer
             pSvc,                        // Indicates the proxy to set
             RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx
             RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx
-            NULL,                        // Server principal name 
+            nullptr,                        // Server principal name 
             RPC_C_AUTHN_LEVEL_CALL,      // RPC_C_AUTHN_LEVEL_xxx 
             RPC_C_IMP_LEVEL_IMPERSONATE, // RPC_C_IMP_LEVEL_xxx
-            NULL,                        // client identity
+            nullptr,                        // client identity
             EOAC_NONE                    // proxy capabilities 
         );
 
@@ -135,12 +135,12 @@ namespace GettingWMIDataFromLocalComputer
         // Use the IWbemServices pointer to make requests of WMI ----
 
         // For example, get the name of the operating system
-        IEnumWbemClassObject* pEnumerator = NULL;
+        IEnumWbemClassObject* pEnumerator = nullptr;
         hres = pSvc->ExecQuery(
             bstr_t("WQL"),
             bstr_t("SELECT * FROM Win32_OperatingSystem"),
             WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-            NULL,
+            nullptr,
             &pEnumerator);
 
         if (FAILED(hres))
@@ -157,7 +157,7 @@ namespace GettingWMIDataFromLocalComputer
         // Step 7: -------------------------------------------------
         // Get the data from the query in step 6 -------------------
 
-        IWbemClassObject* pclsObj = NULL;
+        IWbemClassObject* pclsObj = nullptr;
         ULONG uReturn = 0;
 
         while (pEnumerator)
