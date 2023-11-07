@@ -3,7 +3,73 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <iostream>
+import std;
+
+namespace Strings
+{
+    // trim from start (in place)
+    void LeftTrim(std::string& s)
+    {
+        s.erase(
+            s.begin(),
+            std::find_if(
+                s.begin(),
+                s.end(),
+                [](int ch) { return !std::isspace(ch); }
+            )
+        );
+    }
+
+    // trim from end (in place)
+    void RightTrim(std::string& s)
+    {
+        s.erase(
+            std::find_if(
+                s.rbegin(), 
+                s.rend(), 
+                [](int ch) { return !std::isspace(ch); }
+            ).base(), 
+            s.end()
+        );
+    }
+
+    // trim from both ends (in place)
+    void Trim(std::string& s)
+    {
+        LeftTrim(s);
+        RightTrim(s);
+    }
+
+    std::vector<std::string> Split(
+        const std::string& stringToSplit,
+        const std::string& delimiter
+    )
+    {
+        size_t position = 0;
+        // If we don't find it at all, add the whole string
+        if (stringToSplit.find(delimiter, position) == std::string::npos)
+            return { stringToSplit };
+
+        std::vector<std::string> results;
+        std::string intermediateString = stringToSplit;
+        while ((position = intermediateString.find(delimiter)) != std::string::npos)
+        {
+            // split and add to the results
+            std::string split = intermediateString.substr(0, position);
+            results.push_back(split);
+
+            // move up our position
+            position += delimiter.length();
+            intermediateString = intermediateString.substr(position);
+
+            // On the last iteration, enter the remainder
+            if (intermediateString.find(delimiter) == std::string::npos)
+                results.push_back(intermediateString);
+        }
+
+        return results;
+    }
+}
 
 namespace DemoA
 {
@@ -214,8 +280,6 @@ namespace DemoA
         // The remaining open handles are cleaned up when this process terminates. 
         // To avoid resource leaks in a larger application, close handles explicitly. 
     }
-
-    
 }
 
 namespace DemoB
@@ -321,6 +385,24 @@ namespace DemoB
         CloseHandle(hChildStd_IN_Rd);
     }
 
+    void Parse(const std::string& cmd)
+    {
+        std::vector tokens = Strings::Split(cmd, "\r\r\n");
+        bool nextLine = false;
+        std::string serialNumber;
+        for (const std::string token : tokens)
+        {
+            if (nextLine)
+            {
+                serialNumber = token;
+                break;
+            }
+            nextLine = token.starts_with("SerialNumber");
+        }
+        Strings::Trim(serialNumber);
+        std::cout << std::format("Your BIOS serial number is \"{}\".", serialNumber);
+    }
+
     void RunCmd(const std::wstring& cmd)
     {
         // Get a handle to an input file for the parent. 
@@ -364,7 +446,7 @@ namespace DemoB
 
         // Read from pipe that is the standard output for child process. 
         std::cout << ("\n->Contents of child process STDOUT:\n\n");
-        ReadFromPipe(hChildStd_OUT_Rd);
+        Parse(ReadFromPipe(hChildStd_OUT_Rd));
 
         std::cout << ("\n->End of parent execution.\n");
 
