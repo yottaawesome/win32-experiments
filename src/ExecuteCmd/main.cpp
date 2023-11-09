@@ -11,9 +11,12 @@ namespace Strings
         constexpr FixedString(const wchar_t(&arg)[N]) noexcept
         {
             std::copy_n(arg, N, buf);
-            //for (unsigned i = 0; i < N; i++)
-                //buf[i] = arg[i];
         }
+
+        /*constexpr FixedString(const wchar_t* arg) noexcept
+        {
+            std::copy_n(arg, N, buf);
+        }*/
 
         constexpr operator const wchar_t* () const noexcept
         {
@@ -27,6 +30,8 @@ namespace Strings
     };
     template<size_t N>
     FixedString(wchar_t const (&)[N]) -> FixedString<N>;
+    /*template<size_t N>
+    FixedString(const wchar_t*) -> FixedString<N>;*/
 
     // trim from start (in place)
     void LeftTrim(std::string& s)
@@ -281,16 +286,16 @@ namespace DemoA
     template<Strings::FixedString FCmd, auto FParser = nullptr>
     struct CmdRunner
     {
-        // Once MSVC support C++23's static operator(), this can made static.
+        // Once MSVC supports C++23's static operator(), this can made static.
         auto operator()() const
         {
             return Exec<FParser>(std::wstring{ FCmd });
         }
     };
 
-    constexpr Strings::FixedString GetBiosCommand(LR"(C:\Windows\System32\cmd.exe /c wmic bios get serialnumber)");
+    constexpr Strings::FixedString GetBiosCommand = LR"(C:\Windows\System32\cmd.exe /c wmic bios get serialnumber)";
 
-    // Once MSVC support C++23's static operator(), this can be simplified
+    // Once MSVC supports C++23's static operator(), this can be simplified
     // into a using statement.
     constexpr CmdRunner<GetBiosCommand, Parse> GetBIOS;
 }
