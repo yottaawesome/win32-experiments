@@ -126,6 +126,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WaitOnAddress", "WaitOnAddr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WMI", "WMI\WMI.vcxproj", "{052C1D75-7B98-441D-860C-8BF391629E49}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExecuteCmd", "ExecuteCmd\ExecuteCmd.vcxproj", "{9AF57B13-B296-480C-8F97-D607529F2492}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -518,6 +520,14 @@ Global
 		{052C1D75-7B98-441D-860C-8BF391629E49}.Release|x64.Build.0 = Release|x64
 		{052C1D75-7B98-441D-860C-8BF391629E49}.Release|x86.ActiveCfg = Release|Win32
 		{052C1D75-7B98-441D-860C-8BF391629E49}.Release|x86.Build.0 = Release|Win32
+		{9AF57B13-B296-480C-8F97-D607529F2492}.Debug|x64.ActiveCfg = Debug|x64
+		{9AF57B13-B296-480C-8F97-D607529F2492}.Debug|x64.Build.0 = Debug|x64
+		{9AF57B13-B296-480C-8F97-D607529F2492}.Debug|x86.ActiveCfg = Debug|Win32
+		{9AF57B13-B296-480C-8F97-D607529F2492}.Debug|x86.Build.0 = Debug|Win32
+		{9AF57B13-B296-480C-8F97-D607529F2492}.Release|x64.ActiveCfg = Release|x64
+		{9AF57B13-B296-480C-8F97-D607529F2492}.Release|x64.Build.0 = Release|x64
+		{9AF57B13-B296-480C-8F97-D607529F2492}.Release|x86.ActiveCfg = Release|Win32
+		{9AF57B13-B296-480C-8F97-D607529F2492}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
