@@ -200,60 +200,66 @@ namespace DemoA
     }
 
     template<auto FParser = nullptr>
+    auto Exec(const std::wstring& cmd)
+    {
+        // Get a handle to an input file for the parent. 
+        // This example assumes a plain text file and uses string output to verify data flow. 
+        if (cmd.empty())
+            ErrorExit(L"Please specify a cmd command.\n");
+
+        HANDLE hChildStd_IN_Rd = nullptr;
+        HANDLE hChildStd_IN_Wr = nullptr;
+        HANDLE hChildStd_OUT_Rd = nullptr;
+        HANDLE hChildStd_OUT_Wr = nullptr;
+        HANDLE hInputFile = nullptr;
+
+        // Set the bInheritHandle flag so pipe handles are inherited.
+        SECURITY_ATTRIBUTES saAttr{
+            .nLength = sizeof(SECURITY_ATTRIBUTES),
+            .lpSecurityDescriptor = nullptr,
+            .bInheritHandle = true
+        };
+
+        // Create a pipe for the child process's STDOUT. 
+        if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0))
+            ErrorExit(L"StdoutRd CreatePipe");
+        // Ensure the read handle to the pipe for STDOUT is not inherited.
+        if (!SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
+            ErrorExit(L"Stdout SetHandleInformation");
+        HandleUniquePtr ptrChildStdOutRd = HandleUniquePtr(hChildStd_OUT_Rd);
+
+        // Create a pipe for the child process's STDIN. 
+        if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0))
+            ErrorExit(L"Stdin CreatePipe");
+        // Ensure the write handle to the pipe for STDIN is not inherited. 
+        if (!SetHandleInformation(hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0))
+            ErrorExit(L"Stdin SetHandleInformation");
+        HandleUniquePtr ptrChildStdInWr = HandleUniquePtr(hChildStd_IN_Wr);
+
+        // Create the child process. 
+        PROCESS_INFORMATION childProc = CreateChildProcess(
+            LR"(C:\Windows\System32\cmd.exe)",
+            cmd,
+            hChildStd_OUT_Wr,
+            hChildStd_IN_Rd
+        );
+        HandleUniquePtr ptrChildProcess = HandleUniquePtr(childProc.hProcess);
+        HandleUniquePtr ptrChildThread = HandleUniquePtr(childProc.hThread);
+
+        if constexpr (not std::is_null_pointer_v<decltype(FParser)>)
+        {
+            // Read from pipe that is the standard output for child process. 
+            std::string output = ReadFromPipe(hChildStd_OUT_Rd);
+            return Parse(output);
+        }
+    }
+
+    template<auto FParser = nullptr>
     struct CmdRunner
     {
         auto operator()(const std::wstring& cmd) const
         {
-            // Get a handle to an input file for the parent. 
-            // This example assumes a plain text file and uses string output to verify data flow. 
-            if (cmd.empty())
-                ErrorExit(L"Please specify a cmd command.\n");
-
-            HANDLE hChildStd_IN_Rd = nullptr;
-            HANDLE hChildStd_IN_Wr = nullptr;
-            HANDLE hChildStd_OUT_Rd = nullptr;
-            HANDLE hChildStd_OUT_Wr = nullptr;
-            HANDLE hInputFile = nullptr;
-
-            // Set the bInheritHandle flag so pipe handles are inherited.
-            SECURITY_ATTRIBUTES saAttr{
-                .nLength = sizeof(SECURITY_ATTRIBUTES),
-                .lpSecurityDescriptor = nullptr,
-                .bInheritHandle = true
-            };
-
-            // Create a pipe for the child process's STDOUT. 
-            if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0))
-                ErrorExit(L"StdoutRd CreatePipe");
-            // Ensure the read handle to the pipe for STDOUT is not inherited.
-            if (!SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
-                ErrorExit(L"Stdout SetHandleInformation");
-            HandleUniquePtr ptrChildStdOutRd = HandleUniquePtr(hChildStd_OUT_Rd);
-
-            // Create a pipe for the child process's STDIN. 
-            if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0))
-                ErrorExit(L"Stdin CreatePipe");
-            // Ensure the write handle to the pipe for STDIN is not inherited. 
-            if (!SetHandleInformation(hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0))
-                ErrorExit(L"Stdin SetHandleInformation");
-            HandleUniquePtr ptrChildStdInWr = HandleUniquePtr(hChildStd_IN_Wr);
-
-            // Create the child process. 
-            PROCESS_INFORMATION childProc = CreateChildProcess(
-                LR"(C:\Windows\System32\cmd.exe)",
-                cmd,
-                hChildStd_OUT_Wr,
-                hChildStd_IN_Rd
-            );
-            HandleUniquePtr ptrChildProcess = HandleUniquePtr(childProc.hProcess);
-            HandleUniquePtr ptrChildThread = HandleUniquePtr(childProc.hThread);
-
-            if constexpr (not std::is_null_pointer_v<decltype(FParser)>)
-            {
-                // Read from pipe that is the standard output for child process. 
-                std::string output = ReadFromPipe(hChildStd_OUT_Rd);
-                return Parse(output);
-            }
+            return Exec<FParser>(cmd);
         }
     };
 
