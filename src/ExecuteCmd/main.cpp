@@ -4,6 +4,30 @@ import std;
 
 namespace Strings
 {
+    template <size_t N>
+    struct FixedString
+    {
+        wchar_t buf[N]{};
+        constexpr FixedString(const wchar_t(&arg)[N]) noexcept
+        {
+            std::copy_n(arg, N, buf);
+            //for (unsigned i = 0; i < N; i++)
+                //buf[i] = arg[i];
+        }
+
+        constexpr operator const wchar_t* () const noexcept
+        {
+            return buf;
+        }
+
+        constexpr operator std::wstring_view() const noexcept
+        {
+            return { buf, N };
+        }
+    };
+    template<size_t N>
+    FixedString(wchar_t const (&)[N]) -> FixedString<N>;
+
     // trim from start (in place)
     void LeftTrim(std::string& s)
     {
@@ -254,21 +278,26 @@ namespace DemoA
         }
     }
 
-    template<auto FParser = nullptr>
+    template<Strings::FixedString FCmd, auto FParser = nullptr>
     struct CmdRunner
     {
-        auto operator()(const std::wstring& cmd) const
+        // Once MSVC support C++23's static operator(), this can made static.
+        auto operator()() const
         {
-            return Exec<FParser>(cmd);
+            return Exec<FParser>(std::wstring{ FCmd });
         }
     };
 
-    constexpr CmdRunner<Parse> GetBIOS;
+    constexpr Strings::FixedString GetBiosCommand(LR"(C:\Windows\System32\cmd.exe /c wmic bios get serialnumber)");
+
+    // Once MSVC support C++23's static operator(), this can be simplified
+    // into a using statement.
+    constexpr CmdRunner<GetBiosCommand, Parse> GetBIOS;
 }
 
 int main()
 {
-    std::string serialNumber = DemoA::GetBIOS(LR"(C:\Windows\System32\cmd.exe /c wmic bios get serialnumber)");
+    std::string serialNumber = DemoA::GetBIOS();
     std::cout << std::format("Your BIOS serial number is \"{}\".\n", serialNumber);
 
     return 0;
