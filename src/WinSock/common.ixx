@@ -33,7 +33,6 @@ export namespace Common
         );
         if (moduleToSearch)
             Win32::FreeLibrary(moduleToSearch);
-
         if (!messageBuffer)
         {
             const auto lastError = Win32::GetLastError();
