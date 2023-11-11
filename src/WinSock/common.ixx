@@ -199,6 +199,49 @@ export namespace Common
         }
     };
 
+    void Bind(
+        WinSock::SOCKET socket, 
+        const std::wstring& interfaceAddrIp4, 
+        const unsigned short localPort = 0
+    )
+    {
+        WinSock::IN_ADDR addr{ 0 };
+        if (not interfaceAddrIp4.empty())
+        {
+            Win32::LPCWSTR terminator = nullptr;
+            const Win32::LONG ntstatus = WinSock::RtlIpv4StringToAddressW(
+                interfaceAddrIp4.c_str(),
+                true,
+                &terminator,
+                &addr
+            );
+            if (Win32::HasFailed(ntstatus))
+            {
+                throw std::runtime_error(
+                    "RtlIpv4StringToAddressW() failed"
+                );
+            }
+        }
+
+        WinSock::sockaddr_in bindAddress{ 
+            .sin_family = (int)WinSock::AddressFamily::Inet,
+            .sin_port = localPort ? WinSock::htons(localPort) : 0ui16,
+            .sin_addr = addr
+        };
+        const int status = WinSock::bind(
+            socket,
+            (WinSock::sockaddr*)&bindAddress,
+            sizeof(bindAddress)
+        );
+        if (status == WinSock::SocketError)
+        {
+            const int lastError = WinSock::WSAGetLastError();
+            throw std::runtime_error(
+                "bind() failed"
+            );
+        }
+    }
+
     BasicSocket Open(const ADDRINFOW* addrResult)
     {
         Assert(addrResult != nullptr, "addrResult cannot be nullptr.");

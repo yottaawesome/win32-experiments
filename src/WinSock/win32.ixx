@@ -24,7 +24,9 @@ export namespace Win32
 	using 
 		::DWORD,
 		::HMODULE,
-		::WORD;
+		::WORD, 
+		::LONG,
+		::LPCWSTR;
 
 	using ::GetLastError;
 	using ::FormatMessageA;
@@ -33,6 +35,11 @@ export namespace Win32
 	using ::LoadLibrary;
 	using ::LoadLibraryW;
 	using ::FreeLibrary;
+
+	inline bool HasFailed(const auto code) noexcept
+	{
+		return (static_cast<ULONG>(code) >> 30) == 3;
+	}
 
 	namespace FormatMessageFlags
 	{
@@ -56,9 +63,13 @@ export namespace Win32
 			::ADDRINFOW,
 			::SOCKET,
 			::WSADATA,
-			::SOCKADDR;
+			::SOCKADDR,
+			::IN_ADDR,
+			::sockaddr,
+			::sockaddr_in;
 
 		constexpr auto InvalidSocket = INVALID_SOCKET;
+		constexpr auto SocketError = SOCKET_ERROR;
 
 		enum class AddressFamily
 		{
@@ -120,6 +131,7 @@ export namespace Win32
 			::getprotobynumber,
 			::getservbyname,
 			::setsockopt,
-			::getsockopt;
+			::getsockopt,
+			::htons;
 	}
 }

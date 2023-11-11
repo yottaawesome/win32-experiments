@@ -39,5 +39,9 @@ export namespace DemoA
         auto addr = Common::AddrInfoWUniquePtr(
             Resolve(L"www.microsoft.com", 80)
         );
+
+        Common::BasicSocket socket = Common::Open(addr.get());
+        Common::Assert(socket.Get() != WinSock::InvalidSocket, "Expected valid socket");
+        Common::Bind(socket.Get(), L"", 27015);
     }
 }
