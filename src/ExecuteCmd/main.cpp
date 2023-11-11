@@ -18,7 +18,7 @@ namespace Strings
             std::copy_n(arg, N, buf);
         }*/
 
-        constexpr operator const wchar_t* () const noexcept
+        constexpr operator const wchar_t*() const noexcept
         {
             return buf;
         }
