@@ -119,8 +119,8 @@ export namespace Common
             return m_code;
         }
 
-    private:
-        DWORD m_code = 0;
+        private:
+            DWORD m_code = 0;
     };
 
     struct AddrInfoWDeleter final
@@ -218,17 +218,17 @@ export namespace Common
     };
 
     void Bind(
-        WinSock::SOCKET socket, 
-        const std::wstring& interfaceAddrIp4, 
-        const unsigned short localPort = 0
+        const WinSock::SOCKET socket, 
+        const std::optional<std::wstring>& interfaceAddrIp4, 
+        const unsigned short localPort
     )
     {
         WinSock::IN_ADDR addr{ 0 };
-        if (not interfaceAddrIp4.empty())
+        if (interfaceAddrIp4)
         {
             Win32::LPCWSTR terminator = nullptr;
             const Win32::LONG ntstatus = WinSock::RtlIpv4StringToAddressW(
-                interfaceAddrIp4.c_str(),
+                interfaceAddrIp4->c_str(),
                 true,
                 &terminator,
                 &addr
@@ -252,25 +252,32 @@ export namespace Common
             sizeof(bindAddress)
         );
         if (status == WinSock::SocketError)
-        {
-            const int lastError = WinSock::WSAGetLastError();
-            throw std::runtime_error(
-                "bind() failed"
-            );
-        }
+            throw WinSockError("bind() failed", WinSock::WSAGetLastError());
     }
 
-    BasicSocket Open(const ADDRINFOW* addrResult)
+    BasicSocket Open(const ADDRINFOW& addrResult)
     {
-        Assert(addrResult != nullptr, "addrResult cannot be nullptr.");
         SOCKET socket = WinSock::socket(
-            addrResult->ai_family,
-            addrResult->ai_socktype,
-            addrResult->ai_protocol
+            addrResult.ai_family,
+            addrResult.ai_socktype,
+            addrResult.ai_protocol
         );
         if (socket == WinSock::InvalidSocket)
             throw WinSockError("socket() failed", WinSock::WSAGetLastError());
 
         return { socket };
+    }
+
+    void Connect(const SOCKET socket, const WinSock::ADDRINFOW& addr)
+    {
+        Assert(socket && socket != WinSock::InvalidSocket, "Invalid SOCKET value.");
+
+        const int result = WinSock::connect(
+            socket,
+            addr.ai_addr,
+            static_cast<int>(addr.ai_addrlen)
+        );
+        if (result == WinSock::SocketError)
+            throw WinSockError("connect() failed", WinSock::WSAGetLastError());
     }
 }

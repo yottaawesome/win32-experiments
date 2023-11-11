@@ -40,8 +40,8 @@ export namespace DemoA
             Resolve(L"www.microsoft.com", 80)
         );
 
-        Common::BasicSocket socket = Common::Open(addr.get());
+        Common::BasicSocket socket = Common::Open(*addr.get());
         Common::Assert(socket.Get() != WinSock::InvalidSocket, "Expected valid socket");
-        Common::Bind(socket.Get(), L"", 27015);
+        Common::Bind(socket.Get(), std::nullopt, 27015);
     }
 }
