@@ -31,13 +31,14 @@ namespace Common
         WinSockScope(const WinSockScope&) = delete;
         WinSockScope operator=(const WinSockScope&) = delete;
 
-        WinSockScope()
-        {
-            InitialiseWinsock();
-        }
         ~WinSockScope()
         {
             WinSock::WSACleanup();
+        }
+
+        WinSockScope()
+        {
+            InitialiseWinsock();
         }
     };
 }
