@@ -91,18 +91,36 @@ export namespace Common
         : public std::runtime_error
     {
         Win32Error(const std::string& msg, const Win32::DWORD code)
-            : std::runtime_error(
+            : m_code(code),
+            std::runtime_error(
                 std::format("{}: {}", msg, TranslateErrorCode(code)))
         { }
+
+        DWORD ErrorCode() const noexcept
+        {
+            return m_code;
+        }
+
+        private:
+            DWORD m_code = 0;
     };
 
     struct WinSockError final
         : public std::runtime_error
     {
         WinSockError(const std::string& msg, const Win32::DWORD code)
-            : std::runtime_error(
+            : m_code(code), 
+            std::runtime_error(
                 std::format("{}: {}", msg, TranslateErrorCode(code, L"ws2_32.dll")))
         { }
+
+        DWORD ErrorCode() const noexcept
+        {
+            return m_code;
+        }
+
+    private:
+        DWORD m_code = 0;
     };
 
     struct AddrInfoWDeleter final
