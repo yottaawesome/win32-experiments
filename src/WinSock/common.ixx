@@ -17,7 +17,8 @@ export namespace Common
     }
 
     inline void Assert(
-        const bool value, 
+        const bool value,
+        const std::string_view msg = "",
         const std::source_location& loc = std::source_location::current()
     )
     {
@@ -27,7 +28,8 @@ export namespace Common
                 return;
             std::wcerr <<
                 std::format(
-                    "Assertion failed at:\n\tFunction: {}\n\tFile: {}:{}:{}",
+                    "Assertion failed: {}\nSource:\n\tFunction: {}\n\tFile: {}:{}:{}",
+                    msg,
                     loc.function_name(),
                     loc.file_name(),
                     loc.line(),
@@ -199,7 +201,7 @@ export namespace Common
 
     BasicSocket Open(const ADDRINFOW* addrResult)
     {
-        Assert(1 == 1);
+        Assert(addrResult != nullptr, "addrResult cannot be nullptr.");
         SOCKET m_socket = WinSock::socket(
             addrResult->ai_family,
             addrResult->ai_socktype,
