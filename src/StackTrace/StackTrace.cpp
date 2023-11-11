@@ -183,7 +183,8 @@ void PrintStackCpp(const unsigned skipFrameCount)
 void Blah()
 {
     PrintStackWalk64(0);
-    //PrintStackCpp(0);
+    std::wcout << L"\n";
+    PrintStackCpp(0);
     //PrintStack();
     //PrintStackTrace();
 }
