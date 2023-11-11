@@ -21,20 +21,20 @@ export namespace Common
         const std::source_location& loc = std::source_location::current()
     )
     {
-        if constexpr (not IsDebug())
-            return;
-
-        if (value)
-            return;
-        std::wcerr <<
-            std::format(
-                "Assertion failed at:\n\tFunction: {}\n\tFile: {}:{}:{}",
-                loc.function_name(),
-                loc.file_name(),
-                loc.line(),
-                loc.column()
-            ).c_str();
-        std::abort();
+        if constexpr (IsDebug())
+        {
+            if (value)
+                return;
+            std::wcerr <<
+                std::format(
+                    "Assertion failed at:\n\tFunction: {}\n\tFile: {}:{}:{}",
+                    loc.function_name(),
+                    loc.file_name(),
+                    loc.line(),
+                    loc.column()
+                ).c_str();
+            std::abort();
+        }
     }
 
     std::string TranslateErrorCode(
