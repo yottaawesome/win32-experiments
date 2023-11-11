@@ -245,14 +245,14 @@ export namespace Common
     BasicSocket Open(const ADDRINFOW* addrResult)
     {
         Assert(addrResult != nullptr, "addrResult cannot be nullptr.");
-        SOCKET m_socket = WinSock::socket(
+        SOCKET socket = WinSock::socket(
             addrResult->ai_family,
             addrResult->ai_socktype,
             addrResult->ai_protocol
         );
-        if (m_socket == WinSock::InvalidSocket)
+        if (socket == WinSock::InvalidSocket)
             throw WinSockError("socket() failed", WinSock::WSAGetLastError());
 
-        return { m_socket };
+        return { socket };
     }
 }
