@@ -131,6 +131,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="common.ixx" />
+    <ClCompile Include="demo.ixx" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="win32.ixx" />
   </ItemGroup>

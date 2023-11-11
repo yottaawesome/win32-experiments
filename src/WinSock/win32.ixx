@@ -21,8 +21,30 @@ export module win32;
 
 export namespace Win32
 {
+	using 
+		::DWORD,
+		::HMODULE,
+		::WORD;
+
 	using ::GetLastError;
-	using ::DWORD;
+	using ::FormatMessageA;
+	using ::GetLastError;
+	using ::LocalFree;
+	using ::LoadLibrary;
+	using ::LoadLibraryW;
+	using ::FreeLibrary;
+
+	namespace FormatMessageFlags
+	{
+		enum
+		{
+			AllocateBuffer = FORMAT_MESSAGE_ALLOCATE_BUFFER,
+			MessageFromSystem = FORMAT_MESSAGE_FROM_SYSTEM,
+			IgnoreInserts = FORMAT_MESSAGE_IGNORE_INSERTS,
+			FromHModule = FORMAT_MESSAGE_FROM_HMODULE
+		};
+	}
+
 	constexpr auto MakeWord(int a, int b) noexcept
 	{
 		return MAKEWORD(a, b);
@@ -30,10 +52,11 @@ export namespace Win32
 
 	namespace WinSock
 	{
-		using ::ADDRINFOW;
-		using ::SOCKET;
-		using ::WSADATA;
-		using ::SOCKADDR;
+		using 
+			::ADDRINFOW,
+			::SOCKET,
+			::WSADATA,
+			::SOCKADDR;
 
 		constexpr auto InvalidSocket = INVALID_SOCKET;
 
