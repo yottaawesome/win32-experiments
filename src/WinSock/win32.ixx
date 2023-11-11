@@ -21,12 +21,14 @@ export module win32;
 
 export namespace Win32
 {
+	using NTSTATUS = ::LONG;
 	using 
 		::DWORD,
 		::HMODULE,
 		::WORD, 
 		::LONG,
-		::LPCWSTR;
+		::LPCWSTR, 
+		::HRESULT;
 
 	using ::GetLastError;
 	using ::FormatMessageA;

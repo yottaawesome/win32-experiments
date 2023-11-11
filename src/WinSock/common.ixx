@@ -123,6 +123,24 @@ export namespace Common
             DWORD m_code = 0;
     };
 
+    struct NTStatusError final
+        : public std::runtime_error
+    {
+        NTStatusError(const std::string& msg, const Win32::NTSTATUS code)
+            : m_code(code),
+            std::runtime_error(
+                std::format("{}: {}", msg, TranslateErrorCode(code, L"ntdll.dll")))
+        { }
+
+        Win32::NTSTATUS ErrorCode() const noexcept
+        {
+            return m_code;
+        }
+
+        private:
+            Win32::NTSTATUS m_code = 0;
+    };
+
     struct AddrInfoWDeleter final
     {
         void operator()(WinSock::ADDRINFOW* obj)
