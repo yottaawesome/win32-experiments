@@ -1,10 +1,41 @@
 export module common;
 import std;
+import std.compat;
 import win32;
 
 export namespace Common
 {
     namespace WinSock = Win32::WinSock;
+
+    inline constexpr bool IsDebug() noexcept
+    {
+#ifdef _DEBUG
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    inline void Assert(
+        const bool value, 
+        const std::source_location& loc = std::source_location::current()
+    )
+    {
+        if constexpr (not IsDebug())
+            return;
+
+        if (value)
+            return;
+        std::wcerr <<
+            std::format(
+                "Assertion failed at:\n\tFunction: {}\n\tFile: {}:{}:{}",
+                loc.function_name(),
+                loc.file_name(),
+                loc.line(),
+                loc.column()
+            ).c_str();
+        std::abort();
+    }
 
     std::string TranslateErrorCode(
         const Win32::DWORD errorCode,
@@ -82,19 +113,61 @@ export namespace Common
     using AddrInfoWUniquePtr =
         std::unique_ptr<WinSock::ADDRINFOW, AddrInfoWDeleter>;
 
-    struct BasicSocket
+    class BasicSocket final
     {
-        ~BasicSocket()
-        {
-            if (Socket and Socket != WinSock::InvalidSocket)
-                WinSock::closesocket(Socket);
-        }
+        public:
+            ~BasicSocket()
+            {
+                Close();
+            }
 
-        BasicSocket(WinSock::SOCKET socket)
-            : Socket(socket)
-        {}
+            BasicSocket(const BasicSocket&) = delete;
+            BasicSocket& operator=(const BasicSocket&) = delete;
 
-        WinSock::SOCKET Socket = WinSock::InvalidSocket;
+            BasicSocket(BasicSocket&& other) noexcept
+            {
+                Move(other);
+            }
+            BasicSocket& operator=(BasicSocket&& other) noexcept
+            {
+                Move(other);
+                return *this;
+            }
+
+        public:
+            BasicSocket(WinSock::SOCKET socket)
+                : m_socket(socket)
+            {}
+
+        public:
+            operator SOCKET() noexcept
+            {
+                return m_socket;
+            }
+
+        public:
+            WinSock::SOCKET Get() noexcept
+            {
+                return m_socket;
+            }
+
+        private:
+            WinSock::SOCKET m_socket = WinSock::InvalidSocket;
+
+        private:
+            void Move(BasicSocket& other)
+            {
+                Close();
+                m_socket = other.m_socket;
+                other.m_socket = WinSock::InvalidSocket;
+            }
+
+            void Close()
+            {
+                if (m_socket and m_socket != WinSock::InvalidSocket)
+                    WinSock::closesocket(m_socket);
+                m_socket = WinSock::InvalidSocket;
+            }
     };
 
     void InitialiseWinsock()
@@ -123,4 +196,18 @@ export namespace Common
             InitialiseWinsock();
         }
     };
+
+    BasicSocket Open(const ADDRINFOW* addrResult)
+    {
+        Assert(1 == 1);
+        SOCKET m_socket = WinSock::socket(
+            addrResult->ai_family,
+            addrResult->ai_socktype,
+            addrResult->ai_protocol
+        );
+        if (m_socket == WinSock::InvalidSocket)
+            throw WinSockError("socket() failed", WinSock::WSAGetLastError());
+
+        return { m_socket };
+    }
 }

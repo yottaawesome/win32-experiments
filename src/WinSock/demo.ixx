@@ -9,7 +9,6 @@ export namespace DemoA
 
     WinSock::ADDRINFOW* Resolve(const std::wstring& host, const unsigned short portNum)
     {
-        // https://docs.microsoft.com/en-us/windows/win32/api/ws2tcpip/nf-ws2tcpip-getaddrinfow
         std::wstring portNumber;
         if (portNum)
             portNumber = std::to_wstring(portNum);
@@ -21,6 +20,7 @@ export namespace DemoA
             .ai_socktype = (int)WinSock::SocketTypes::Stream,
             .ai_protocol = (int)WinSock::Protocol::TCP
         };
+        // https://docs.microsoft.com/en-us/windows/win32/api/ws2tcpip/nf-ws2tcpip-getaddrinfow
         const int status = WinSock::GetAddrInfoW(
             host.c_str(),
             portNumber.c_str(),
