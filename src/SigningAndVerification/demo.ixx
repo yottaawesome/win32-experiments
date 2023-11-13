@@ -1,7 +1,5 @@
 module;
 
-//#define _UNICODE 1
-//#define UNICODE 1
 #include <tchar.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +8,6 @@ module;
 #include <wincrypt.h>
 #include <wintrust.h>
 
-// Link with the Wintrust.lib file.
 #pragma comment (lib, "wintrust")
 #pragma comment(lib, "crypt32.lib")
 
