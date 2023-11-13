@@ -41,12 +41,12 @@ export namespace Common
 
     std::string TranslateErrorCode(
         const Win32::DWORD errorCode,
-        const std::wstring& moduleNameToLoad = {}
+        const std::optional<std::wstring>& moduleNameToLoad = std::nullopt
     )
     {
         Win32::HMODULE moduleToSearch = nullptr;
-        if (not moduleNameToLoad.empty())
-            moduleToSearch = Win32::LoadLibraryW(moduleNameToLoad.c_str());
+        if (moduleNameToLoad)
+            moduleToSearch = Win32::LoadLibraryW(moduleNameToLoad->c_str());
 
         const Win32::DWORD flags =
             Win32::FormatMessageFlags::AllocateBuffer 

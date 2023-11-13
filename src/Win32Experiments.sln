@@ -130,6 +130,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExecuteCmd", "ExecuteCmd\Ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinSock", "WinSock\WinSock.vcxproj", "{A11714B9-097C-4779-99FA-CDCCB79A9038}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SigningAndVerification", "SigningAndVerification\SigningAndVerification.vcxproj", "{89F848F9-5C0E-4573-A2B8-9D72179D1058}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -538,6 +540,14 @@ Global
 		{A11714B9-097C-4779-99FA-CDCCB79A9038}.Release|x64.Build.0 = Release|x64
 		{A11714B9-097C-4779-99FA-CDCCB79A9038}.Release|x86.ActiveCfg = Release|Win32
 		{A11714B9-097C-4779-99FA-CDCCB79A9038}.Release|x86.Build.0 = Release|Win32
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058}.Debug|x64.ActiveCfg = Debug|x64
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058}.Debug|x64.Build.0 = Debug|x64
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058}.Debug|x86.ActiveCfg = Debug|Win32
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058}.Debug|x86.Build.0 = Debug|Win32
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058}.Release|x64.ActiveCfg = Release|x64
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058}.Release|x64.Build.0 = Release|x64
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058}.Release|x86.ActiveCfg = Release|Win32
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -596,6 +606,7 @@ Global
 		{052C1D75-7B98-441D-860C-8BF391629E49} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{9AF57B13-B296-480C-8F97-D607529F2492} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{A11714B9-097C-4779-99FA-CDCCB79A9038} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
+		{89F848F9-5C0E-4573-A2B8-9D72179D1058} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
