@@ -174,30 +174,31 @@ HRESULT DesktopToastsApp::RegisterAppForNotificationSupport()
 {
     CoTaskMemString appData;
     auto hr = ::SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, appData.GetAddressOf());
-    if (SUCCEEDED(hr))
-    {
-        wchar_t shortcutPath[MAX_PATH];
-        hr = ::PathCchCombine(shortcutPath, ARRAYSIZE(shortcutPath), appData.Get(), LR"(Microsoft\Windows\Start Menu\Programs\Desktop Toasts App.lnk)");
-        if (SUCCEEDED(hr))
-        {
-            DWORD attributes = ::GetFileAttributes(shortcutPath);
-            bool fileExists = attributes < 0xFFFFFFF;
-            if (!fileExists)
-            {
-                wchar_t exePath[MAX_PATH];
-                DWORD charWritten = ::GetModuleFileName(nullptr, exePath, ARRAYSIZE(exePath));
-                hr = charWritten > 0 ? S_OK : HRESULT_FROM_WIN32(::GetLastError());
-                if (SUCCEEDED(hr))
-                {
-                    hr = InstallShortcut(shortcutPath, exePath);
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = RegisterComServer(exePath);
-                    }
-                }
-            }
-        }
-    }
+    if (FAILED(hr))
+        return hr;
+
+    wchar_t shortcutPath[MAX_PATH];
+    hr = ::PathCchCombine(shortcutPath, ARRAYSIZE(shortcutPath), appData.Get(), LR"(Microsoft\Windows\Start Menu\Programs\Desktop Toasts App.lnk)");
+    if (FAILED(hr))
+        return hr;
+
+    DWORD attributes = ::GetFileAttributes(shortcutPath);
+    bool fileExists = attributes < 0xFFFFFFF;
+    if (fileExists)
+        return hr;
+
+    wchar_t exePath[MAX_PATH];
+    DWORD charWritten = ::GetModuleFileName(nullptr, exePath, ARRAYSIZE(exePath));
+    hr = charWritten > 0 ? S_OK : HRESULT_FROM_WIN32(::GetLastError());
+    if (FAILED(hr))
+        return hr;
+
+    hr = InstallShortcut(shortcutPath, exePath);
+    if (FAILED(hr))
+        return hr;
+
+    hr = RegisterComServer(exePath);
+
     return hr;
 }
 
@@ -295,57 +296,54 @@ _Use_decl_annotations_
 HRESULT DesktopToastsApp::Initialize(HINSTANCE hInstance)
 {
     HRESULT hr = RegisterAppForNotificationSupport();
-    if (SUCCEEDED(hr))
-    {
-        WNDCLASSEX wcex = { sizeof(wcex) };
-        // Register window class
-        wcex.style = CS_HREDRAW | CS_VREDRAW;
-        wcex.lpfnWndProc = DesktopToastsApp::WndProc;
-        wcex.cbWndExtra = sizeof(LONG_PTR);
-        wcex.hInstance = hInstance;
-        wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-        wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-        wcex.lpszClassName = L"DesktopToastsApp";
-        wcex.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
-        ::RegisterClassEx(&wcex);
+    if (FAILED(hr))
+        return hr;
 
-        // Create window
-        m_hwnd = CreateWindow(
-            L"DesktopToastsApp",
-            L"Desktop Toasts Demo App",
-            WS_OVERLAPPEDWINDOW,
-            CW_USEDEFAULT, CW_USEDEFAULT,
-            350, 200,
-            nullptr, nullptr,
-            hInstance, this);
+    WNDCLASSEX wcex = { sizeof(wcex) };
+    // Register window class
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = DesktopToastsApp::WndProc;
+    wcex.cbWndExtra = sizeof(LONG_PTR);
+    wcex.hInstance = hInstance;
+    wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wcex.lpszClassName = L"DesktopToastsApp";
+    wcex.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
+    ::RegisterClassEx(&wcex);
 
-        hr = m_hwnd ? S_OK : E_FAIL;
-        if (SUCCEEDED(hr))
-        {
-            ::CreateWindow(
-                L"BUTTON",
-                L"View Text Toast",
-                BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE,
-                0, 0, 150, 25,
-                m_hwnd, reinterpret_cast<HMENU>(HM_TEXTBUTTON),
-                hInstance, nullptr);
-            m_hEdit = ::CreateWindow(
-                L"EDIT",
-                L"Whatever action you take on the displayed toast will be shown here.",
-                ES_LEFT | ES_MULTILINE | ES_READONLY | WS_CHILD | WS_VISIBLE | WS_BORDER,
-                0, 30, 300, 50,
-                m_hwnd, nullptr,
-                hInstance, nullptr);
+    // Create window
+    m_hwnd = CreateWindow(
+        L"DesktopToastsApp",
+        L"Desktop Toasts Demo App",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        350, 200,
+        nullptr, nullptr,
+        hInstance, this);
 
-            ::ShowWindow(m_hwnd, SW_SHOWNORMAL);
-            ::UpdateWindow(m_hwnd);
-        }
-    }
+    hr = m_hwnd ? S_OK : E_FAIL;
+    if (FAILED(hr))
+        return hr;
 
-    if (SUCCEEDED(hr))
-    {
-        hr = RegisterActivator();
-    }
+    ::CreateWindow(
+        L"BUTTON",
+        L"View Text Toast",
+        BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE,
+        0, 0, 150, 25,
+        m_hwnd, reinterpret_cast<HMENU>(HM_TEXTBUTTON),
+        hInstance, nullptr);
+    m_hEdit = ::CreateWindow(
+        L"EDIT",
+        L"Whatever action you take on the displayed toast will be shown here.",
+        ES_LEFT | ES_MULTILINE | ES_READONLY | WS_CHILD | WS_VISIBLE | WS_BORDER,
+        0, 30, 300, 50,
+        m_hwnd, nullptr,
+        hInstance, nullptr);
+
+    ::ShowWindow(m_hwnd, SW_SHOWNORMAL);
+    ::UpdateWindow(m_hwnd);
+
+    hr = RegisterActivator();
 
     return hr;
 }
