@@ -134,6 +134,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SigningAndVerification", "S
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EventLog", "EventLog\EventLog.vcxproj", "{6BAD48E1-3433-43C3-86DB-C44058B5333C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DesktopToastsSample", "DesktopToasts\src\DesktopToastsSample.vcxproj", "{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -558,6 +560,14 @@ Global
 		{6BAD48E1-3433-43C3-86DB-C44058B5333C}.Release|x64.Build.0 = Release|x64
 		{6BAD48E1-3433-43C3-86DB-C44058B5333C}.Release|x86.ActiveCfg = Release|Win32
 		{6BAD48E1-3433-43C3-86DB-C44058B5333C}.Release|x86.Build.0 = Release|Win32
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}.Debug|x64.ActiveCfg = Debug|x64
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}.Debug|x64.Build.0 = Debug|x64
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}.Debug|x86.ActiveCfg = Debug|Win32
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}.Debug|x86.Build.0 = Debug|Win32
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}.Release|x64.ActiveCfg = Release|x64
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}.Release|x64.Build.0 = Release|x64
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}.Release|x86.ActiveCfg = Release|Win32
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -618,6 +628,7 @@ Global
 		{A11714B9-097C-4779-99FA-CDCCB79A9038} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{89F848F9-5C0E-4573-A2B8-9D72179D1058} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{6BAD48E1-3433-43C3-86DB-C44058B5333C} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
+		{77CC36BE-AD64-4AD3-95C6-0F352F6A3FE3} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
