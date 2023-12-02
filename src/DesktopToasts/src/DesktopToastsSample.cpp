@@ -24,11 +24,6 @@ import std;
 //  Used to CoCreate an INotificationActivationCallback interface to notify about toast activations.
 EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_AppUserModel_ToastActivatorCLSID = { { 0x9F4C2855, 0x9F79, 0x4B39, { 0xA8, 0xD0, 0xE1, 0xD4, 0x2D, 0xE1, 0xD5, 0xF3 } }, 26 };
 
-using namespace ABI::Windows::Data::Xml::Dom;
-using namespace ABI::Windows::UI::Notifications;
-using namespace Microsoft::WRL;
-//using namespace Microsoft::WRL::Wrappers;
-
 struct CoTaskMemStringTraits
 {
     typedef PWSTR Type;
@@ -111,7 +106,7 @@ DesktopToastsApp* DesktopToastsApp::s_currentInstance = nullptr;
 // when the notification is activated.  The CLSID of the object needs to be registered with the
 // OS via its shortcut so that it knows who to call later.
 class DECLSPEC_UUID("23A5B06E-20BB-4E7E-A0AC-6982ED6A6041") NotificationActivator WrlSealed
-    : public RuntimeClass < RuntimeClassFlags<ClassicCom>,
+    : public Microsoft::WRL::RuntimeClass < Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::ClassicCom>,
     INotificationActivationCallback > WrlFinal
 {
 public:
@@ -206,7 +201,7 @@ HRESULT DesktopToastsApp::RegisterAppForNotificationSupport()
 _Use_decl_annotations_
 HRESULT DesktopToastsApp::InstallShortcut(PCWSTR shortcutPath, PCWSTR exePath)
 {
-    ComPtr<IShellLink> shellLink;
+    Microsoft::WRL::ComPtr<IShellLink> shellLink;
     HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&shellLink));
     if (FAILED(hr))
         return hr;
@@ -215,7 +210,7 @@ HRESULT DesktopToastsApp::InstallShortcut(PCWSTR shortcutPath, PCWSTR exePath)
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IPropertyStore> propertyStore;
+    Microsoft::WRL::ComPtr<IPropertyStore> propertyStore;
 
     hr = shellLink.As(&propertyStore);
     if (FAILED(hr))
@@ -238,7 +233,7 @@ HRESULT DesktopToastsApp::InstallShortcut(PCWSTR shortcutPath, PCWSTR exePath)
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IPersistFile> persistFile;
+    Microsoft::WRL::ComPtr<IPersistFile> persistFile;
     hr = shellLink.As(&persistFile);
     if (FAILED(hr))
         return hr;
@@ -272,24 +267,24 @@ HRESULT DesktopToastsApp::RegisterActivator()
 {
     // Module<OutOfProc> needs a callback registered before it can be used.
     // Since we don't care about when it shuts down, we'll pass an empty lambda here.
-    Module<OutOfProc>::Create([] {});
+    Microsoft::WRL::Module<Microsoft::WRL::OutOfProc>::Create([] {});
 
     // If a local server process only hosts the COM object then COM expects
     // the COM server host to shutdown when the references drop to zero.
     // Since the user might still be using the program after activating the notification,
     // we don't want to shutdown immediately.  Incrementing the object count tells COM that
     // we aren't done yet.
-    Module<OutOfProc>::GetModule().IncrementObjectCount();
+    Microsoft::WRL::Module<Microsoft::WRL::OutOfProc>::GetModule().IncrementObjectCount();
 
-    return Module<OutOfProc>::GetModule().RegisterObjects();
+    return Microsoft::WRL::Module<Microsoft::WRL::OutOfProc>::GetModule().RegisterObjects();
 }
 
 // Unregister our activator COM object
 void DesktopToastsApp::UnregisterActivator()
 {
-    Module<OutOfProc>::GetModule().UnregisterObjects();
+    Microsoft::WRL::Module<Microsoft::WRL::OutOfProc>::GetModule().UnregisterObjects();
 
-    Module<OutOfProc>::GetModule().DecrementObjectCount();
+    Microsoft::WRL::Module<Microsoft::WRL::OutOfProc>::GetModule().DecrementObjectCount();
 }
 
 // Prepare the main window
@@ -373,14 +368,14 @@ HRESULT DesktopToastsApp::SetMessage(PCWSTR message)
 // display the toast using the new C++ /ZW options (using handles, COM wrappers, etc.)
 HRESULT DesktopToastsApp::DisplayToast()
 {
-    ComPtr<IToastNotificationManagerStatics> toastStatics;
+    Microsoft::WRL::ComPtr<ABI::Windows::UI::Notifications::IToastNotificationManagerStatics> toastStatics;
     HRESULT hr = Windows::Foundation::GetActivationFactory(
         Microsoft::WRL::Wrappers::HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotificationManager).Get(),
         &toastStatics);
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IXmlDocument> toastXml;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlDocument> toastXml;
     hr = CreateToastXml(toastStatics.Get(), &toastXml);
     if (FAILED(hr))
         return hr;
@@ -392,12 +387,12 @@ HRESULT DesktopToastsApp::DisplayToast()
 
 // Create the toast XML from a template
 _Use_decl_annotations_
-HRESULT DesktopToastsApp::CreateToastXml(IToastNotificationManagerStatics* toastManager, IXmlDocument** inputXml)
+HRESULT DesktopToastsApp::CreateToastXml(ABI::Windows::UI::Notifications::IToastNotificationManagerStatics* toastManager, ABI::Windows::Data::Xml::Dom::IXmlDocument** inputXml)
 {
     *inputXml = nullptr;
 
     // Retrieve the template XML
-    HRESULT hr = toastManager->GetTemplateContent(ToastTemplateType_ToastImageAndText04, inputXml);
+    HRESULT hr = toastManager->GetTemplateContent(ABI::Windows::UI::Notifications::ToastTemplateType_ToastImageAndText04, inputXml);
     if (FAILED(hr))
         return hr;
 
@@ -419,7 +414,7 @@ HRESULT DesktopToastsApp::CreateToastXml(IToastNotificationManagerStatics* toast
 
 // Set the value of the "src" attribute of the "image" node
 _Use_decl_annotations_
-HRESULT DesktopToastsApp::SetImageSrc(PCWSTR imagePath, IXmlDocument* toastXml)
+HRESULT DesktopToastsApp::SetImageSrc(PCWSTR imagePath, ABI::Windows::Data::Xml::Dom::IXmlDocument* toastXml)
 {
     wchar_t imageSrcUri[MAX_PATH];
     DWORD size = ARRAYSIZE(imageSrcUri);
@@ -428,22 +423,22 @@ HRESULT DesktopToastsApp::SetImageSrc(PCWSTR imagePath, IXmlDocument* toastXml)
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IXmlNodeList> nodeList;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlNodeList> nodeList;
     hr = toastXml->GetElementsByTagName(Microsoft::WRL::Wrappers::HStringReference(L"image").Get(), &nodeList);
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IXmlNode> imageNode;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlNode> imageNode;
     hr = nodeList->Item(0, &imageNode);
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IXmlNamedNodeMap> attributes;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlNamedNodeMap> attributes;
     hr = imageNode->get_Attributes(&attributes);
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IXmlNode> srcAttribute;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlNode> srcAttribute;
     hr = attributes->GetNamedItem(Microsoft::WRL::Wrappers::HStringReference(L"src").Get(), &srcAttribute);
     if (FAILED(hr))
         return hr;
@@ -455,9 +450,9 @@ HRESULT DesktopToastsApp::SetImageSrc(PCWSTR imagePath, IXmlDocument* toastXml)
 
 // Set the values of each of the text nodes
 _Use_decl_annotations_
-HRESULT DesktopToastsApp::SetTextValues(const PCWSTR* textValues, UINT32 textValuesCount, IXmlDocument* toastXml)
+HRESULT DesktopToastsApp::SetTextValues(const PCWSTR* textValues, UINT32 textValuesCount, ABI::Windows::Data::Xml::Dom::IXmlDocument* toastXml)
 {
-    ComPtr<IXmlNodeList> nodeList;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlNodeList> nodeList;
     HRESULT hr = toastXml->GetElementsByTagName(Microsoft::WRL::Wrappers::HStringReference(L"text").Get(), &nodeList);
     if (FAILED(hr))
         return hr;
@@ -475,7 +470,7 @@ HRESULT DesktopToastsApp::SetTextValues(const PCWSTR* textValues, UINT32 textVal
 
     for (UINT32 i = 0; i < textValuesCount; i++)
     {
-        ComPtr<IXmlNode> textNode;
+        Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlNode> textNode;
         hr = nodeList->Item(i, &textNode);
         if (SUCCEEDED(hr))
             hr = SetNodeValueString(Microsoft::WRL::Wrappers::HStringReference(textValues[i]).Get(), textNode.Get(), toastXml);
@@ -485,19 +480,19 @@ HRESULT DesktopToastsApp::SetTextValues(const PCWSTR* textValues, UINT32 textVal
 }
 
 _Use_decl_annotations_
-HRESULT DesktopToastsApp::SetNodeValueString(HSTRING inputString, IXmlNode* node, IXmlDocument* xml)
+HRESULT DesktopToastsApp::SetNodeValueString(HSTRING inputString, ABI::Windows::Data::Xml::Dom::IXmlNode* node, ABI::Windows::Data::Xml::Dom::IXmlDocument* xml)
 {
-    ComPtr<IXmlText> inputText;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlText> inputText;
     HRESULT hr = xml->CreateTextNode(inputString, &inputText);
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IXmlNode> inputTextNode;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlNode> inputTextNode;
     hr = inputText.As(&inputTextNode);
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IXmlNode> appendedChild;
+    Microsoft::WRL::ComPtr<ABI::Windows::Data::Xml::Dom::IXmlNode> appendedChild;
     hr = node->AppendChild(inputTextNode.Get(), &appendedChild);
 
     return hr;
@@ -505,21 +500,21 @@ HRESULT DesktopToastsApp::SetNodeValueString(HSTRING inputString, IXmlNode* node
 
 // Create and display the toast
 _Use_decl_annotations_
-HRESULT DesktopToastsApp::CreateToast(IToastNotificationManagerStatics* toastManager, IXmlDocument* xml)
+HRESULT DesktopToastsApp::CreateToast(ABI::Windows::UI::Notifications::IToastNotificationManagerStatics* toastManager, ABI::Windows::Data::Xml::Dom::IXmlDocument* xml)
 {
-    ComPtr<IToastNotifier> notifier;
+    Microsoft::WRL::ComPtr<ABI::Windows::UI::Notifications::IToastNotifier> notifier;
     HRESULT hr = toastManager->CreateToastNotifierWithId(Microsoft::WRL::Wrappers::HStringReference(AppId).Get(), &notifier);
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IToastNotificationFactory> factory;
+    Microsoft::WRL::ComPtr<ABI::Windows::UI::Notifications::IToastNotificationFactory> factory;
     hr = Windows::Foundation::GetActivationFactory(
         Microsoft::WRL::Wrappers::HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotification).Get(),
         &factory);
     if (FAILED(hr))
         return hr;
 
-    ComPtr<IToastNotification> toast;
+    Microsoft::WRL::ComPtr<ABI::Windows::UI::Notifications::IToastNotification> toast;
     hr = factory->CreateToastNotification(xml, &toast);
     if (FAILED(hr))
         return hr;
@@ -534,49 +529,58 @@ HRESULT DesktopToastsApp::CreateToast(IToastNotificationManagerStatics* toastMan
     using namespace ABI::Windows::Foundation;
 
     hr = toast->add_Activated(
-        Callback < Implements < RuntimeClassFlags<ClassicCom>,
-        ITypedEventHandler<ToastNotification*, IInspectable* >> >(
-        [](IToastNotification*, IInspectable*)
-    {
-        // When the user clicks or taps on the toast, the registered
-        // COM object is activated, and the Activated event is raised.
-        // There is no guarantee which will happen first. If the COM
-        // object is activated first, then this message may not show.
-        DesktopToastsApp::GetInstance()->SetMessage(L"The user clicked on the toast.");
-        return S_OK;
-    }).Get(),
-        &activatedToken);
+        Microsoft::WRL::Callback<
+            Microsoft::WRL::Implements<
+                Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::ClassicCom>,
+                ITypedEventHandler<ABI::Windows::UI::Notifications::ToastNotification*, IInspectable*>>>
+        (
+            [](ABI::Windows::UI::Notifications::IToastNotification*, IInspectable*)
+            {
+                // When the user clicks or taps on the toast, the registered
+                // COM object is activated, and the Activated event is raised.
+                // There is no guarantee which will happen first. If the COM
+                // object is activated first, then this message may not show.
+                DesktopToastsApp::GetInstance()->SetMessage(L"The user clicked on the toast.");
+                return S_OK;
+            }).Get(),
+            &activatedToken
+        );
 
     if (FAILED(hr))
         return hr;
 
     hr = toast->add_Dismissed(
-        Callback < Implements < RuntimeClassFlags<ClassicCom>,
-        ITypedEventHandler<ToastNotification*, ToastDismissedEventArgs* >> >(
-        [](IToastNotification*, IToastDismissedEventArgs* e)
+        Microsoft::WRL::Callback<
+            Microsoft::WRL::Implements<
+                Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::ClassicCom>,
+                ITypedEventHandler<ABI::Windows::UI::Notifications::ToastNotification*, ABI::Windows::UI::Notifications::ToastDismissedEventArgs*>
+            >
+        >(
+        [](ABI::Windows::UI::Notifications::IToastNotification*, ABI::Windows::UI::Notifications::IToastDismissedEventArgs* e)
         {
-            ToastDismissalReason reason;
-            if (SUCCEEDED(e->get_Reason(&reason)))
-            {
-                PCWSTR outputText;
-                switch (reason)
-                {
-                    case ToastDismissalReason_ApplicationHidden:
-                        outputText = L"The application hid the toast using ToastNotifier.hide()";
-                        break;
-                    case ToastDismissalReason_UserCanceled:
-                        outputText = L"The user dismissed this toast";
-                        break;
-                    case ToastDismissalReason_TimedOut:
-                        outputText = L"The toast has timed out";
-                        break;
-                    default:
-                        outputText = L"Toast not activated";
-                        break;
-                }
+                ABI::Windows::UI::Notifications::ToastDismissalReason reason;
+            if (FAILED(e->get_Reason(&reason)))
+                return S_OK;
 
-                DesktopToastsApp::GetInstance()->SetMessage(outputText);
+            PCWSTR outputText;
+            switch (reason)
+            {
+                case ABI::Windows::UI::Notifications::ToastDismissalReason_ApplicationHidden:
+                    outputText = L"The application hid the toast using ToastNotifier.hide()";
+                    break;
+                case ABI::Windows::UI::Notifications::ToastDismissalReason_UserCanceled:
+                    outputText = L"The user dismissed this toast";
+                    break;
+                case ABI::Windows::UI::Notifications::ToastDismissalReason_TimedOut:
+                    outputText = L"The toast has timed out";
+                    break;
+                default:
+                    outputText = L"Toast not activated";
+                    break;
             }
+
+            DesktopToastsApp::GetInstance()->SetMessage(outputText);
+
             return S_OK;
         }).Get(),
         &dismissedToken
@@ -586,9 +590,11 @@ HRESULT DesktopToastsApp::CreateToast(IToastNotificationManagerStatics* toastMan
         return hr;
 
     hr = toast->add_Failed(
-        Callback < Implements < RuntimeClassFlags<ClassicCom>,
-        ITypedEventHandler<ToastNotification*, ToastFailedEventArgs* >> >(
-        [](IToastNotification*, IToastFailedEventArgs* /*e */)
+        Microsoft::WRL::Callback<
+            Microsoft::WRL::Implements<
+                Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::ClassicCom>,
+                ITypedEventHandler<ABI::Windows::UI::Notifications::ToastNotification*, ABI::Windows::UI::Notifications::ToastFailedEventArgs*>>>(
+        [](ABI::Windows::UI::Notifications::IToastNotification*, ABI::Windows::UI::Notifications::IToastFailedEventArgs* /*e */)
         {
             DesktopToastsApp::GetInstance()->SetMessage(L"The toast encountered an error.");
             return S_OK;
