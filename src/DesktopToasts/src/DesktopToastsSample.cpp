@@ -376,15 +376,16 @@ HRESULT DesktopToastsApp::DisplayToast()
     HRESULT hr = Windows::Foundation::GetActivationFactory(
         HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotificationManager).Get(),
         &toastStatics);
-    if (SUCCEEDED(hr))
-    {
-        ComPtr<IXmlDocument> toastXml;
-        hr = CreateToastXml(toastStatics.Get(), &toastXml);
-        if (SUCCEEDED(hr))
-        {
-            hr = CreateToast(toastStatics.Get(), toastXml.Get());
-        }
-    }
+    if (FAILED(hr))
+        return hr;
+
+    ComPtr<IXmlDocument> toastXml;
+    hr = CreateToastXml(toastStatics.Get(), &toastXml);
+    if (FAILED(hr))
+        return hr;
+
+    hr = CreateToast(toastStatics.Get(), toastXml.Get());
+
     return hr;
 }
 
@@ -396,27 +397,27 @@ HRESULT DesktopToastsApp::CreateToastXml(IToastNotificationManagerStatics* toast
 
     // Retrieve the template XML
     HRESULT hr = toastManager->GetTemplateContent(ToastTemplateType_ToastImageAndText04, inputXml);
+    if (FAILED(hr))
+        return hr;
+
+    PWSTR imagePath = _wfullpath(nullptr, L"toastImageAndText.png", MAX_PATH);
+    hr = imagePath != nullptr ? S_OK : HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    if (FAILED(hr))
+        return hr;
+
+    hr = SetImageSrc(imagePath, *inputXml);
     if (SUCCEEDED(hr))
     {
-        PWSTR imagePath = _wfullpath(nullptr, L"toastImageAndText.png", MAX_PATH);
-        hr = imagePath != nullptr ? S_OK : HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-        if (SUCCEEDED(hr))
-        {
-            hr = SetImageSrc(imagePath, *inputXml);
-            if (SUCCEEDED(hr))
-            {
-                const PCWSTR textValues[] = {
-                    L"Line 1",
-                    L"Line 2",
-                    L"Line 3"
-                };
-
-                hr = SetTextValues(textValues, ARRAYSIZE(textValues), *inputXml);
-            }
-
-            free(imagePath);
-        }
+        const PCWSTR textValues[] = {
+            L"Line 1",
+            L"Line 2",
+            L"Line 3"
+        };
+        hr = SetTextValues(textValues, ARRAYSIZE(textValues), *inputXml);
     }
+
+    free(imagePath);
+
     return hr;
 }
 
@@ -428,32 +429,31 @@ HRESULT DesktopToastsApp::SetImageSrc(PCWSTR imagePath, IXmlDocument* toastXml)
     DWORD size = ARRAYSIZE(imageSrcUri);
 
     HRESULT hr = ::UrlCreateFromPath(imagePath, imageSrcUri, &size, 0);
-    if (SUCCEEDED(hr))
-    {
-        ComPtr<IXmlNodeList> nodeList;
-        hr = toastXml->GetElementsByTagName(HStringReference(L"image").Get(), &nodeList);
-        if (SUCCEEDED(hr))
-        {
-            ComPtr<IXmlNode> imageNode;
-            hr = nodeList->Item(0, &imageNode);
-            if (SUCCEEDED(hr))
-            {
-                ComPtr<IXmlNamedNodeMap> attributes;
+    if (FAILED(hr))
+        return hr;
 
-                hr = imageNode->get_Attributes(&attributes);
-                if (SUCCEEDED(hr))
-                {
-                    ComPtr<IXmlNode> srcAttribute;
+    ComPtr<IXmlNodeList> nodeList;
+    hr = toastXml->GetElementsByTagName(HStringReference(L"image").Get(), &nodeList);
+    if (FAILED(hr))
+        return hr;
 
-                    hr = attributes->GetNamedItem(HStringReference(L"src").Get(), &srcAttribute);
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = SetNodeValueString(HStringReference(imageSrcUri).Get(), srcAttribute.Get(), toastXml);
-                    }
-                }
-            }
-        }
-    }
+    ComPtr<IXmlNode> imageNode;
+    hr = nodeList->Item(0, &imageNode);
+    if (FAILED(hr))
+        return hr;
+
+    ComPtr<IXmlNamedNodeMap> attributes;
+    hr = imageNode->get_Attributes(&attributes);
+    if (FAILED(hr))
+        return hr;
+
+    ComPtr<IXmlNode> srcAttribute;
+    hr = attributes->GetNamedItem(HStringReference(L"src").Get(), &srcAttribute);
+    if (FAILED(hr))
+        return hr;
+
+    hr = SetNodeValueString(HStringReference(imageSrcUri).Get(), srcAttribute.Get(), toastXml);
+
     return hr;
 }
 
@@ -463,28 +463,26 @@ HRESULT DesktopToastsApp::SetTextValues(const PCWSTR* textValues, UINT32 textVal
 {
     ComPtr<IXmlNodeList> nodeList;
     HRESULT hr = toastXml->GetElementsByTagName(HStringReference(L"text").Get(), &nodeList);
-    if (SUCCEEDED(hr))
+    if (FAILED(hr))
+        return hr;
+
+    UINT32 nodeListLength;
+    hr = nodeList->get_Length(&nodeListLength);
+    if (FAILED(hr))
+        return hr;
+
+    // If a template was chosen with fewer text elements, also change the amount of strings
+    // passed to this method.
+    hr = textValuesCount <= nodeListLength ? S_OK : E_INVALIDARG;
+    if (FAILED(hr))
+        return hr;
+
+    for (UINT32 i = 0; i < textValuesCount; i++)
     {
-        UINT32 nodeListLength;
-        hr = nodeList->get_Length(&nodeListLength);
+        ComPtr<IXmlNode> textNode;
+        hr = nodeList->Item(i, &textNode);
         if (SUCCEEDED(hr))
-        {
-            // If a template was chosen with fewer text elements, also change the amount of strings
-            // passed to this method.
-            hr = textValuesCount <= nodeListLength ? S_OK : E_INVALIDARG;
-            if (SUCCEEDED(hr))
-            {
-                for (UINT32 i = 0; i < textValuesCount; i++)
-                {
-                    ComPtr<IXmlNode> textNode;
-                    hr = nodeList->Item(i, &textNode);
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = SetNodeValueString(HStringReference(textValues[i]).Get(), textNode.Get(), toastXml);
-                    }
-                }
-            }
-        }
+            hr = SetNodeValueString(HStringReference(textValues[i]).Get(), textNode.Get(), toastXml);
     }
 
     return hr;
@@ -495,16 +493,16 @@ HRESULT DesktopToastsApp::SetNodeValueString(HSTRING inputString, IXmlNode* node
 {
     ComPtr<IXmlText> inputText;
     HRESULT hr = xml->CreateTextNode(inputString, &inputText);
-    if (SUCCEEDED(hr))
-    {
-        ComPtr<IXmlNode> inputTextNode;
-        hr = inputText.As(&inputTextNode);
-        if (SUCCEEDED(hr))
-        {
-            ComPtr<IXmlNode> appendedChild;
-            hr = node->AppendChild(inputTextNode.Get(), &appendedChild);
-        }
-    }
+    if (FAILED(hr))
+        return hr;
+
+    ComPtr<IXmlNode> inputTextNode;
+    hr = inputText.As(&inputTextNode);
+    if (FAILED(hr))
+        return hr;
+
+    ComPtr<IXmlNode> appendedChild;
+    hr = node->AppendChild(inputTextNode.Get(), &appendedChild);
 
     return hr;
 }
@@ -515,93 +513,96 @@ HRESULT DesktopToastsApp::CreateToast(IToastNotificationManagerStatics* toastMan
 {
     ComPtr<IToastNotifier> notifier;
     HRESULT hr = toastManager->CreateToastNotifierWithId(HStringReference(AppId).Get(), &notifier);
-    if (SUCCEEDED(hr))
+    if (FAILED(hr))
+        return hr;
+
+    ComPtr<IToastNotificationFactory> factory;
+    hr = Windows::Foundation::GetActivationFactory(
+        HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotification).Get(),
+        &factory);
+    if (FAILED(hr))
+        return hr;
+
+    ComPtr<IToastNotification> toast;
+    hr = factory->CreateToastNotification(xml, &toast);
+    if (FAILED(hr))
+        return hr;
+
+    // Register the event handlers
+    //
+    // These handlers are called asynchronously.  This sample doesn't handle the
+    // the fact that these events could be raised after the app object has already
+    // been decontructed.
+    EventRegistrationToken activatedToken, dismissedToken, failedToken;
+
+    using namespace ABI::Windows::Foundation;
+
+    hr = toast->add_Activated(
+        Callback < Implements < RuntimeClassFlags<ClassicCom>,
+        ITypedEventHandler<ToastNotification*, IInspectable* >> >(
+        [](IToastNotification*, IInspectable*)
     {
-        ComPtr<IToastNotificationFactory> factory;
-        hr = Windows::Foundation::GetActivationFactory(
-            HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotification).Get(),
-            &factory);
-        if (SUCCEEDED(hr))
+        // When the user clicks or taps on the toast, the registered
+        // COM object is activated, and the Activated event is raised.
+        // There is no guarantee which will happen first. If the COM
+        // object is activated first, then this message may not show.
+        DesktopToastsApp::GetInstance()->SetMessage(L"The user clicked on the toast.");
+        return S_OK;
+    }).Get(),
+        &activatedToken);
+
+    if (FAILED(hr))
+        return hr;
+
+    hr = toast->add_Dismissed(
+        Callback < Implements < RuntimeClassFlags<ClassicCom>,
+        ITypedEventHandler<ToastNotification*, ToastDismissedEventArgs* >> >(
+        [](IToastNotification*, IToastDismissedEventArgs* e)
         {
-            ComPtr<IToastNotification> toast;
-            hr = factory->CreateToastNotification(xml, &toast);
-            if (SUCCEEDED(hr))
+            ToastDismissalReason reason;
+            if (SUCCEEDED(e->get_Reason(&reason)))
             {
-                // Register the event handlers
-                //
-                // These handlers are called asynchronously.  This sample doesn't handle the
-                // the fact that these events could be raised after the app object has already
-                // been decontructed.
-                EventRegistrationToken activatedToken, dismissedToken, failedToken;
-
-                using namespace ABI::Windows::Foundation;
-
-                hr = toast->add_Activated(
-                    Callback < Implements < RuntimeClassFlags<ClassicCom>,
-                    ITypedEventHandler<ToastNotification*, IInspectable* >> >(
-                    [](IToastNotification*, IInspectable*)
+                PCWSTR outputText;
+                switch (reason)
                 {
-                    // When the user clicks or taps on the toast, the registered
-                    // COM object is activated, and the Activated event is raised.
-                    // There is no guarantee which will happen first. If the COM
-                    // object is activated first, then this message may not show.
-                    DesktopToastsApp::GetInstance()->SetMessage(L"The user clicked on the toast.");
-                    return S_OK;
-                }).Get(),
-                    &activatedToken);
-
-                if (SUCCEEDED(hr))
-                {
-                    hr = toast->add_Dismissed(Callback < Implements < RuntimeClassFlags<ClassicCom>,
-                        ITypedEventHandler<ToastNotification*, ToastDismissedEventArgs* >> >(
-                        [](IToastNotification*, IToastDismissedEventArgs* e)
-                    {
-                        ToastDismissalReason reason;
-                        if (SUCCEEDED(e->get_Reason(&reason)))
-                        {
-                            PCWSTR outputText;
-                            switch (reason)
-                            {
-                            case ToastDismissalReason_ApplicationHidden:
-                                outputText = L"The application hid the toast using ToastNotifier.hide()";
-                                break;
-                            case ToastDismissalReason_UserCanceled:
-                                outputText = L"The user dismissed this toast";
-                                break;
-                            case ToastDismissalReason_TimedOut:
-                                outputText = L"The toast has timed out";
-                                break;
-                            default:
-                                outputText = L"Toast not activated";
-                                break;
-                            }
-
-                            DesktopToastsApp::GetInstance()->SetMessage(outputText);
-                        }
-                        return S_OK;
-                    }).Get(),
-                        &dismissedToken);
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = toast->add_Failed(Callback < Implements < RuntimeClassFlags<ClassicCom>,
-                            ITypedEventHandler<ToastNotification*, ToastFailedEventArgs* >> >(
-                            [](IToastNotification*, IToastFailedEventArgs* /*e */)
-                        {
-                            DesktopToastsApp::GetInstance()->SetMessage(L"The toast encountered an error.");
-                            return S_OK;
-                        }).Get(),
-                            &failedToken);
-
-                        if (SUCCEEDED(hr))
-                        {
-                            hr = notifier->Show(toast.Get());
-                        }
-                    }
+                    case ToastDismissalReason_ApplicationHidden:
+                        outputText = L"The application hid the toast using ToastNotifier.hide()";
+                        break;
+                    case ToastDismissalReason_UserCanceled:
+                        outputText = L"The user dismissed this toast";
+                        break;
+                    case ToastDismissalReason_TimedOut:
+                        outputText = L"The toast has timed out";
+                        break;
+                    default:
+                        outputText = L"Toast not activated";
+                        break;
                 }
 
+                DesktopToastsApp::GetInstance()->SetMessage(outputText);
             }
-        }
-    }
+            return S_OK;
+        }).Get(),
+        &dismissedToken
+    );
+
+    if (FAILED(hr))
+        return hr;
+
+    hr = toast->add_Failed(
+        Callback < Implements < RuntimeClassFlags<ClassicCom>,
+        ITypedEventHandler<ToastNotification*, ToastFailedEventArgs* >> >(
+        [](IToastNotification*, IToastFailedEventArgs* /*e */)
+        {
+            DesktopToastsApp::GetInstance()->SetMessage(L"The toast encountered an error.");
+            return S_OK;
+        }).Get(),
+        &failedToken
+    );
+
+    if (SUCCEEDED(hr))
+        hr = notifier->Show(toast.Get());
+
     return hr;
 }
 
@@ -613,17 +614,16 @@ LRESULT CALLBACK DesktopToastsApp::WndProc(HWND hwnd, UINT32 message, WPARAM wPa
     {
         auto pcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
         auto app = reinterpret_cast<DesktopToastsApp *>(pcs->lpCreateParams);
-
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(app));
-
         return 1;
     }
 
     auto app = reinterpret_cast<DesktopToastsApp *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-    if (app)
+    if (!app)
+        return DefWindowProc(hwnd, message, wParam, lParam);
+
+    switch (message)
     {
-        switch (message)
-        {
         case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -635,22 +635,24 @@ LRESULT CALLBACK DesktopToastsApp::WndProc(HWND hwnd, UINT32 message, WPARAM wPa
             default:
                 return DefWindowProc(hwnd, message, wParam, lParam);
             }
-        }
             break;
+        }
+
         case WM_PAINT:
         {
             PAINTSTRUCT ps;
             BeginPaint(hwnd, &ps);
             EndPaint(hwnd, &ps);
-        }
             return 0;
+        }
 
         case WM_DESTROY:
         {
             PostQuitMessage(0);
-        }
             return 1;
         }
+
+        default:
+            return DefWindowProc(hwnd, message, wParam, lParam);
     }
-    return DefWindowProc(hwnd, message, wParam, lParam);
 }
