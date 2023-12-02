@@ -27,7 +27,7 @@ EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_AppUserModel_ToastActivatorCL
 using namespace ABI::Windows::Data::Xml::Dom;
 using namespace ABI::Windows::UI::Notifications;
 using namespace Microsoft::WRL;
-using namespace Microsoft::WRL::Wrappers;
+//using namespace Microsoft::WRL::Wrappers;
 
 struct CoTaskMemStringTraits
 {
@@ -37,7 +37,7 @@ struct CoTaskMemStringTraits
 
     inline static Type GetInvalidValue() throw() { return nullptr; }
 };
-typedef HandleT<CoTaskMemStringTraits> CoTaskMemString;
+typedef Microsoft::WRL::Wrappers::HandleT<CoTaskMemStringTraits> CoTaskMemString;
 
 const wchar_t AppId[] = L"Microsoft.Samples.DesktopToasts";
 
@@ -130,7 +130,7 @@ CoCreatableClass(NotificationActivator);
 // Main function
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 {
-    RoInitializeWrapper winRtInitializer(RO_INIT_MULTITHREADED);
+    Microsoft::WRL::Wrappers::RoInitializeWrapper winRtInitializer(RO_INIT_MULTITHREADED);
 
     HRESULT hr = winRtInitializer;
     if (SUCCEEDED(hr))
@@ -375,7 +375,7 @@ HRESULT DesktopToastsApp::DisplayToast()
 {
     ComPtr<IToastNotificationManagerStatics> toastStatics;
     HRESULT hr = Windows::Foundation::GetActivationFactory(
-        HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotificationManager).Get(),
+        Microsoft::WRL::Wrappers::HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotificationManager).Get(),
         &toastStatics);
     if (FAILED(hr))
         return hr;
@@ -429,7 +429,7 @@ HRESULT DesktopToastsApp::SetImageSrc(PCWSTR imagePath, IXmlDocument* toastXml)
         return hr;
 
     ComPtr<IXmlNodeList> nodeList;
-    hr = toastXml->GetElementsByTagName(HStringReference(L"image").Get(), &nodeList);
+    hr = toastXml->GetElementsByTagName(Microsoft::WRL::Wrappers::HStringReference(L"image").Get(), &nodeList);
     if (FAILED(hr))
         return hr;
 
@@ -444,11 +444,11 @@ HRESULT DesktopToastsApp::SetImageSrc(PCWSTR imagePath, IXmlDocument* toastXml)
         return hr;
 
     ComPtr<IXmlNode> srcAttribute;
-    hr = attributes->GetNamedItem(HStringReference(L"src").Get(), &srcAttribute);
+    hr = attributes->GetNamedItem(Microsoft::WRL::Wrappers::HStringReference(L"src").Get(), &srcAttribute);
     if (FAILED(hr))
         return hr;
 
-    hr = SetNodeValueString(HStringReference(imageSrcUri).Get(), srcAttribute.Get(), toastXml);
+    hr = SetNodeValueString(Microsoft::WRL::Wrappers::HStringReference(imageSrcUri).Get(), srcAttribute.Get(), toastXml);
 
     return hr;
 }
@@ -458,7 +458,7 @@ _Use_decl_annotations_
 HRESULT DesktopToastsApp::SetTextValues(const PCWSTR* textValues, UINT32 textValuesCount, IXmlDocument* toastXml)
 {
     ComPtr<IXmlNodeList> nodeList;
-    HRESULT hr = toastXml->GetElementsByTagName(HStringReference(L"text").Get(), &nodeList);
+    HRESULT hr = toastXml->GetElementsByTagName(Microsoft::WRL::Wrappers::HStringReference(L"text").Get(), &nodeList);
     if (FAILED(hr))
         return hr;
 
@@ -478,7 +478,7 @@ HRESULT DesktopToastsApp::SetTextValues(const PCWSTR* textValues, UINT32 textVal
         ComPtr<IXmlNode> textNode;
         hr = nodeList->Item(i, &textNode);
         if (SUCCEEDED(hr))
-            hr = SetNodeValueString(HStringReference(textValues[i]).Get(), textNode.Get(), toastXml);
+            hr = SetNodeValueString(Microsoft::WRL::Wrappers::HStringReference(textValues[i]).Get(), textNode.Get(), toastXml);
     }
 
     return hr;
@@ -508,13 +508,13 @@ _Use_decl_annotations_
 HRESULT DesktopToastsApp::CreateToast(IToastNotificationManagerStatics* toastManager, IXmlDocument* xml)
 {
     ComPtr<IToastNotifier> notifier;
-    HRESULT hr = toastManager->CreateToastNotifierWithId(HStringReference(AppId).Get(), &notifier);
+    HRESULT hr = toastManager->CreateToastNotifierWithId(Microsoft::WRL::Wrappers::HStringReference(AppId).Get(), &notifier);
     if (FAILED(hr))
         return hr;
 
     ComPtr<IToastNotificationFactory> factory;
     hr = Windows::Foundation::GetActivationFactory(
-        HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotification).Get(),
+        Microsoft::WRL::Wrappers::HStringReference(RuntimeClass_Windows_UI_Notifications_ToastNotification).Get(),
         &factory);
     if (FAILED(hr))
         return hr;
