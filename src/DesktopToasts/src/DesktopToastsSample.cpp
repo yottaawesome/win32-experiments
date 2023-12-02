@@ -15,6 +15,7 @@
 #include <wrl\wrappers\corewrappers.h>
 #include <windows.ui.notifications.h>
 #include "NotificationActivationCallback.h"
+import std;
 
 //  Name:     System.AppUserModel.ToastActivatorCLSID -- PKEY_AppUserModel_ToastActivatorCLSID
 //  Type:     Guid -- VT_CLSID
@@ -400,23 +401,18 @@ HRESULT DesktopToastsApp::CreateToastXml(IToastNotificationManagerStatics* toast
     if (FAILED(hr))
         return hr;
 
-    PWSTR imagePath = _wfullpath(nullptr, L"toastImageAndText.png", MAX_PATH);
-    hr = imagePath != nullptr ? S_OK : HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    std::filesystem::path imagePath = std::filesystem::absolute({ L".\\toastImageAndText.png" });
+
+    hr = SetImageSrc(imagePath.c_str(), *inputXml);
     if (FAILED(hr))
         return hr;
 
-    hr = SetImageSrc(imagePath, *inputXml);
-    if (SUCCEEDED(hr))
-    {
-        const PCWSTR textValues[] = {
-            L"Line 1",
-            L"Line 2",
-            L"Line 3"
-        };
-        hr = SetTextValues(textValues, ARRAYSIZE(textValues), *inputXml);
-    }
-
-    free(imagePath);
+    const PCWSTR textValues[] = {
+        L"Line 1",
+        L"Line 2",
+        L"Line 3"
+    };
+    hr = SetTextValues(textValues, ARRAYSIZE(textValues), *inputXml);
 
     return hr;
 }
@@ -618,7 +614,7 @@ LRESULT CALLBACK DesktopToastsApp::WndProc(HWND hwnd, UINT32 message, WPARAM wPa
         return 1;
     }
 
-    auto app = reinterpret_cast<DesktopToastsApp *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    auto app = reinterpret_cast<DesktopToastsApp*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
     if (!app)
         return DefWindowProc(hwnd, message, wParam, lParam);
 
@@ -629,13 +625,13 @@ LRESULT CALLBACK DesktopToastsApp::WndProc(HWND hwnd, UINT32 message, WPARAM wPa
             int wmId = LOWORD(wParam);
             switch (wmId)
             {
-            case DesktopToastsApp::HM_TEXTBUTTON:
-                app->DisplayToast();
-                break;
-            default:
-                return DefWindowProc(hwnd, message, wParam, lParam);
+                case DesktopToastsApp::HM_TEXTBUTTON:
+                    app->DisplayToast();
+                    break;
+                default:
+                    return DefWindowProc(hwnd, message, wParam, lParam);
             }
-            break;
+            return 0;
         }
 
         case WM_PAINT:
