@@ -92,8 +92,8 @@ private:
         _In_ ABI::Windows::Data::Xml::Dom::IXmlDocument* xml
         );
 
-    HWND m_hwnd = nullptr;
-    HWND m_hEdit = nullptr;
+    //HWND m_hwnd = nullptr;
+    //HWND m_hEdit = nullptr;
 
     static const WORD HM_TEXTBUTTON = 1;
 
@@ -295,20 +295,20 @@ HRESULT DesktopToastsApp::Initialize(HINSTANCE hInstance)
     if (FAILED(hr))
         return hr;
 
-    WNDCLASSEX wcex = { sizeof(wcex) };
-    // Register window class
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = DesktopToastsApp::WndProc;
-    wcex.cbWndExtra = sizeof(LONG_PTR);
-    wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wcex.lpszClassName = L"DesktopToastsApp";
-    wcex.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
-    ::RegisterClassEx(&wcex);
+    //WNDCLASSEX wcex = { sizeof(wcex) };
+    //// Register window class
+    //wcex.style = CS_HREDRAW | CS_VREDRAW;
+    //wcex.lpfnWndProc = DesktopToastsApp::WndProc;
+    //wcex.cbWndExtra = sizeof(LONG_PTR);
+    //wcex.hInstance = hInstance;
+    //wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+    //wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    //wcex.lpszClassName = L"DesktopToastsApp";
+    //wcex.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
+    //::RegisterClassEx(&wcex);
 
     // Create window
-    m_hwnd = CreateWindow(
+    /*m_hwnd = CreateWindow(
         L"DesktopToastsApp",
         L"Desktop Toasts Demo App",
         WS_OVERLAPPEDWINDOW,
@@ -337,7 +337,7 @@ HRESULT DesktopToastsApp::Initialize(HINSTANCE hInstance)
         hInstance, nullptr);
 
     ::ShowWindow(m_hwnd, SW_SHOWNORMAL);
-    ::UpdateWindow(m_hwnd);
+    ::UpdateWindow(m_hwnd);*/
 
     hr = RegisterActivator();
 
@@ -347,19 +347,26 @@ HRESULT DesktopToastsApp::Initialize(HINSTANCE hInstance)
 // Standard message loop
 void DesktopToastsApp::RunMessageLoop()
 {
-    MSG msg;
+    for (int i = 0; i < 1; i++)
+    {
+        DisplayToast();
+        Sleep(1000);
+    }
+    Sleep(5000);
+
+    /*MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0))
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-    }
+    }*/
 }
 
 HRESULT DesktopToastsApp::SetMessage(PCWSTR message)
 {
-    ::SetForegroundWindow(m_hwnd);
+    //::SetForegroundWindow(m_hwnd);
 
-    ::SendMessage(m_hEdit, WM_SETTEXT, reinterpret_cast<WPARAM>(nullptr), reinterpret_cast<LPARAM>(message));
+    //::SendMessage(m_hEdit, WM_SETTEXT, reinterpret_cast<WPARAM>(nullptr), reinterpret_cast<LPARAM>(message));
 
     return S_OK;
 }
@@ -533,16 +540,18 @@ HRESULT DesktopToastsApp::CreateToast(ABI::Windows::UI::Notifications::IToastNot
             Microsoft::WRL::Implements<
                 Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::ClassicCom>,
                 ITypedEventHandler<ABI::Windows::UI::Notifications::ToastNotification*, IInspectable*>>>
-        (
-            [](ABI::Windows::UI::Notifications::IToastNotification*, IInspectable*)
-            {
-                // When the user clicks or taps on the toast, the registered
-                // COM object is activated, and the Activated event is raised.
-                // There is no guarantee which will happen first. If the COM
-                // object is activated first, then this message may not show.
-                DesktopToastsApp::GetInstance()->SetMessage(L"The user clicked on the toast.");
-                return S_OK;
-            }).Get(),
+            (
+                [](ABI::Windows::UI::Notifications::IToastNotification*, IInspectable*)
+                {
+                    // When the user clicks or taps on the toast, the registered
+                    // COM object is activated, and the Activated event is raised.
+                    // There is no guarantee which will happen first. If the COM
+                    // object is activated first, then this message may not show.
+                    DesktopToastsApp::GetInstance()->SetMessage(L"The user clicked on the toast.");
+                    MessageBox(nullptr, L"AA", L"AA", MB_OK);
+                    return S_OK;
+                }
+            ).Get(),
             &activatedToken
         );
 
