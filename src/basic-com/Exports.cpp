@@ -93,7 +93,7 @@ BOOL   HelperWriteKey(
 
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" HRESULT __declspec(dllexport) __stdcall DllRegisterServer()
+extern "C" HRESULT __stdcall DllRegisterServer()
 {
     //
     //As per COM guidelines, every self installable COM inprocess component
@@ -193,7 +193,7 @@ extern "C" HRESULT __declspec(dllexport) __stdcall DllRegisterServer()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" HRESULT __declspec(dllexport) __stdcall DllUnregisterServer(void)
+extern "C" HRESULT __stdcall DllUnregisterServer(void)
 {
     //
     //As per COM guidelines, every self removable COM inprocess component
