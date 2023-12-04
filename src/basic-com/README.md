@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This repo is an implementation of an old [CodeGuru tutorial on authoring a COM DLL](https://www.codeguru.com/soap/step-by-step-com-tutorial/). The links and images are broke on the original page, but you can find an upload of the original source code [here](https://github.com/grimripper/grim_com_testing/tree/master/COMStepByStep_src).
+This repo is an implementation of an old [CodeGuru tutorial on authoring a COM DLL](https://www.codeguru.com/soap/step-by-step-com-tutorial/). The links and images are broken on the original page (Dr Dobbs itself sadly ceased publication a decade ago), but you can find an upload of the original source code [here](https://github.com/grimripper/grim_com_testing/tree/master/COMStepByStep_src).
 
 ## Changes
 
