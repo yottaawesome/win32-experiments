@@ -35,28 +35,21 @@ HRESULT __stdcall CAddFactory::LockServer(BOOL bLock)
 }
 
 HRESULT __stdcall CAddFactory::QueryInterface(
-    REFIID riid,
-    void** ppObj
+    REFIID iid,
+    void** ppv
 )
 {
-    if (riid == IID_IUnknown)
-    {
-        *ppObj = this;
-        AddRef();
-        return S_OK;
-    }
-
-    if (riid == IID_IAdd)
-    {
-        *ppObj = this;
-        AddRef();
-        return S_OK;
-    }
-
-    //if control reaches here then , let the client know that
-    //we do not satisfy the required interface
-    *ppObj = NULL;
-    return E_NOINTERFACE;
+    if ((iid == IID_IUnknown) || (iid == IID_IClassFactory))
+	{
+	    *ppv = static_cast<IClassFactory*>(this) ; 
+	}
+	else
+	{
+	    *ppv = NULL ;
+	    return E_NOINTERFACE ;
+	}
+	reinterpret_cast<IUnknown*>(*ppv)->AddRef() ;
+	return S_OK ;
 }//QueryInterface method
 
 ULONG __stdcall CAddFactory::AddRef()
