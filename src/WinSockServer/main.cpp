@@ -100,7 +100,7 @@ int main()
         iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
         if (iResult > 0) 
         {
-            std::println("Bytes received: {}\n", iResult);
+            std::println("Bytes received: {}: {}\n", iResult, std::string(recvbuf, iResult));
 
             // Echo the buffer back to the sender
             iSendResult = send(ClientSocket, recvbuf, iResult, 0);
@@ -122,7 +122,6 @@ int main()
             WSACleanup();
             return 1;
         }
-
     } while (iResult > 0);
 
     // shutdown the connection since we're done

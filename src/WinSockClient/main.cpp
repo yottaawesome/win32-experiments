@@ -92,7 +92,8 @@ int main(int argc, char** argv)
     }
 
     // Send an initial buffer
-    iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+    std::string hello{ "Hello, world!" };
+    iResult = send(ConnectSocket, hello.c_str(), hello.size(), 0);
     if (iResult == SOCKET_ERROR) 
     {
         std::println("send failed with error: {}\n", WSAGetLastError());
@@ -118,12 +119,11 @@ int main(int argc, char** argv)
     {
         iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
         if (iResult > 0)
-            std::println("Bytes received: {}\n", iResult);
+            std::println("Bytes received: {}: {}\n", iResult, std::string(recvbuf, iResult));
         else if (iResult == 0)
             std::println("Connection closed\n");
         else
             std::println("recv failed with error: {}\n", WSAGetLastError());
-
     } while (iResult > 0);
 
     // cleanup
