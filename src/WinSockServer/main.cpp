@@ -100,7 +100,7 @@ int main()
         iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
         if (iResult > 0) 
         {
-            std::println("Bytes received: {}: {}\n", iResult, std::string(recvbuf, iResult));
+            std::println("Bytes received: {}: {}\n", iResult, std::string_view(recvbuf, iResult));
 
             // Echo the buffer back to the sender
             iSendResult = send(ClientSocket, recvbuf, iResult, 0);

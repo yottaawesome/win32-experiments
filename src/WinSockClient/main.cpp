@@ -119,7 +119,7 @@ int main(int argc, char** argv)
     {
         iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
         if (iResult > 0)
-            std::println("Bytes received: {}: {}\n", iResult, std::string(recvbuf, iResult));
+            std::println("Bytes received: {}: {}\n", iResult, std::string_view(recvbuf, iResult));
         else if (iResult == 0)
             std::println("Connection closed\n");
         else
