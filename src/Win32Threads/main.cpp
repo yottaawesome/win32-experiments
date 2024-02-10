@@ -191,9 +191,35 @@ namespace Group
     }
 }
 
+namespace StdGroup
+{
+    struct Task final
+    { 
+        void operator()() { std::println("Hello, std::thread!"); } 
+    };
+
+    template<typename...T>
+    struct ThreadGroup
+    {
+        std::array<std::jthread, sizeof...(T)> Threads;
+        
+        void Start()
+        {
+            Threads = { std::jthread(T{})... };
+        }
+    };
+
+    void Run()
+    {
+        ThreadGroup<Task, Task, Task> ts{};
+        ts.Start();
+    }
+}
+
 int main()
 {
     Threads1::Run();
     Threads2::Run();
     Group::Run();
+    StdGroup::Run();
 }
