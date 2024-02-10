@@ -152,6 +152,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="threads-experiments.ixx" />
+    <ClCompile Include="threads-shared.ixx" />
+    <ClCompile Include="threads.ixx" />
+    <ClCompile Include="win32.ixx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
