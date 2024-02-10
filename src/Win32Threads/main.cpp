@@ -8,4 +8,5 @@ int main()
     Threads2::Run();
     Group::Run();
     StdGroup::Run();
+    APC::Run();
 }

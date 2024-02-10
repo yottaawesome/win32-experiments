@@ -11,14 +11,24 @@ export namespace win32
 	using 
 		::HANDLE,
 		::uintptr_t,
-		::DWORD;
+		::DWORD,
+		::ULONG_PTR,
+		::SYNCHRONIZATION_BARRIER;
 
 	using 
 		::_beginthreadex, 
 		::WaitForSingleObject,
 		::WaitForSingleObjectEx,
 		::CloseHandle,
-		::GetLastError;
+		::GetLastError,
+		::Sleep,
+		::SleepEx,
+		::QueueUserAPC,
+		::QueueUserAPC2,
+		::InitializeSynchronizationBarrier,
+		::EnterSynchronizationBarrier,
+		::DeleteSynchronizationBarrier;
 
 	constexpr auto InfiniteWait = INFINITE;
+	constexpr auto WaitIoCompletion = WAIT_IO_COMPLETION;
 }

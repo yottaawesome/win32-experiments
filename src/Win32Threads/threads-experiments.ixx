@@ -8,45 +8,45 @@ export namespace Threads1
     template<typename T, typename...TArgs>
     class Thread final
     {
-    public:
-        ~Thread() { Join(); }
-        Thread() = default;
-        Thread(const Thread&) = delete;
-        Thread& operator=(const Thread&) = delete;
-        Thread(Thread&&) = delete;
-        Thread& operator=(Thread&&) = delete;
+        public:
+            ~Thread() { Join(); }
+            Thread() = default;
+            Thread(const Thread&) = delete;
+            Thread& operator=(const Thread&) = delete;
+            Thread(Thread&&) = delete;
+            Thread& operator=(Thread&&) = delete;
 
-        void Start()
-        {
-            const win32::uintptr_t handle = win32::_beginthreadex(
-                nullptr,
-                0,
-                Run,
-                nullptr,
-                0,
-                &m_threadId
-            );
-            m_handle = HandleUniquePtr(reinterpret_cast<win32::HANDLE>(handle));
-            if (not m_handle)
-                throw system_category_error{ "_beginthreadex() failed." };
-        }
+            void Start()
+            {
+                const win32::uintptr_t handle = win32::_beginthreadex(
+                    nullptr,
+                    0,
+                    Run,
+                    nullptr,
+                    0,
+                    &m_threadId
+                );
+                m_handle = HandleUniquePtr(reinterpret_cast<win32::HANDLE>(handle));
+                if (not m_handle)
+                    throw system_category_error{ "_beginthreadex() failed." };
+            }
 
-        void Join() const
-        {
-            if (win32::WaitForSingleObjectEx(m_handle.get(), win32::InfiniteWait, false))
-                throw system_category_error{ "WaitForSingleObjectEx() failed." };
-        }
+            void Join() const
+            {
+                if (win32::WaitForSingleObjectEx(m_handle.get(), win32::InfiniteWait, false))
+                    throw system_category_error{ "WaitForSingleObjectEx() failed." };
+            }
 
-    private:
-        static unsigned __stdcall Run(void* ptr)
-        {
-            T t{};
-            return t.Begin(TArgs{}...);
-        }
+        private:
+            static unsigned __stdcall Run(void* ptr)
+            {
+                T t{};
+                return t.Begin(TArgs{}...);
+            }
 
-    private:
-        HandleUniquePtr m_handle{};
-        unsigned m_threadId = 0;
+        private:
+            HandleUniquePtr m_handle{};
+            unsigned m_threadId = 0;
     };
 
     struct Alternative {};
@@ -77,60 +77,58 @@ export namespace Threads2
     template<typename T, typename...TArgs>
     class Thread final
     {
-    public:
-        Thread() = default;
-        Thread(const Thread&) = delete;
-        Thread& operator=(const Thread&) = delete;
-        Thread(Thread&&) = delete;
-        Thread& operator=(Thread&&) = delete;
+        public:
+            Thread() = default;
+            Thread(const Thread&) = delete;
+            Thread& operator=(const Thread&) = delete;
+            Thread(Thread&&) = delete;
+            Thread& operator=(Thread&&) = delete;
 
-        void Start()
-        {
-            const win32::uintptr_t handle = win32::_beginthreadex(
-                nullptr,
-                0,
-                Run,
-                nullptr,
-                0,
-                &m_threadId
-            );
-            m_handle = HandleUniquePtr(reinterpret_cast<win32::HANDLE>(handle));
-            if (not m_handle)
-                throw system_category_error{ "_beginthreadex() failed." };
-        }
+            void Start()
+            {
+                const win32::uintptr_t handle = win32::_beginthreadex(
+                    nullptr,
+                    0,
+                    Run,
+                    nullptr,
+                    0,
+                    &m_threadId
+                );
+                m_handle = HandleUniquePtr(reinterpret_cast<win32::HANDLE>(handle));
+                if (not m_handle)
+                    throw system_category_error{ "_beginthreadex() failed." };
+            }
 
-        void Join() const
-        {
-            if (win32::WaitForSingleObjectEx(m_handle.get(), win32::InfiniteWait, false))
-                throw system_category_error{ "WaitForSingleObjectEx() failed." };
-        }
+            void Join() const
+            {
+                if (win32::WaitForSingleObjectEx(m_handle.get(), win32::InfiniteWait, false))
+                    throw system_category_error{ "WaitForSingleObjectEx() failed." };
+            }
 
-        HandleUniquePtr&& Detach() noexcept
-        {
-            return std::move(m_handle);
-        }
+            HandleUniquePtr&& Detach() noexcept
+            {
+                return std::move(m_handle);
+            }
 
-    private:
-        static unsigned __stdcall Run(void* ptr)
-        {
-            return T::Begin(TArgs{}...);
-        }
+        private:
+            static unsigned __stdcall Run(void* ptr)
+            {
+                return T::Begin(TArgs{}...);
+            }
 
-    private:
-        HandleUniquePtr m_handle{};
-        unsigned m_threadId = 0;
+        private:
+            HandleUniquePtr m_handle{};
+            unsigned m_threadId = 0;
     };
 
     template<typename...T>
     void Run(std::vector<HandleUniquePtr>& handles)
     {
-        (
-            []<typename T, size_t...Is>(std::vector<HandleUniquePtr>&handles, Thread<T> && t, std::index_sequence<Is...>)
+        ([]<typename T, size_t...Is>(std::vector<HandleUniquePtr>&handles, Thread<T> && t, std::index_sequence<Is...>)
         {
             t.Start();
             handles.emplace_back(t.Detach());
-        }(handles, Thread<T>{}, std::make_index_sequence<sizeof...(T)>{})
-            , ...);
+        }(handles, Thread<T>{}, std::make_index_sequence<sizeof...(T)>{}), ...);
     }
 
     struct Runner

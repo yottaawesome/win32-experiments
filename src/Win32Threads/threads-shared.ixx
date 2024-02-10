@@ -13,4 +13,31 @@ export
             : system_error(std::error_code{ static_cast<int>(errorCode), std::system_category() }, std::string{ msg })
         {}
     };
+
+    template<size_t ThreadCount>
+    struct SynchronizationBarrier final
+    {
+        public:
+        ~SynchronizationBarrier()
+        {
+            win32::DeleteSynchronizationBarrier(&m_barrier);
+        }
+
+        void Enter()
+        {
+            // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-entersynchronizationbarrier
+            win32::EnterSynchronizationBarrier(&m_barrier, 0);
+        }
+
+        private:
+        win32::SYNCHRONIZATION_BARRIER m_barrier = 
+            [](auto& barrier) -> auto&
+            {
+                // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-initializesynchronizationbarrier
+                const bool success = win32::InitializeSynchronizationBarrier(&barrier, ThreadCount, -1);
+                if (not success)
+                    throw system_category_error("InitializeSynchronizationBarrier() failed");
+                return barrier;
+            }(m_barrier);
+    };
 }
