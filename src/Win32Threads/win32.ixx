@@ -27,7 +27,9 @@ export namespace win32
 		::QueueUserAPC2,
 		::InitializeSynchronizationBarrier,
 		::EnterSynchronizationBarrier,
-		::DeleteSynchronizationBarrier;
+		::DeleteSynchronizationBarrier,
+		::CreateEventW,
+		::SetEvent;
 
 	constexpr auto InfiniteWait = INFINITE;
 	constexpr auto WaitIoCompletion = WAIT_IO_COMPLETION;

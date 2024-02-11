@@ -80,118 +80,158 @@ export namespace APC
     class Thread final
     {
         public:
-        Thread() = default;
-        Thread(TArgs&... args) : Args{ args... } {}
-        Thread(const Thread&) = delete;
-        Thread& operator=(const Thread&) = delete;
-        Thread(Thread&&) = delete;
-        Thread& operator=(Thread&&) = delete;
-        std::tuple<TArgs...> Args{};
+            Thread() = default;
+            Thread(TArgs&... args) : Args{ std::ref(args)... } {}
+            Thread(const Thread&) = delete;
+            Thread& operator=(const Thread&) = delete;
+            Thread(Thread&&) = delete;
+            Thread& operator=(Thread&&) = delete;
+            std::tuple<TArgs&...> Args{};
 
-        public:
-        void Start()
-        {
-            const win32::uintptr_t handle = win32::_beginthreadex(
-                nullptr,
-                0,
-                Run,
-                this,
-                0,
-                &m_threadId
-            );
-            m_handle = HandleUniquePtr(reinterpret_cast<win32::HANDLE>(handle));
-            if (not m_handle)
-                throw system_category_error{ "_beginthreadex() failed." };
-        }
-
-        void Join() const
-        {
-            if (m_handle and win32::WaitForSingleObjectEx(m_handle.get(), win32::InfiniteWait, false))
-                throw system_category_error{ "WaitForSingleObjectEx() failed." };
-        }
-
-        auto Detach()               noexcept        -> HandleUniquePtr&&    { return std::move(m_handle); }
-        auto GetHandle()            const noexcept  -> win32::HANDLE        { return m_handle.get(); }
-        void PrintPointlessLine()                                           { std::println("Pointless line printed!"); }
-
-        void Queue()
-        {
-            // https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-queueuserapc
-            win32::DWORD success = 0;
-            if constexpr (false)
+            public:
+            void Start()
             {
-                success = win32::QueueUserAPC(
-                    ExecuteAPC<decltype(PrintPointlessLinePtr)>,
-                    m_handle.get(),
-                    reinterpret_cast<win32::ULONG_PTR>(&PrintPointlessLinePtr)
+                const win32::uintptr_t handle = win32::_beginthreadex(
+                    nullptr,
+                    0,
+                    Run,
+                    this,
+                    0,
+                    &m_threadId
                 );
+                m_handle = HandleUniquePtr(reinterpret_cast<win32::HANDLE>(handle));
+                if (not m_handle)
+                    throw system_category_error{ "_beginthreadex() failed." };
             }
-            else
+
+            void Join() const
             {
-                success = win32::QueueUserAPC(
-                    ExecuteAPC<decltype(PP)>,
-                    m_handle.get(),
-                    reinterpret_cast<win32::ULONG_PTR>(&PP)
-                );
+                if (m_handle and win32::WaitForSingleObjectEx(m_handle.get(), win32::InfiniteWait, false))
+                    throw system_category_error{ "WaitForSingleObjectEx() failed." };
             }
-            if (not success)
-                throw system_category_error{ "QueueUserAPC() failed" };
-        }
+
+            auto Detach()               noexcept        -> HandleUniquePtr&&    { return std::move(m_handle); }
+            auto GetHandle()            const noexcept  -> win32::HANDLE        { return m_handle.get(); }
+            void PrintPointlessLine()                                           { std::println("Pointless line printed!"); }
+
+            void Queue()
+            {
+                // https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-queueuserapc
+                win32::DWORD success = 0;
+                if constexpr (false)
+                {
+                    success = win32::QueueUserAPC(
+                        ExecuteAPC<decltype(PrintPointlessLinePtr)>,
+                        m_handle.get(),
+                        reinterpret_cast<win32::ULONG_PTR>(&PrintPointlessLinePtr)
+                    );
+                }
+                else
+                {
+                    success = win32::QueueUserAPC(
+                        ExecuteAPC<decltype(PP)>,
+                        m_handle.get(),
+                        reinterpret_cast<win32::ULONG_PTR>(&PP)
+                    );
+                }
+                if (not success)
+                    throw system_category_error{ "QueueUserAPC() failed" };
+            }
 
         private:
-        // Use one or the other
-        PtrToMember<Thread, &Thread::PrintPointlessLine> PrintPointlessLinePtr{ this };
-        // Can also use decltype(&Thread::PrintPointlessLine)
-        std::pair<Thread*, void(Thread::*)()> PP{this, &Thread::PrintPointlessLine };
-        //
-        //  
-        static unsigned __stdcall Run(void* ptr)
-        {
-            Thread* instance = reinterpret_cast<Thread*>(ptr);
-            return std::apply(T::Begin, instance->Args);
-            //return T::Begin(TArgs{}...);
-        }
-
-        template<typename T>
-        static void ExecuteAPC(win32::ULONG_PTR ptr)
-        {
             // Use one or the other
-            if constexpr (Pair<T>)
-            {
-                auto [obj, func] = *reinterpret_cast<T*>(ptr);
-                std::invoke(func, obj);
+            PtrToMember<Thread, &Thread::PrintPointlessLine> PrintPointlessLinePtr{ this };
+            // Can also use decltype(&Thread::PrintPointlessLine)
+            std::pair<Thread*, void(Thread::*)()> PP{this, &Thread::PrintPointlessLine };
 
-                /*T p = *reinterpret_cast<T*>(ptr);
-                Thread* t = p.first;
-                auto fn = p.second;
-                (t->*(fn))();*/
-            }
-            else
+            static unsigned __stdcall Run(void* ptr)
             {
-                auto memberFuncPtr = reinterpret_cast<T*>(ptr);
-                (*memberFuncPtr)();
+                Thread* instance = reinterpret_cast<Thread*>(ptr);
+                T task = std::make_from_tuple<T>(instance->Args);
+
+                return task.Begin();
+                /*return std::apply(
+                    [&task](auto&&...args)
+                    {
+                        return task.Begin(std::forward<decltype(args)>(args)...);
+                    },
+                    instance->Args
+                );*/
+                // std::apply doesn't work here as as we need std::ref since Begin()
+                // accepts a reference, but we can't do that easily with a tuple
+                // and std::tuple_cat
+
+                //return T::Begin(TArgs{}...);
             }
-        }
+
+            template<typename T>
+            static void ExecuteAPC(win32::ULONG_PTR ptr)
+            {
+                // Use one or the other
+                if constexpr (Pair<T>)
+                {
+                    auto [obj, func] = *reinterpret_cast<T*>(ptr);
+                    std::invoke(func, obj);
+
+                    /*T p = *reinterpret_cast<T*>(ptr);
+                    Thread* t = p.first;
+                    auto fn = p.second;
+                    (t->*(fn))();*/
+                }
+                else
+                {
+                    auto memberFuncPtr = reinterpret_cast<T*>(ptr);
+                    (*memberFuncPtr)();
+                }
+            }
 
         private:
-        HandleUniquePtr m_handle{};
-        unsigned m_threadId = 0;
+            HandleUniquePtr m_handle{};
+            unsigned m_threadId = 0;
     };
 
     struct TaskState
     {
         int x = 0;
+        bool Run = true;
+
+        HandleUniquePtr Exit =
+            [] {
+                win32::HANDLE ptr = win32::CreateEventW(nullptr, true, false, nullptr);
+                if (not ptr)
+                    throw system_category_error("CreateEventW() failed.");
+                return HandleUniquePtr(ptr);
+            }();
+
+        void SignalToExit()
+        {
+            win32::SetEvent(Exit.get());
+        }
     };
 
-    struct Task
+    struct Task final
     {
-        static unsigned Begin(TaskState& state)
+        Task(TaskState& stateIn)
+            : state{stateIn}
+        {}
+
+        TaskState& state;
+
+        unsigned Begin()
         {
             syncBarrier.Enter();
-            std::println("state value {}", state.x);
-            win32::DWORD result = win32::SleepEx(win32::InfiniteWait, true);
-            if (result == win32::WaitIoCompletion)
-                std::println("Matches");
+            while (state.Run)
+            {
+                std::println("state value {}", state.x);
+                win32::DWORD result = win32::WaitForSingleObjectEx(state.Exit.get(), win32::InfiniteWait, true);
+                    
+                //win32::SleepEx(win32::InfiniteWait, true);
+                if (result == win32::WaitIoCompletion)
+                    std::println("Matches");
+                else
+                    state.Run = false;
+            }
+            
             return 0;
         }
     };
@@ -203,6 +243,12 @@ export namespace APC
         t.Start();
         syncBarrier.Enter();
         t.Queue();
+        ts.SignalToExit();
         t.Join();
     }
+}
+
+export namespace APC2
+{
+
 }
