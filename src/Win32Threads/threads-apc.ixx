@@ -3,10 +3,8 @@ import std;
 import win32;
 import :shared;
 
-export namespace APC
+namespace
 {
-    SynchronizationBarrier<2> syncBarrier{};
-
     template<typename T, auto M>
     struct PtrToMember
     {
@@ -21,14 +19,26 @@ export namespace APC
         }
     };
 
+    template<typename F>
+    struct IsPairT : std::false_type {};
+
+    template<typename F, typename S>
+    struct IsPairT<std::pair<F, S>> : std::true_type {};
+
+    template<typename T>
+    inline constexpr bool IsPairV = IsPairT<T>::value;
+
+    template<typename T>
+    concept Pair = IsPairV<T>;
+
     ///////////////////////
     struct TestType
     {
-        TestType(int a, int b) 
+        TestType(int a, int b)
         {
             std::cout << std::format("TestType [1]: {} {}\n", a, b);
         }
-        void operator()(int a, int b) 
+        void operator()(int a, int b)
         {
             std::cout << std::format("TestType [2]: {} {}\n", a, b);
         }
@@ -38,7 +48,7 @@ export namespace APC
     struct VariadicArgs
     {
         VariadicArgs(T&&...con)
-            : Args{ std::forward<decltype(con)>(con)...} {}
+            : Args{ std::forward<decltype(con)>(con)... } {}
         std::tuple<T...> Args;
 
         using TupleT = decltype(Args);
@@ -51,7 +61,7 @@ export namespace APC
             : ConstructorArgs{ std::move(c.Args) },
             InvokeArgs{ std::move(a.Args) }
         {}
-        
+
         TConstructArgs::TupleT ConstructorArgs;
         TInvokeArgs::TupleT InvokeArgs;
         TInvokee Invokee = std::make_from_tuple<TInvokee>(ConstructorArgs);
@@ -64,17 +74,17 @@ export namespace APC
     // l();
     ///////////////////////
 
-    template<typename F>
-    struct IsPairT : std::false_type {};
+    // https://devblogs.microsoft.com/oldnewthing/20200624-00/?p=103902
+    template<typename Tuple, std::size_t... Ints>
+    std::tuple<std::tuple_element_t<Ints, Tuple>...> SelectTuple(Tuple&& tuple, std::index_sequence<Ints...>)
+    {
+        return { std::get<Ints>(std::forward<Tuple>(tuple))... };
+    }
+}
 
-    template<typename F, typename S>
-    struct IsPairT<std::pair<F, S>> : std::true_type {};
-
-    template<typename T>
-    inline constexpr bool IsPairV = IsPairT<T>::value;
-
-    template<typename T>
-    concept Pair = IsPairV<T>;
+export namespace APC
+{
+    SynchronizationBarrier<2> syncBarrier{};
 
 	template<typename T, typename...TArgs>
     class Thread final
@@ -250,5 +260,159 @@ export namespace APC
 
 export namespace APC2
 {
+    template<typename T>
+    class Thread final
+    {
+        public:
+            Thread(T& task) : Task{ task }{}
+            Thread(const Thread&) = delete;
+            Thread& operator=(const Thread&) = delete;
+            Thread(Thread&&) = delete;
+            Thread& operator=(Thread&&) = delete;
 
+            T& Task;
+
+        public:
+            void Start()
+            {
+                const win32::uintptr_t handle = win32::_beginthreadex(
+                    nullptr,
+                    0,
+                    Run,
+                    this,
+                    0,
+                    &m_threadId
+                );
+                m_handle = HandleUniquePtr(reinterpret_cast<win32::HANDLE>(handle));
+                if (not m_handle)
+                    throw system_category_error{ "_beginthreadex() failed." };
+            }
+
+            void Join() const
+            {
+                if (m_handle and win32::WaitForSingleObjectEx(m_handle.get(), win32::InfiniteWait, false))
+                    throw system_category_error{ "WaitForSingleObjectEx() failed." };
+            }
+
+            auto Detach()               noexcept        -> HandleUniquePtr&& { return std::move(m_handle); }
+            auto GetHandle()            const noexcept  -> win32::HANDLE { return m_handle.get(); }
+
+            template<typename T, typename F, typename...TArgs>
+            struct MemberFunc
+            {
+                MemberFunc(T* object, F f, auto&&...args)
+                    : Object{ object }, Function{ f }, Args { std::forward<decltype(args)>(args)... }
+                { }
+                T* Object = nullptr;
+                F Function;
+                std::tuple<TArgs...> Args;
+            };
+
+            template<typename TObject, typename TFunction>
+            void QueueMemberFunction(std::pair<TObject, TFunction>& objectAndMember)
+            {
+                win32::DWORD success = win32::QueueUserAPC(
+                    ExecuteAPC<std::remove_cvref_t<decltype(objectAndMember)>>,
+                    m_handle.get(),
+                    reinterpret_cast<win32::ULONG_PTR>(&objectAndMember)
+                );
+                if (not success)
+                    throw system_category_error{ "QueueUserAPC() failed" };
+            }
+
+            template<typename T, typename F, typename...A>
+            void QueueMemberFunction2(T* object, F function, A&&...args)
+            {
+                auto m = new MemberFunc<T, F, A...>{ object, function, std::forward<A>(args)...};
+                win32::DWORD success = win32::QueueUserAPC(
+                    ExecuteAPC2<T, F, A...>,
+                    m_handle.get(),
+                    reinterpret_cast<win32::ULONG_PTR>(m)
+                );
+                if (not success)
+                    throw system_category_error{ "QueueUserAPC() failed" };
+            }
+
+        private:
+            // Use one or the other
+            // Can also use decltype(&Thread::PrintPointlessLine)
+            //std::pair<Thread*, void(Thread::*)()> PP{ this, &Thread::PrintPointlessLine };
+
+            static unsigned __stdcall Run(void* ptr)
+            {
+                Thread* instance = reinterpret_cast<Thread*>(ptr);
+                return instance->Task.Begin(instance);
+            }
+
+            template<typename T>
+            static void ExecuteAPC(win32::ULONG_PTR ptr)
+            {
+                auto [obj, func] = *reinterpret_cast<T*>(ptr);
+                std::invoke(func, obj);
+            }
+
+            template<typename T, typename F, typename...A>
+            static void ExecuteAPC2(win32::ULONG_PTR ptr)
+            {
+                MemberFunc<T, F, A...>* info = reinterpret_cast<MemberFunc<T, F, A...>*>(ptr);
+                if (not info)
+                    return;
+                std::unique_ptr<MemberFunc<T, F, A...>> uptr(info);
+                std::apply(info->Function, std::tuple_cat(std::make_tuple(info->Object), info->Args));
+            }
+
+        private:
+            HandleUniquePtr m_handle{};
+            unsigned m_threadId = 0;
+    };
+
+
+    struct Task
+    {
+        void SomeFunc()
+        {
+
+        }
+
+        void SomeFunc2(const int& i)
+        {
+            std::println("The value is {}", i);
+        }
+
+        std::pair<Task*, void(Task::*)()> PtrSomeFunc { this, &Task::SomeFunc };
+
+        unsigned Begin(Thread<Task>* thread)
+        {
+            Thread = thread;
+            win32::SleepEx(win32::InfiniteWait, true);
+
+            return 0;
+        }
+
+        void Enqueue()
+        {
+            if (not Thread)
+                return;
+            Thread->QueueMemberFunction(PtrSomeFunc);
+        }
+
+        void Enqueue2()
+        {
+            if (not Thread)
+                return;
+            Thread->QueueMemberFunction2(this, &Task::SomeFunc2, 1);
+        }
+
+        Thread<Task>* Thread = nullptr;
+    };
+
+    void Run()
+    {
+        Task task{};
+        Thread thread{ task };
+        thread.Start();
+        std::this_thread::sleep_for(std::chrono::seconds{ 2 });
+        task.Enqueue2();
+        std::this_thread::sleep_for(std::chrono::seconds{2});
+    }
 }
