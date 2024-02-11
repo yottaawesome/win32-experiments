@@ -424,22 +424,27 @@ export namespace APC2
 
     struct Task
     {
-        void SomeFunc()
-        {
-
-        }
+        void NoOp() { }
 
         void SomeFunc2(const int& i)
         {
             std::println("The value is {}", i);
         }
 
-        std::pair<Task*, void(Task::*)()> PtrSomeFunc { this, &Task::SomeFunc };
+        std::pair<Task*, void(Task::*)()> PtrSomeFunc { this, &Task::NoOp };
+        bool Run = true;
+
+        void Exit()
+        {
+            Run = false;
+            Thread->QueueMemberFunction2(this, &Task::NoOp);
+        }
 
         unsigned Begin(Thread<Task>* thread)
         {
             Thread = thread;
-            win32::SleepEx(win32::InfiniteWait, true);
+            while(Run)
+                win32::SleepEx(win32::InfiniteWait, true);
 
             return 0;
         }
@@ -468,6 +473,6 @@ export namespace APC2
         thread.Start();
         std::this_thread::sleep_for(std::chrono::seconds{ 2 });
         task.Enqueue2();
-        std::this_thread::sleep_for(std::chrono::seconds{2});
+        task.Exit();
     }
 }
