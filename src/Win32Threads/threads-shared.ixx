@@ -23,6 +23,14 @@ export
                 win32::DeleteSynchronizationBarrier(&m_barrier);
             }
 
+            SynchronizationBarrier()
+            {
+                // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-initializesynchronizationbarrier
+                if (not win32::InitializeSynchronizationBarrier(&m_barrier, ThreadCount, -1))
+                    throw system_category_error("InitializeSynchronizationBarrier() failed");
+            }
+
+        public:
             void Enter()
             {
                 // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-entersynchronizationbarrier
@@ -30,14 +38,6 @@ export
             }
 
         private:
-            win32::SYNCHRONIZATION_BARRIER m_barrier = 
-                [](auto& barrier) -> auto&
-                {
-                    // https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-initializesynchronizationbarrier
-                    const bool success = win32::InitializeSynchronizationBarrier(&barrier, ThreadCount, -1);
-                    if (not success)
-                        throw system_category_error("InitializeSynchronizationBarrier() failed");
-                    return barrier;
-                }(m_barrier);
+            win32::SYNCHRONIZATION_BARRIER m_barrier;
     };
 }
