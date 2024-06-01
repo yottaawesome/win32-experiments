@@ -7,7 +7,7 @@ module;
 export module shared;
 export import std;
 
-export
+export namespace Win32
 {
 	constexpr auto Sw_ShowDefault = SW_SHOWDEFAULT;
 	constexpr auto Ws_OverlappedWindow = WS_OVERLAPPEDWINDOW;
@@ -53,3 +53,10 @@ export
 		::GetLastError
 		;
 }
+
+export struct SystemCategoryError final : public std::system_error
+{
+	SystemCategoryError(std::string_view msg, DWORD errorCode = GetLastError())
+		: system_error(std::error_code{ static_cast<int>(errorCode), std::system_category() }, std::string{ msg })
+	{}
+};
