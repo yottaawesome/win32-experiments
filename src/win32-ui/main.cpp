@@ -19,6 +19,7 @@ LRESULT __stdcall MainWndProc(HWND hwnd, UINT type, WPARAM wParam, LPARAM lParam
             break;
         case Messages::Destroy:
             PostQuitMessage(0);
+break;
         default:
             return DefWindowProcW(hwnd, type, wParam, lParam);
     }
