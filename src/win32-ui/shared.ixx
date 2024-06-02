@@ -17,16 +17,9 @@ export namespace Win32
 	constexpr auto Cs_HRedraw = CS_HREDRAW;
 	constexpr auto Cs_VRedraw = CS_VREDRAW;
 	constexpr auto White_Brush = WHITE_BRUSH;
-	
-	namespace Messages
-	{
-		constexpr auto Quit = WM_QUIT;
-		constexpr auto Close = WM_CLOSE;
-		constexpr auto Destroy = WM_DESTROY;
-	}
 
-	using 
-		::HINSTANCE, 
+	using
+		::HINSTANCE,
 		::HWND,
 		::HMENU,
 		::LRESULT,
@@ -37,6 +30,7 @@ export namespace Win32
 		::HBRUSH,
 		::MSG,
 		::DWORD,
+		::LPWSTR,
 		::CreateWindowExW,
 		::ShowWindow,
 		::UpdateWindow,
@@ -50,13 +44,55 @@ export namespace Win32
 		::DispatchMessageW,
 		::PostQuitMessage,
 		::DestroyWindow,
-		::GetLastError
+		::GetLastError,
+		::LoadIconW,
+		::LoadImageW
 		;
+
+	namespace Messages
+	{
+		constexpr auto Quit = WM_QUIT;
+		constexpr auto Close = WM_CLOSE;
+		constexpr auto Destroy = WM_DESTROY;
+	}
+
+	template<typename R, typename T>
+	consteval R To(T x)
+	{
+		return R(x);
+	}
+
+	namespace Cursors
+	{
+		const auto Arrow = IDC_ARROW;
+		const auto IBeam = IDC_IBEAM;
+		const auto Wait = IDC_WAIT;
+		const auto Cross = IDC_CROSS;
+		const auto UpArrow = IDC_UPARROW;
+		const auto SizeNWSE = IDC_SIZENWSE;
+		const auto SizeNESW = IDC_SIZENESW;
+		const auto SizeWE = IDC_SIZEWE;
+		const auto SizeNS = IDC_SIZENS;
+		const auto SizeAll = IDC_SIZEALL;
+		const auto No = IDC_NO;
+		const auto Hand = IDC_HAND;
+		const auto AppStarting = IDC_APPSTARTING;
+		const auto Help = IDC_HELP;
+		const auto Pin = IDC_PIN;
+		const auto Person = IDC_PERSON;
+	}
+
+	auto MakeIntResource(int i) noexcept -> LPWSTR
+	{
+		return MAKEINTRESOURCEW(i);
+	}
 }
 
 export struct SystemCategoryError final : public std::system_error
 {
-	SystemCategoryError(std::string_view msg, DWORD errorCode = GetLastError())
-		: system_error(std::error_code{ static_cast<int>(errorCode), std::system_category() }, std::string{ msg })
+	SystemCategoryError(
+		std::string_view msg, 
+		const DWORD errorCode = GetLastError()
+	) : system_error(std::error_code{ static_cast<int>(errorCode), std::system_category() }, std::string{ msg })
 	{}
 };

@@ -25,19 +25,20 @@ namespace BasicWindow
 
     bool InitApplication(HINSTANCE hinstance, std::wstring_view className)
     {
-        WNDCLASSEX wcx{};
-        wcx.cbSize = sizeof(wcx);          // size of structure 
-        wcx.style = Cs_HRedraw | Cs_VRedraw;                    // redraw if size changes 
-        wcx.lpfnWndProc = MainWndProc;     // points to window procedure 
-        wcx.cbClsExtra = 0;                // no extra class memory 
-        wcx.cbWndExtra = 0;                // no extra window memory 
-        wcx.hInstance = hinstance;         // handle to instance 
-        wcx.hIcon = nullptr;// LoadIcon(nullptr, IDI_APPLICATION);              // predefined app. icon 
-        wcx.hCursor = nullptr;// LoadCursor(nullptr, IDC_ARROW);                    // predefined arrow 
-        wcx.hbrBackground = (HBRUSH)GetStockObject(White_Brush);                  // white background brush 
-        //wcx.lpszMenuName = ClassName.data();    // name of menu resource 
-        wcx.lpszClassName = className.data();  // name of window class 
-        wcx.hIconSm = nullptr;
+        WNDCLASSEX wcx{
+            .cbSize = sizeof(wcx),              // size of structure 
+            .style = Cs_HRedraw | Cs_VRedraw,   // redraw if size changes 
+            .lpfnWndProc = MainWndProc,         // points to window procedure 
+            .cbClsExtra = 0,                    // no extra class memory 
+            .cbWndExtra = 0,                    // no extra window memory 
+            .hInstance = hinstance,             // handle to instance 
+            .hIcon = nullptr,// LoadIcon(nullptr, IDI_APPLICATION); // predefined app. icon 
+            .hCursor = nullptr,// LoadCursor(nullptr, IDC_ARROW);   // predefined arrow 
+            .hbrBackground = (HBRUSH)GetStockObject(White_Brush),   // white background brush 
+            //.lpszMenuName = ClassName.data(), // name of menu resource 
+            .lpszClassName = className.data(),  // name of window class 
+            .hIconSm = nullptr
+        };
 
         return RegisterClassExW(&wcx);
     }
