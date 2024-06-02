@@ -9,14 +9,25 @@ export import std;
 
 export namespace Win32
 {
+	namespace WindowStyles
+	{
+		constexpr auto Ws_Child = WS_CHILD;
+		constexpr auto Ws_ClipSiblings = WS_CLIPSIBLINGS;
+		constexpr auto Ws_Visible = WS_VISIBLE;
+		constexpr auto Ws_OverlappedWindow = WS_OVERLAPPEDWINDOW;
+		constexpr auto Ws_HScroll = WS_HSCROLL;
+		constexpr auto Ws_VScroll = WS_VSCROLL;
+	}
+
 	constexpr auto Sw_ShowDefault = SW_SHOWDEFAULT;
-	constexpr auto Ws_OverlappedWindow = WS_OVERLAPPEDWINDOW;
-	constexpr auto Ws_HScroll = WS_HSCROLL;
-	constexpr auto Ws_VScroll = WS_VSCROLL;
+	constexpr auto Wc_TabControl = WC_TABCONTROL;
+	constexpr auto Icc_Tab_Classes = ICC_TAB_CLASSES;
+	constexpr auto Tcif_Text = TCIF_TEXT;
+	constexpr auto Tcif_Image = TCIF_IMAGE;
 	constexpr auto Cw_UseDefault = CW_USEDEFAULT;
 	constexpr auto Cs_HRedraw = CS_HREDRAW;
 	constexpr auto Cs_VRedraw = CS_VREDRAW;
-	constexpr auto White_Brush = WHITE_BRUSH;
+	constexpr auto White_Brush = WHITE_BRUSH;	
 
 	using
 		::HINSTANCE,
@@ -31,6 +42,10 @@ export namespace Win32
 		::MSG,
 		::DWORD,
 		::LPWSTR,
+		::RECT,
+		::INITCOMMONCONTROLSEX,
+		::TCITEMW,
+		::TCHAR,
 		::CreateWindowExW,
 		::ShowWindow,
 		::UpdateWindow,
@@ -46,8 +61,18 @@ export namespace Win32
 		::DestroyWindow,
 		::GetLastError,
 		::LoadIconW,
-		::LoadImageW
+		::LoadImageW,
+		::InitCommonControlsEx,
+		::GetClientRect,
+		::SendMessageW,
+		::LoadStringW
 		;
+
+	// TabCtrl_InsertItem
+	LRESULT AddTab(HWND hwnd, int iItem, TCITEMW pitem)
+	{
+		return SendMessageW((hwnd), TCM_INSERTITEM, (WPARAM)(int)(iItem), (LPARAM)(const TC_ITEM*)(&pitem));
+	}
 
 	namespace Messages
 	{
