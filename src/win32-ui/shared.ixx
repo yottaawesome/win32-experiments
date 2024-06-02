@@ -28,7 +28,7 @@ export namespace Win32
 	constexpr auto Cs_HRedraw = CS_HREDRAW;
 	constexpr auto Cs_VRedraw = CS_VREDRAW;
 	constexpr auto White_Brush = WHITE_BRUSH;	
-
+	
 	using
 		::HINSTANCE,
 		::HWND,
@@ -68,8 +68,18 @@ export namespace Win32
 		::LoadStringW
 		;
 
+	auto GetLowWord(LPARAM lparam) noexcept -> WORD
+	{
+		return LOWORD(lparam);
+	}
+
+	auto GetLighWord(LPARAM lparam) noexcept -> WORD
+	{
+		return HIWORD(lparam);
+	}
+
 	// TabCtrl_InsertItem
-	LRESULT AddTab(HWND hwnd, int iItem, TCITEMW pitem)
+	auto AddTab(HWND hwnd, int iItem, TCITEMW pitem) noexcept -> LRESULT
 	{
 		return SendMessageW((hwnd), TCM_INSERTITEM, (WPARAM)(int)(iItem), (LPARAM)(const TC_ITEM*)(&pitem));
 	}
@@ -82,7 +92,7 @@ export namespace Win32
 	}
 
 	template<typename R, typename T>
-	consteval R To(T x)
+	consteval auto To(T x) noexcept -> R
 	{
 		return R(x);
 	}
