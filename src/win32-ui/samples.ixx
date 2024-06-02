@@ -6,10 +6,25 @@ import shared;
 
 namespace BasicWindow
 {
+    // Adapted from https://learn.microsoft.com/en-us/windows/win32/controls/create-a-tab-control-in-the-main-window
+
     constexpr std::wstring_view ClassName = L"MainWClass";
     constexpr std::wstring_view WindowName = L"Main Window";
 
     using namespace Win32;
+
+    HWND TabControl = nullptr;
+
+    bool OnSize(HWND hwndTab, LPARAM lParam)
+    {
+        if (not hwndTab)
+            return false;
+
+        // Resize the tab control to fit the client are of main window.
+        if (!SetWindowPos(hwndTab, 0, 0, 0, GetLowWord(lParam), GetHighWord(lParam), Swp_ShowWindow))
+            return false;
+        return true;
+    }
 
     LRESULT __stdcall MainWndProc(HWND hwnd, UINT type, WPARAM wParam, LPARAM lParam)
     {
@@ -17,23 +32,27 @@ namespace BasicWindow
         {
             case Messages::Close:
                 DestroyWindow(hwnd);
-                break;
+                return 0;
             case Messages::Destroy:
                 PostQuitMessage(0);
+                return 0;
+            case Messages::Size:
+                OnSize(TabControl, lParam);
+                return 0;
             default:
                 return DefWindowProcW(hwnd, type, wParam, lParam);
         }
-        return 0;
     }
 
     HWND CreateTabControl(HWND hwndParent, HINSTANCE g_hInst)
     {
-        constexpr auto DAYS_IN_WEEK = 7;
+        constexpr auto daysInWeek = 7;
 
         // Initialize common controls.
-        INITCOMMONCONTROLSEX icex;
-        icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-        icex.dwICC = Icc_Tab_Classes;
+        INITCOMMONCONTROLSEX icex{
+            .dwSize = sizeof(INITCOMMONCONTROLSEX),
+            .dwICC = Icc_Tab_Classes
+        };
         InitCommonControlsEx(&icex);
 
         // Get the dimensions of the parent window's client area, and 
@@ -65,7 +84,7 @@ namespace BasicWindow
         };
         
         std::wstring name;
-        for (int i = 0; i < DAYS_IN_WEEK; i++)
+        for (int i = 0; i < daysInWeek; i++)
         {
             switch (i)
             {
@@ -102,7 +121,7 @@ namespace BasicWindow
         return hwndTab;
     }
 
-    bool InitApplication(HINSTANCE hinstance, std::wstring_view className)
+    ATOM InitApplication(HINSTANCE hinstance, std::wstring_view className)
     {
         WNDCLASSEX wcx{
             .cbSize = sizeof(wcx),              // size of structure 
@@ -133,8 +152,8 @@ namespace BasicWindow
             Cw_UseDefault,                                  // default vertical position    
             Cw_UseDefault,                                  // default width                
             Cw_UseDefault,                                  // default height               
-            (HWND)nullptr,                                  // no parent or owner window    
-            (HMENU)nullptr,                                 // class menu used              
+            nullptr,                                  // no parent or owner window    
+            nullptr,                                 // class menu used              
             hInst,                                          // instance handle              
             nullptr                                         // no window creation data      
         );
@@ -152,7 +171,8 @@ namespace BasicWindow
         if (not hwndMain)
             return 1;
 
-        if (not CreateTabControl(hwndMain, hinst))
+        TabControl = CreateTabControl(hwndMain, hinst);
+        if (not TabControl)
             return 1;
 
         ShowWindow(hwndMain, Sw_ShowDefault);

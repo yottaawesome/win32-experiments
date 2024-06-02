@@ -27,8 +27,9 @@ export namespace Win32
 	constexpr auto Cw_UseDefault = CW_USEDEFAULT;
 	constexpr auto Cs_HRedraw = CS_HREDRAW;
 	constexpr auto Cs_VRedraw = CS_VREDRAW;
-	constexpr auto White_Brush = WHITE_BRUSH;	
-	
+	constexpr auto White_Brush = WHITE_BRUSH;
+	constexpr auto Swp_ShowWindow = SWP_SHOWWINDOW;
+
 	using
 		::HINSTANCE,
 		::HWND,
@@ -46,6 +47,8 @@ export namespace Win32
 		::INITCOMMONCONTROLSEX,
 		::TCITEMW,
 		::TCHAR,
+		::ATOM,
+		::HRESULT,
 		::CreateWindowExW,
 		::ShowWindow,
 		::UpdateWindow,
@@ -65,7 +68,8 @@ export namespace Win32
 		::InitCommonControlsEx,
 		::GetClientRect,
 		::SendMessageW,
-		::LoadStringW
+		::LoadStringW,
+		::SetWindowPos
 		;
 
 	auto GetLowWord(LPARAM lparam) noexcept -> WORD
@@ -73,7 +77,7 @@ export namespace Win32
 		return LOWORD(lparam);
 	}
 
-	auto GetLighWord(LPARAM lparam) noexcept -> WORD
+	auto GetHighWord(LPARAM lparam) noexcept -> WORD
 	{
 		return HIWORD(lparam);
 	}
@@ -89,6 +93,7 @@ export namespace Win32
 		constexpr auto Quit = WM_QUIT;
 		constexpr auto Close = WM_CLOSE;
 		constexpr auto Destroy = WM_DESTROY;
+		constexpr auto Size = WM_SIZE;
 	}
 
 	template<typename R, typename T>
@@ -123,11 +128,25 @@ export namespace Win32
 	}
 }
 
-export struct SystemCategoryError final : public std::system_error
+export namespace Error
 {
-	SystemCategoryError(
-		std::string_view msg, 
-		const DWORD errorCode = GetLastError()
-	) : system_error(std::error_code{ static_cast<int>(errorCode), std::system_category() }, std::string{ msg })
-	{}
-};
+	struct Win32Error final : public std::system_error
+	{
+		Win32Error(
+			std::string_view msg,
+			const DWORD errorCode = GetLastError()
+		) : system_error(std::error_code{ static_cast<int>(errorCode), std::system_category() }, std::string{ msg })
+		{}
+	};
+
+	template<typename TException, typename TDummyUnique>
+	struct Error final : public TException
+	{
+		template<typename...TArgs>
+		Error(std::format_string<TArgs...> str, TArgs&&...args) 
+			: TException(std::format(str, std::forward<TArgs>(args)...)) 
+		{}
+	};
+
+	using RuntimeError = Error<std::runtime_error, struct BasicRuntimeError>;
+}
