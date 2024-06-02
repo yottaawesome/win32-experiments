@@ -139,14 +139,30 @@ export namespace Error
 		{}
 	};
 
-	template<typename TException, typename TDummyUnique>
+	struct TestTranslator
+	{
+		static std::string Translate(DWORD x)
+		{
+			return "some error";
+		}
+	};
+
+	template<typename TException, typename TDummyUnique, typename TTranslator = void>
 	struct Error final : public TException
 	{
 		template<typename...TArgs>
+		requires std::same_as<void, TTranslator>
 		Error(std::format_string<TArgs...> str, TArgs&&...args) 
 			: TException(std::format(str, std::forward<TArgs>(args)...)) 
 		{}
+
+		template<typename...TArgs>
+		requires (not std::same_as<void, TTranslator>)
+		Error(auto&& value, std::format_string<TArgs...> str, TArgs&&...args)
+			: TException(std::format("{} -> {}", TTranslator::Translate(value), std::format(str, std::forward<TArgs>(args)...)))
+		{ }
 	};
 
 	using RuntimeError = Error<std::runtime_error, struct BasicRuntimeError>;
+	using RuntimeError2 = Error<std::runtime_error, struct BasicRuntimeErrorTest, TestTranslator>;
 }
