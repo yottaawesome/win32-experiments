@@ -13,7 +13,9 @@ export namespace win32
 		::uintptr_t,
 		::DWORD,
 		::ULONG_PTR,
-		::SYNCHRONIZATION_BARRIER;
+		::SYNCHRONIZATION_BARRIER,
+		::MSG,
+		::BOOL;
 
 	using 
 		::_beginthreadex, 
@@ -29,8 +31,24 @@ export namespace win32
 		::EnterSynchronizationBarrier,
 		::DeleteSynchronizationBarrier,
 		::CreateEventW,
+		::PeekMessageW,
+		::PostThreadMessageW,
+		::GetMessageW,
+		::GetCurrentThreadId,
+		::SetEvent,
 		::SetEvent;
 
+	constexpr auto MessageBase = WM_APP;
+
+	namespace WaitResults
+	{
+		constexpr auto Index = WAIT_OBJECT_0;
+		constexpr auto Timeout = WAIT_TIMEOUT;
+	}
+
+	constexpr auto NoRemove = PM_NOREMOVE;
 	constexpr auto InfiniteWait = INFINITE;
 	constexpr auto WaitIoCompletion = WAIT_IO_COMPLETION;
+
+	constexpr auto QuitMsg = WM_QUIT;
 }

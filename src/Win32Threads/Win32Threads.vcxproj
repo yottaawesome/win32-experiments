@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="thread-queue.ixx" />
     <ClCompile Include="threads-apc.ixx" />
     <ClCompile Include="threads-experiments.ixx" />
     <ClCompile Include="threads-shared.ixx" />

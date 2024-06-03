@@ -14,7 +14,8 @@ int main()
     Group::Run();
     StdGroup::Run();
     APC::Run();*/
-    APC2::Run();
+    //APC2::Run();
+    ThreadMessageQueue::Run();
 
     return 0;
 }
