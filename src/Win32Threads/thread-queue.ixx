@@ -19,7 +19,7 @@ export namespace ThreadMessageQueue
 	template<typename T>
 	concept Duration = IsDuration<T>::value;
 
-	// Use for cleaning up our event.
+	// Used for cleaning up our event.
 	struct HandleDeleter
 	{
 		void operator()(win32::HANDLE h)
@@ -29,7 +29,7 @@ export namespace ThreadMessageQueue
 	};
 	using Win32HandleUniquePtr = std::unique_ptr<std::remove_pointer_t<win32::HANDLE>, HandleDeleter>;
 
-	// A small event wrapper to use to signal when the queue is ready.
+	// A small event wrapper used to signal when the queue is ready.
 	class Event
 	{
 		public:
