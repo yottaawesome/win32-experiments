@@ -33,115 +33,115 @@ export namespace ThreadMessageQueue
 	class Event
 	{
 		public:
-			void Wait()
-			{
-				win32::DWORD result = win32::WaitForSingleObject(
-					m_handle.get(),
-					win32::InfiniteWait
-				);
-				if (result != win32::WaitResults::Index)
-					throw std::runtime_error("WaitForSingleObject() failed.");
-			}
+		void Wait()
+		{
+			win32::DWORD result = win32::WaitForSingleObject(
+				m_handle.get(),
+				win32::InfiniteWait
+			);
+			if (result != win32::WaitResults::Index)
+				throw std::runtime_error("WaitForSingleObject() failed.");
+		}
 
-			bool Wait(Duration auto&& duration)
+		bool Wait(Duration auto&& duration)
+		{
+			win32::DWORD result = win32::WaitForSingleObject(
+				m_handle.get(),
+				static_cast<win32::DWORD>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count())
+			);
+			switch (result)
 			{
-				win32::DWORD result = win32::WaitForSingleObject(
-					m_handle.get(),
-					static_cast<win32::DWORD>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count())
-				);
-				switch (result)
-				{
-					case win32::WaitResults::Index:
-						return true;
-					case win32::WaitResults::Timeout:
-						return false;
-					default:
-						throw std::runtime_error("WaitForSingleObject() failed.");
-				}
-				std::unreachable();
+			case win32::WaitResults::Index:
+				return true;
+			case win32::WaitResults::Timeout:
+				return false;
+			default:
+				throw std::runtime_error("WaitForSingleObject() failed.");
 			}
+			std::unreachable();
+		}
 
-			void Signal()
-			{
-				win32::SetEvent(m_handle.get());
-			}
+		void Signal()
+		{
+			win32::SetEvent(m_handle.get());
+		}
 
 		private:
-			Win32HandleUniquePtr m_handle =
-				[]{
-					HANDLE handle = win32::CreateEventW(nullptr, true, false, nullptr);
-					if (not handle)
-						throw std::runtime_error("Failed creating handle");
-					return Win32HandleUniquePtr(handle);
-				}();
+		Win32HandleUniquePtr m_handle =
+			[] {
+			HANDLE handle = win32::CreateEventW(nullptr, true, false, nullptr);
+			if (not handle)
+				throw std::runtime_error("Failed creating handle");
+			return Win32HandleUniquePtr(handle);
+			}();
 	};
 
 	// The thread creating the message queue and receives messages on it.
 	class Thread
 	{
 		public:
-			void Start()
-			{
-				m_thread = std::jthread(
-					[](Thread* self) 
-					{
-						self->m_threadId = win32::GetCurrentThreadId();
-						self->RunNoWindow();
-						return 0;
-					}, 
-					this
-				);
-			}
+		void Start()
+		{
+			m_thread = std::jthread(
+				[](Thread* self)
+				{
+					self->m_threadId = win32::GetCurrentThreadId();
+					self->RunNoWindow();
+					return 0;
+				},
+				this
+			);
+		}
 
-			void WaitOnReady()
-			{
-				if (not m_ready.Wait(std::chrono::seconds{ 2 }))
-					throw std::runtime_error("Timed out waiting for queue.");
-			}
+		void WaitOnReady()
+		{
+			if (not m_ready.Wait(std::chrono::seconds{ 2 }))
+				throw std::runtime_error("Timed out waiting for queue.");
+		}
 
-			void PostMessage()
-			{
-				if (not win32::PostThreadMessageW(m_threadId, win32::MessageBase, 0, 0))
-					throw std::runtime_error("PostThreadMessageW() failed.");
-			}
+		void PostMessage()
+		{
+			if (not win32::PostThreadMessageW(m_threadId, win32::MessageBase, 0, 0))
+				throw std::runtime_error("PostThreadMessageW() failed.");
+		}
 
-			void PostQuit()
-			{
-				if (not win32::PostThreadMessageW(m_threadId, win32::QuitMsg, 0, 0))
-					throw std::runtime_error("PostThreadMessageW() failed.");
-			}
+		void PostQuit()
+		{
+			if (not win32::PostThreadMessageW(m_threadId, win32::QuitMsg, 0, 0))
+				throw std::runtime_error("PostThreadMessageW() failed.");
+		}
 
 		private:
-			DWORD m_threadId = 0;
-			Event m_ready;
-			std::jthread m_thread;
+		DWORD m_threadId = 0;
+		Event m_ready;
+		std::jthread m_thread;
 
-			void RunNoWindow()
+		void RunNoWindow()
+		{
+			win32::MSG msg;
+			win32::PeekMessageW(&msg, nullptr, 0, 0, win32::NoRemove);
+			m_ready.Signal();
+
+			while (true)
 			{
-				win32::MSG msg;
-				win32::PeekMessageW(&msg, nullptr, 0, 0, win32::NoRemove);
-				m_ready.Signal();
-				
-				while (true)
+				if (win32::BOOL result = win32::GetMessageW(&msg, nullptr, 0, 0); result <= 0)
 				{
-					if (win32::BOOL result = win32::GetMessageW(&msg, nullptr, 0, 0); result <= 0)
-					{
-						std::println("GetMessage(): {}", result);
-						break;
-					}
-					std::println("Success!");
+					std::println("GetMessage(): {}", result);
+					break;
 				}
-				std::println("Bye!");
+				std::println("Success!");
 			}
+			std::println("Bye!");
+		}
 
-			void RunHiddenWindow()
-			{
-				// TODO
-			}			
+		void RunHiddenWindow()
+		{
+			// TODO
+		}
 	};
 
-	auto Run() -> void 
-	try
+	auto Run() -> void
+		try
 	{
 		Thread t;
 		t.Start();
