@@ -2,6 +2,27 @@ export module threads:threadqueue;
 import std;
 import win32;
 
+namespace Stuff
+{
+	void waitonall(std::same_as<win32::HANDLE> auto...handles)
+	{
+		((handles == nullptr ? (throw std::runtime_error("a"), true) : (false)), ...);
+		([](win32::HANDLE h)
+			{
+
+			}(handles), ...);
+
+		std::array v{ handles... };
+
+	}
+
+	void blah()
+	{
+		win32::HANDLE a = nullptr, b = nullptr;
+		waitonall(a, b);
+	}
+}
+
 // Demonstrates using a Win32 message queue in a different thread.
 // See https://stackoverflow.com/questions/51942953/is-it-possible-to-create-a-message-loop-without-creating-a-window-in-c
 export namespace ThreadMessageQueue
