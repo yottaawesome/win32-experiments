@@ -51,12 +51,12 @@ export namespace ThreadMessageQueue
 			);
 			switch (result)
 			{
-			case win32::WaitResults::Index:
-				return true;
-			case win32::WaitResults::Timeout:
-				return false;
-			default:
-				throw std::runtime_error("WaitForSingleObject() failed.");
+				case win32::WaitResults::Index:
+					return true;
+				case win32::WaitResults::Timeout:
+					return false;
+				default:
+					throw std::runtime_error("WaitForSingleObject() failed.");
 			}
 			std::unreachable();
 		}
@@ -68,11 +68,11 @@ export namespace ThreadMessageQueue
 
 		private:
 		Win32HandleUniquePtr m_handle =
-			[] {
-			HANDLE handle = win32::CreateEventW(nullptr, true, false, nullptr);
-			if (not handle)
-				throw std::runtime_error("Failed creating handle");
-			return Win32HandleUniquePtr(handle);
+			[]{
+				HANDLE handle = win32::CreateEventW(nullptr, true, false, nullptr);
+				if (not handle)
+					throw std::runtime_error("Failed creating handle");
+				return Win32HandleUniquePtr(handle);
 			}();
 	};
 
