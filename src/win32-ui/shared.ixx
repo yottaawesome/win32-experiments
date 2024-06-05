@@ -82,6 +82,11 @@ export namespace Win32
 		return HIWORD(lparam);
 	}
 
+	auto SplitWord(LPARAM lparam) noexcept -> std::pair<WORD, WORD>
+	{
+		return { GetLowWord(lparam), GetHighWord(lparam) };
+	}
+
 	// TabCtrl_InsertItem
 	auto AddTab(HWND hwnd, int iItem, TCITEMW pitem) noexcept -> LRESULT
 	{

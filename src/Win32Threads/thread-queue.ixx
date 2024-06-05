@@ -162,7 +162,7 @@ export namespace ThreadMessageQueue
 	};
 
 	auto Run() -> void
-		try
+	try
 	{
 		Thread t;
 		t.Start();
