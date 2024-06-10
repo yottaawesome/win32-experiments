@@ -140,6 +140,7 @@ export namespace ThreadMessageQueue
 		virtual void Run() = 0;
 	};
 
+	// Thread queue using a hidden window.
 	class WindowThread : public BaseThread
 	{
 		public:
@@ -236,7 +237,7 @@ export namespace ThreadMessageQueue
 		}
 	};
 
-	// The thread creating the message queue and receives messages on it.
+	// Thread queue with no window.
 	class NoWindowThread : public BaseThread
 	{
 		public:
