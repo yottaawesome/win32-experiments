@@ -15,7 +15,15 @@ export namespace win32
 		::ULONG_PTR,
 		::SYNCHRONIZATION_BARRIER,
 		::MSG,
-		::BOOL;
+		::BOOL,
+		::WNDCLASSEXW,
+		::LPARAM,
+		::WPARAM,
+		::LRESULT,
+		::UINT32,
+		::HWND,
+		::ATOM
+		;
 
 	using 
 		::_beginthreadex, 
@@ -36,9 +44,18 @@ export namespace win32
 		::GetMessageW,
 		::GetCurrentThreadId,
 		::SetEvent,
-		::SetEvent;
+		::RegisterClassExW,
+		::GetModuleHandleW,
+		::DefWindowProcW,
+		::PostQuitMessage,
+		::CreateWindowExW,
+		::SendMessageW,
+		::TranslateMessage,
+		::DispatchMessageW,
+		::ShowWindow,
+		::PostMessageW
+		;
 
-	constexpr auto MessageBase = WM_APP;
 
 	namespace WaitResults
 	{
@@ -50,5 +67,12 @@ export namespace win32
 	constexpr auto InfiniteWait = INFINITE;
 	constexpr auto WaitIoCompletion = WAIT_IO_COMPLETION;
 
-	constexpr auto QuitMsg = WM_QUIT;
+	constexpr auto Hide = SW_HIDE;
+
+	namespace Msg
+	{
+		constexpr auto MessageBase = WM_APP;
+		constexpr auto Close = WM_CLOSE;
+		constexpr auto QuitMsg = WM_QUIT;
+	}
 }

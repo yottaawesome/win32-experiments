@@ -97,18 +97,27 @@ export namespace ThreadMessageQueue
 			}();
 	};
 
-	// The thread creating the message queue and receives messages on it.
-	class Thread
+	class BaseThread
 	{
 		public:
+		virtual ~BaseThread() = default;
+
 		void Start()
 		{
 			m_thread = std::jthread(
-				[](Thread* self)
+				[](BaseThread* self) noexcept -> int
 				{
-					self->m_threadId = win32::GetCurrentThreadId();
-					self->RunNoWindow();
-					return 0;
+					try
+					{
+						self->m_threadId = win32::GetCurrentThreadId();
+						self->Run();
+						return 0;
+					}
+					catch (const std::exception& ex)
+					{
+						std::println("Thread encountered exception: {}", ex.what());
+						return 1;
+					}
 				},
 				this
 			);
@@ -120,24 +129,131 @@ export namespace ThreadMessageQueue
 				throw std::runtime_error("Timed out waiting for queue.");
 		}
 
-		void PostMessage()
-		{
-			if (not win32::PostThreadMessageW(m_threadId, win32::MessageBase, 0, 0))
-				throw std::runtime_error("PostThreadMessageW() failed.");
-		}
+		virtual void PostMessage() = 0;
+		virtual void PostQuit() = 0;
 
-		void PostQuit()
-		{
-			if (not win32::PostThreadMessageW(m_threadId, win32::QuitMsg, 0, 0))
-				throw std::runtime_error("PostThreadMessageW() failed.");
-		}
-
-		private:
+		protected:
 		DWORD m_threadId = 0;
 		Event m_ready;
 		std::jthread m_thread;
 
-		void RunNoWindow()
+		virtual void Run() = 0;
+	};
+
+	class WindowThread : public BaseThread
+	{
+		public:
+		void PostMessage() override
+		{
+			// synchronous, return value is based on the message
+			//win32::SendMessageW(m_wnd, win32::Msg::MessageBase, 0, 0);
+			// asynchronous
+			if (not win32::PostMessageW(m_wnd, win32::Msg::MessageBase, 0, 0))
+				throw std::runtime_error("PostMessageW() failed");
+		}
+
+		void PostQuit() override
+		{
+			// synchronous, return value is based on the message
+			//win32::SendMessageW(m_wnd, win32::Msg::Close, 0, 0);
+			// asynchronous
+			if (not win32::PostMessageW(m_wnd, win32::Msg::Close, 0, 0))
+				throw std::runtime_error("PostMessageW() failed");
+			// This also works
+			/*if (not win32::PostThreadMessageW(m_threadId, win32::Msg::QuitMsg, 0, 0))
+				throw std::runtime_error("PostThreadMessageW() failed.");*/
+		}
+
+		private:
+		win32::HWND m_wnd = nullptr;
+
+		void Run() override
+		{
+			constexpr std::wstring_view name = L"TestWindowClass";
+			constexpr std::wstring_view windowName = L"TestWindow";
+
+			win32::WNDCLASSEXW windowClass{
+				.cbSize = sizeof(win32::WNDCLASSEXW),
+				.lpfnWndProc = WindowThread::WndProc,
+				.hInstance = win32::GetModuleHandleW(nullptr),
+				.lpszClassName = name.data(),
+			};
+			win32::ATOM atom = win32::RegisterClassExW(&windowClass);
+			if (not atom)
+				throw std::runtime_error("RegisterClassExW() failed");
+
+			m_wnd = win32::CreateWindowExW(
+				0, 
+				name.data(), 
+				windowName.data(), 
+				0, 
+				0, 
+				0, 
+				0, 
+				0, 
+				nullptr, 
+				nullptr, 
+				win32::GetModuleHandleW(nullptr), 
+				nullptr
+			);
+			if (not m_wnd)
+				throw std::runtime_error("Failed creating window");
+			win32::ShowWindow(m_wnd, win32::Hide);
+
+			m_ready.Signal();
+
+			win32::MSG msg;
+			while (true)
+			{
+				if (win32::BOOL result = win32::GetMessageW(&msg, nullptr, 0, 0); result <= 0)
+				{
+					std::println("GetMessage(): {}", result);
+					break;
+				}
+				// win32::TranslateMessage(&msg); Not required
+				win32::DispatchMessageW(&msg); // Not necessarily required, see not in WndProc.
+				std::println("WindowThread success! {}", msg.message);
+			}
+			std::println("WindowThread bye!");
+		}
+
+		static win32::LRESULT WndProc(win32::HWND hwnd, win32::UINT32 msg, win32::WPARAM wparam, win32::LPARAM lparam)
+		{
+			// You probably don't need to process messages here. You'll need to spcifically handle
+			// the WM_DWMNCRENDERINGCHANGED message if you don't.
+			// https://learn.microsoft.com/en-us/windows/win32/dwm/wm-dwmncrenderingchanged
+			switch (msg)
+			{
+				case win32::Msg::Close:
+					std::println("Got Close!");
+					win32::PostQuitMessage(0);
+					return 0;
+				case win32::Msg::MessageBase:
+					std::println("Got MessageBase!");
+					return 0;
+			}
+			return win32::DefWindowProcW(hwnd, msg, wparam, lparam);
+		}
+	};
+
+	// The thread creating the message queue and receives messages on it.
+	class NoWindowThread : public BaseThread
+	{
+		public:
+		void PostMessage() override
+		{
+			if (not win32::PostThreadMessageW(m_threadId, win32::Msg::MessageBase, 0, 0))
+				throw std::runtime_error("PostThreadMessageW() failed.");
+		}
+
+		void PostQuit() override
+		{
+			if (not win32::PostThreadMessageW(m_threadId, win32::Msg::QuitMsg, 0, 0))
+				throw std::runtime_error("PostThreadMessageW() failed.");
+		}
+
+		private:
+		void Run() override
 		{
 			win32::MSG msg;
 			win32::PeekMessageW(&msg, nullptr, 0, 0, win32::NoRemove);
@@ -150,25 +266,29 @@ export namespace ThreadMessageQueue
 					std::println("GetMessage(): {}", result);
 					break;
 				}
-				std::println("Success!");
+				std::println("NoWindowThread success! {}", msg.message);
 			}
-			std::println("Bye!");
-		}
-
-		void RunHiddenWindow()
-		{
-			// TODO
-		}
+			std::println("NoWindowThread bye!");
+		}		
 	};
 
 	auto Run() -> void
 	try
 	{
-		Thread t;
+		std::println("Testing NoWindowThread...");
+		NoWindowThread t;
 		t.Start();
 		t.WaitOnReady();
 		t.PostMessage();
 		t.PostQuit();
+
+		std::this_thread::sleep_for(std::chrono::seconds{1});
+		std::println("Testing NoWindowThread...");
+		WindowThread w;
+		w.Start();
+		w.WaitOnReady();
+		w.PostMessage();
+		w.PostQuit();
 	}
 	catch (const std::exception& ex)
 	{
