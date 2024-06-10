@@ -2,5 +2,5 @@ import samples;
 
 int main()
 {
-    return BasicWindow::Run();
+    return SubclassControl::Run();
 }

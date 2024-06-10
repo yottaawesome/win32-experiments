@@ -63,9 +63,9 @@ namespace BasicWindow
         GetClientRect(hwndParent, &rcClient);
         HWND hwndTab = Win32::CreateWindowExW(
             0,
-            Wc_TabControl,
+            Controls::TabControl,
             L"",
-            WindowStyles::Ws_Child | WindowStyles::Ws_ClipSiblings | WindowStyles::Ws_Visible,
+            Styles::Child | Styles::ClipSiblings | Styles::Visible,
             0, 
             0, 
             rcClient.right, 
@@ -142,21 +142,40 @@ namespace BasicWindow
         return RegisterClassExW(&wcx);
     }
 
+    HWND CreateButton(HWND parent)
+    {
+        HWND button = CreateWindowExW(
+            0, 
+            Controls::Button, 
+            L"OK", 
+            Styles::PushButton | Styles::Child | Styles::Visible,
+            100, 
+            100, 
+            100,
+            100,
+            parent, 
+            nullptr, 
+            GetModuleHandleW(nullptr), 
+            nullptr
+        );
+        return button;
+    }
+
     HWND CreateMainWindow(HINSTANCE hInst, std::wstring_view className, std::wstring_view windowName)
     {
         HWND hwndMain = CreateWindowExW(
-            0,                                              // no extended styles           
-            className.data(),                               // class name                   
-            windowName.data(),                              // window name                  
-            WindowStyles::Ws_OverlappedWindow | WindowStyles::Ws_HScroll | WindowStyles::Ws_VScroll,  // overlapped window horizontal scroll and vertical scroll bar          
-            Cw_UseDefault,                                  // default horizontal position  
-            Cw_UseDefault,                                  // default vertical position    
-            Cw_UseDefault,                                  // default width                
-            Cw_UseDefault,                                  // default height               
-            nullptr,                                  // no parent or owner window    
-            nullptr,                                 // class menu used              
-            hInst,                                          // instance handle              
-            nullptr                                         // no window creation data      
+            0,                          // no extended styles           
+            className.data(),           // class name                   
+            windowName.data(),          // window name                  
+            Styles::OverlappedWindow,   // overlapped window horizontal scroll and vertical scroll bar          
+            Cw_UseDefault,              // default horizontal position  
+            Cw_UseDefault,              // default vertical position    
+            Cw_UseDefault,              // default width                
+            Cw_UseDefault,              // default height               
+            nullptr,                    // no parent or owner window    
+            nullptr,                    // class menu used              
+            hInst,                      // instance handle              
+            nullptr                     // no window creation data      
         );
         return hwndMain;
     }
@@ -176,6 +195,8 @@ namespace BasicWindow
         if (not TabControl)
             return 1;
 
+        HWND button = CreateButton(hwndMain);
+
         ShowWindow(hwndMain, Sw_ShowDefault);
         UpdateWindow(hwndMain);
 
@@ -194,4 +215,151 @@ namespace BasicWindow
 
         return static_cast<int>(msg.wParam);
 	}
+}
+
+// https://learn.microsoft.com/en-us/windows/win32/controls/subclassing-overview#subclassing-controls-using-comctl32dll-version-6
+export namespace SubclassControl
+{
+    namespace Messages = Win32::Messages;
+
+    Win32::LRESULT __stdcall MainWndProc(HWND hwnd, UINT type, WPARAM wParam, LPARAM lParam)
+    {
+        switch (type)
+        {
+            case Messages::Close:
+                Win32::DestroyWindow(hwnd);
+                return 0;
+            case Messages::Destroy:
+                Win32::PostQuitMessage(0);
+                return 0;
+            default:
+                return Win32::DefWindowProcW(hwnd, type, wParam, lParam);
+        }
+    }
+
+    constexpr std::wstring_view ClassName = L"SubclassTest";
+    Win32::ATOM Class =
+        []()
+        {
+            Win32::WNDCLASSEX wcx{
+                .cbSize = sizeof(wcx),              // size of structure 
+                .style = Win32::Cs_HRedraw | Win32::Cs_VRedraw,   // redraw if size changes 
+                .lpfnWndProc = MainWndProc,         // points to window procedure 
+                .cbClsExtra = 0,                    // no extra class memory 
+                .cbWndExtra = 0,                    // no extra window memory 
+                .hInstance = Win32::GetModuleHandleW(nullptr),             // handle to instance 
+                .hIcon = nullptr,// LoadIcon(nullptr, IDI_APPLICATION); // predefined app. icon 
+                .hCursor = nullptr,// LoadCursor(nullptr, IDC_ARROW);   // predefined arrow 
+                .hbrBackground = (Win32::HBRUSH)Win32::GetStockObject(Win32::White_Brush),   // white background brush 
+                .lpszClassName = ClassName.data(),  // name of window class 
+                .hIconSm = nullptr
+            };
+            ATOM returnValue = Win32::RegisterClassExW(&wcx);
+            if (not returnValue)
+            {
+                std::println("Failed registering window class.");
+                std::terminate();
+            }
+
+            return returnValue;
+        }();
+
+    constexpr std::wstring_view WindowName = L"SubclassTestWindow";
+    Win32::HWND MainWindow =
+        []()
+        {
+            Win32::HWND window = Win32::CreateWindowExW(
+                0,                          // no extended styles           
+                ClassName.data(),           // class name                   
+                WindowName.data(),          // window name                  
+                Win32::Styles::OverlappedWindow,   // overlapped window horizontal scroll and vertical scroll bar          
+                Win32::Cw_UseDefault,              // default horizontal position  
+                Win32::Cw_UseDefault,              // default vertical position    
+                Win32::Cw_UseDefault,              // default width                
+                Win32::Cw_UseDefault,              // default height               
+                nullptr,                    // no parent or owner window    
+                nullptr,                    // class menu used              
+                Win32::GetModuleHandleW(nullptr),                      // instance handle              
+                nullptr                     // no window creation data      
+            );
+            if (not window)
+            {
+                std::println("Failed creating window.");
+                std::terminate();
+            }
+            Win32::ShowWindow(window, Win32::Sw_ShowDefault);
+            Win32::UpdateWindow(window);
+
+            return window;
+        }();
+
+    Win32::LRESULT __stdcall SubclassProc(
+        Win32::HWND hWnd,
+        Win32::UINT msg,
+        Win32::WPARAM wParam,
+        Win32::LPARAM lParam,
+        Win32::UINT_PTR uIdSubclass,
+        Win32::DWORD_PTR dwRefData
+    )
+    {
+        switch (msg)
+        {
+            case Win32::Messages::LeftButtonUp:
+                std::println("Button up!");
+        }
+        return Win32::DefSubclassProc(hWnd, msg, wParam, lParam);
+    }
+
+    Win32::HWND Button = 
+        [](HWND parent)
+        {
+            Win32::HWND button = CreateWindowExW(
+                0,
+                Win32::Controls::Button,
+                L"OK",
+                Win32::Styles::PushButton | Win32::Styles::Child | Win32::Styles::Visible,
+                100,
+                100,
+                100,
+                100,
+                parent,
+                nullptr,
+                GetModuleHandleW(nullptr),
+                nullptr
+            );
+            if (not button)
+            {
+                std::println("Failed creating button.");
+                std::terminate();
+            }
+            if (not Win32::SetWindowSubclass(button, SubclassProc, 5, 0))
+            {
+                std::println("Failed subclassing button.");
+                std::terminate();
+            }
+
+            return button;
+        }(MainWindow);
+
+    int MessageLoop()
+    {
+        Win32::MSG msg;
+        while (true)
+        {
+            int fGotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
+            if (fGotMessage == 0) // WM_QUIT received
+                break;
+            if (fGotMessage == -1) // error
+                break;
+
+            Win32::TranslateMessage(&msg);
+            Win32::DispatchMessageW(&msg);
+        }
+        return static_cast<int>(msg.wParam);
+    }
+
+    int Run()
+    {
+        return MessageLoop();
+    }
 }

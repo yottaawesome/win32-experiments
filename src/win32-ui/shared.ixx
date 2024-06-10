@@ -9,18 +9,24 @@ export import std;
 
 export namespace Win32
 {
-	namespace WindowStyles
+	namespace Styles
 	{
-		constexpr auto Ws_Child = WS_CHILD;
-		constexpr auto Ws_ClipSiblings = WS_CLIPSIBLINGS;
-		constexpr auto Ws_Visible = WS_VISIBLE;
-		constexpr auto Ws_OverlappedWindow = WS_OVERLAPPEDWINDOW;
-		constexpr auto Ws_HScroll = WS_HSCROLL;
-		constexpr auto Ws_VScroll = WS_VSCROLL;
+		constexpr auto Child = WS_CHILD;
+		constexpr auto ClipSiblings = WS_CLIPSIBLINGS;
+		constexpr auto Visible = WS_VISIBLE;
+		constexpr auto OverlappedWindow = WS_OVERLAPPEDWINDOW;
+		constexpr auto HScroll = WS_HSCROLL;
+		constexpr auto VScroll = WS_VSCROLL;
+		constexpr auto PushButton = BS_DEFPUSHBUTTON;
+	}
+
+	namespace Controls
+	{
+		constexpr auto TabControl = WC_TABCONTROL;
+		constexpr auto Button = WC_BUTTON;
 	}
 
 	constexpr auto Sw_ShowDefault = SW_SHOWDEFAULT;
-	constexpr auto Wc_TabControl = WC_TABCONTROL;
 	constexpr auto Icc_Tab_Classes = ICC_TAB_CLASSES;
 	constexpr auto Tcif_Text = TCIF_TEXT;
 	constexpr auto Tcif_Image = TCIF_IMAGE;
@@ -49,6 +55,8 @@ export namespace Win32
 		::TCHAR,
 		::ATOM,
 		::HRESULT,
+		::UINT_PTR,
+		::DWORD_PTR,
 		::CreateWindowExW,
 		::ShowWindow,
 		::UpdateWindow,
@@ -69,7 +77,9 @@ export namespace Win32
 		::GetClientRect,
 		::SendMessageW,
 		::LoadStringW,
-		::SetWindowPos
+		::SetWindowPos,
+		::DefSubclassProc,
+		::SetWindowSubclass
 		;
 
 	auto GetLowWord(LPARAM lparam) noexcept -> WORD
@@ -99,6 +109,7 @@ export namespace Win32
 		constexpr auto Close = WM_CLOSE;
 		constexpr auto Destroy = WM_DESTROY;
 		constexpr auto Size = WM_SIZE;
+		constexpr auto LeftButtonUp = WM_LBUTTONUP;
 	}
 
 	template<typename R, typename T>
