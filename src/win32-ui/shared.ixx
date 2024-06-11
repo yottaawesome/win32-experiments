@@ -57,6 +57,10 @@ export namespace Win32
 		::HRESULT,
 		::UINT_PTR,
 		::DWORD_PTR,
+		::CREATESTRUCT,
+		::LONG_PTR,
+		::PAINTSTRUCT,
+		::HDC,
 		::CreateWindowExW,
 		::ShowWindow,
 		::UpdateWindow,
@@ -79,8 +83,17 @@ export namespace Win32
 		::LoadStringW,
 		::SetWindowPos,
 		::DefSubclassProc,
-		::SetWindowSubclass
+		::SetWindowSubclass,
+		::SetWindowLongPtrW,
+		::GetWindowLongPtrW,
+		::FillRect,
+		::BeginPaint,
+		::EndPaint
 		;
+
+	constexpr auto Gwlp_UserData = GWLP_USERDATA;
+
+	constexpr auto ColorWindow = COLOR_WINDOW;
 
 	auto GetLowWord(LPARAM lparam) noexcept -> WORD
 	{
@@ -110,6 +123,8 @@ export namespace Win32
 		constexpr auto Destroy = WM_DESTROY;
 		constexpr auto Size = WM_SIZE;
 		constexpr auto LeftButtonUp = WM_LBUTTONUP;
+		constexpr auto NonClientCreate = WM_NCCREATE;
+		constexpr auto Paint = WM_PAINT;
 	}
 
 	template<typename R, typename T>

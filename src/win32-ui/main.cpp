@@ -2,5 +2,5 @@ import samples;
 
 int main()
 {
-    return SubclassControl::Run();
+    return ObjectOrientedWindowTemplate::Run();
 }
