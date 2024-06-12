@@ -510,8 +510,6 @@ export namespace ObjectOrientedWindow // Approach 1
     }
 }
 
-
-
 export namespace ObjectOrientedWindowTemplate // Approach 2
 {
     export template <typename TDerived>
@@ -595,10 +593,7 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
             {
                 return pThis->HandleMessage(uMsg, wParam, lParam);
             }
-            else
-            {
-                return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
-            }
+            return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
         }
 
         protected:
@@ -616,15 +611,6 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
                 case Win32::Messages::Destroy:
                 {
                     Win32::PostQuitMessage(0);
-                    return 0;
-                }
-
-                case Win32::Messages::Paint:
-                {
-                    Win32::PAINTSTRUCT ps;
-                    Win32::HDC hdc = Win32::BeginPaint(m_hwnd, &ps);
-                    Win32::FillRect(hdc, &ps.rcPaint, (Win32::HBRUSH)(Win32::ColorWindow + 1));
-                    Win32::EndPaint(m_hwnd, &ps);
                     return 0;
                 }
 
@@ -656,5 +642,213 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
         MainWindow window;
         window.Create(L"Blah", Win32::Styles::OverlappedWindow);
         return MessageLoop();
+    }
+}
+
+export namespace ObjectOrientedControl
+{
+    template<typename T>
+    concept ControlLike = requires (T t)
+    {
+        t.Control;
+        t.Control = (Win32::HWND)0;
+        T::ClassName;
+        std::wstring_view{t.Text};
+        t.Styles;
+    };
+
+    template<ControlLike TType>
+    class Control
+    {
+        public:
+        Control(Win32::HWND parent)
+        {
+            m_control.Control = CreateWindowExW(
+                0,
+                Win32::Controls::Button,
+                m_control.Text.data(),
+                m_control.Styles,
+                100,
+                100,
+                100,
+                100,
+                parent,
+                nullptr,
+                GetModuleHandleW(nullptr),
+                nullptr
+            );
+            if (not m_control.Control)
+                throw Error::Win32Error("Failed creating button.");
+            if (not Win32::SetWindowSubclass(m_control.Control, SubclassProc, 5, reinterpret_cast<Win32::DWORD_PTR>(this)))
+            {
+                std::println("Failed subclassing button.");
+                std::terminate();
+            }
+        }
+
+        protected:
+        static Win32::LRESULT __stdcall SubclassProc(
+            Win32::HWND hwnd,
+            Win32::UINT msg,
+            Win32::WPARAM wParam,
+            Win32::LPARAM lParam,
+            Win32::UINT_PTR idSubclass,
+            Win32::DWORD_PTR refData
+        )
+        {
+            Control<TType>* pThis = reinterpret_cast<Control<TType>*>(refData);
+            if (pThis)
+            {
+                return pThis->m_control.Process(
+                    msg,
+                    wParam,
+                    lParam,
+                    idSubclass,
+                    refData
+                );
+            }
+            return Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
+        }
+
+        protected:
+        TType m_control;
+    };
+
+    struct TypeButton
+    {
+        static constexpr std::wstring_view ClassName = L"Button";
+
+        std::wstring_view Text = L"Button";
+
+        Win32::HWND Control = nullptr;
+
+        Win32::DWORD Styles = Win32::Styles::PushButton | Win32::Styles::Child | Win32::Styles::Visible;
+
+        Win32::LRESULT Process(
+            Win32::UINT msg,
+            Win32::WPARAM wParam,
+            Win32::LPARAM lParam,
+            Win32::UINT_PTR uIdSubclass,
+            Win32::DWORD_PTR dwRefData
+        )
+        {
+            switch (msg)
+            {
+                case Win32::Messages::LeftButtonUp:
+                    std::println("Button up!");
+            }
+            return Win32::DefSubclassProc(Control, msg, wParam, lParam);
+        }
+    };
+
+    using Button = Control<TypeButton>;
+
+    class MainWindow
+    {
+        std::wstring_view ClassName = L"MainWindow";
+        std::wstring_view WindowName = L"MainWindow";
+
+        HWND m_hwnd = 
+            [](auto self)
+            {
+                Win32::WNDCLASSEX wc{
+                    .cbSize = sizeof(wc),
+                    .lpfnWndProc = WindowProc,
+                    .hInstance = Win32::GetModuleHandleW(nullptr),
+                    .lpszClassName = self->ClassName.data()
+                };
+                if (not Win32::RegisterClassExW(&wc))
+                    throw Error::Win32Error("Failed registering class");
+
+                Win32::HWND hwnd = Win32::CreateWindowExW(
+                    0,
+                    self->ClassName.data(),
+                    self->WindowName.data(),
+                    Win32::Styles::OverlappedWindow,
+                    Win32::Cw_UseDefault,
+                    Win32::Cw_UseDefault,
+                    Win32::Cw_UseDefault,
+                    Win32::Cw_UseDefault,
+                    nullptr,
+                    nullptr,
+                    Win32::GetModuleHandleW(nullptr),
+                    self
+                );
+                if (not hwnd)
+                    throw Error::Win32Error("Failed creating window");
+
+                Win32::ShowWindow(hwnd, Win32::Sw_ShowDefault);
+                Win32::UpdateWindow(hwnd);
+                return hwnd;
+            }(this);
+
+        Button m_button{ m_hwnd };
+
+        Win32::LRESULT HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam)
+        {
+            switch (uMsg)
+            {
+                case Win32::Messages::Destroy:
+                {
+                    Win32::PostQuitMessage(0);
+                    return 0;
+                }
+
+                default:
+                    return Win32::DefWindowProcW(m_hwnd, uMsg, wParam, lParam);
+            }
+        }
+
+        static Win32::LRESULT __stdcall WindowProc(Win32::HWND hwnd, Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam)
+        {
+            MainWindow* pThis = nullptr;
+
+            if (uMsg == Win32::Messages::NonClientCreate)
+            {
+                Win32::CREATESTRUCT* pCreate = (Win32::CREATESTRUCT*)lParam;
+                pThis = (MainWindow*)pCreate->lpCreateParams;
+                Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, (Win32::LONG_PTR)pThis);
+
+                pThis->m_hwnd = hwnd;
+            }
+            else
+            {
+                pThis = (MainWindow*)GetWindowLongPtrW(hwnd, Win32::Gwlp_UserData);
+            }
+
+            if (pThis)
+            {
+                return pThis->HandleMessage(uMsg, wParam, lParam);
+            }
+            return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+        }
+    };
+
+    int MessageLoop()
+    {
+        Win32::MSG msg;
+        while (true)
+        {
+            int gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
+            if (gotMessage == 0) // WM_QUIT received
+                break;
+            if (gotMessage == -1) // error
+                break;
+
+            Win32::TranslateMessage(&msg);
+            Win32::DispatchMessageW(&msg);
+        }
+        return static_cast<int>(msg.wParam);
+    }
+
+    int Run() try
+    {
+        MainWindow m;
+        return MessageLoop();
+    }
+    catch (const std::exception& ex)
+    {
+        std::println("{}", ex.what());
+        return 1;
     }
 }
