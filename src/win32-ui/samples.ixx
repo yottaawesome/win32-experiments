@@ -510,11 +510,16 @@ export namespace ObjectOrientedWindow // Approach 1
     }
 }
 
+
+
 export namespace ObjectOrientedWindowTemplate // Approach 2
 {
-    export template <class TDerived>
+    export template <typename TDerived>
     class BaseWindow
     {
+        // MSVC has a bug
+        //static constexpr std::wstring_view x = TDerived::ClassName;
+
         public:
         virtual void Create(
             std::wstring_view lpWindowName,
