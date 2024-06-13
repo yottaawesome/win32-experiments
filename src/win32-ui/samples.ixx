@@ -696,9 +696,9 @@ export namespace ObjectOrientedControl
         )
         {
             Control<TType>* pThis = reinterpret_cast<Control<TType>*>(refData);
-            if (not pThis)
-                return Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
-            return pThis->m_control.Process(msg, wParam, lParam, idSubclass, refData);
+            return pThis 
+                ? pThis->m_control.Process(msg, wParam, lParam, idSubclass, refData)
+                : Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
         }
 
         protected:
