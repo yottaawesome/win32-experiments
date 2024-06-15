@@ -134,6 +134,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="samples.ixx" />
     <ClCompile Include="shared.ixx" />
+    <ClCompile Include="util.ixx" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="win32-ui.exe.manifest" />

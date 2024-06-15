@@ -18,6 +18,8 @@ export namespace Win32
 		constexpr auto HScroll = WS_HSCROLL;
 		constexpr auto VScroll = WS_VSCROLL;
 		constexpr auto PushButton = BS_DEFPUSHBUTTON;
+		constexpr auto VRedraw = CS_VREDRAW;
+		constexpr auto HRedraw = CS_HREDRAW;
 	}
 
 	namespace Controls

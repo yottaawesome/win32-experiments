@@ -1,5 +1,6 @@
 export module samples;
 import shared;
+import util;
 
 #pragma comment(lib, "Comctl32.lib")
 // See https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
@@ -650,8 +651,8 @@ export namespace ObjectOrientedControl
     template<typename T>
     concept ControlLike = requires (T t)
     {
-        t.Control = (Win32::HWND)0;
-        { T::ControlClass.data() } -> std::same_as<const wchar_t*>;
+        t.Handle = (Win32::HWND)0;
+        { T::Class.data() } -> std::same_as<const wchar_t*>;
         {t.Text.data() } -> std::same_as<const wchar_t*>;
         t.Styles = Win32::DWORD{ 0 };
     };
@@ -662,9 +663,9 @@ export namespace ObjectOrientedControl
         public:
         Control(Win32::HWND parent)
         {
-            m_control.Control = CreateWindowExW(
+            m_control.Handle = CreateWindowExW(
                 0,
-                TType::ControlClass.data(),
+                TType::Class.data(),
                 m_control.Text.data(),
                 m_control.Styles,
                 m_control.X,
@@ -672,13 +673,13 @@ export namespace ObjectOrientedControl
                 m_control.Width,
                 m_control.Height,
                 parent,
-                (Win32::HMENU)m_control.Id,
+                (Win32::HMENU)(Win32::UINT_PTR)(m_control.Id),
                 GetModuleHandleW(nullptr),
                 nullptr
             );
-            if (not m_control.Control)
+            if (not m_control.Handle)
                 throw Error::Win32Error("Failed creating button.");
-            if (not Win32::SetWindowSubclass(m_control.Control, SubclassProc, 5, reinterpret_cast<Win32::DWORD_PTR>(this)))
+            if (not Win32::SetWindowSubclass(m_control.Handle, SubclassProc, 5, reinterpret_cast<Win32::DWORD_PTR>(this)))
             {
                 std::println("Failed subclassing button.");
                 std::terminate();
@@ -705,21 +706,42 @@ export namespace ObjectOrientedControl
         TType m_control;
     };
 
-    struct TypeButton
+    template<
+        Util::WideFixedString VClassName,
+        Win32::DWORD VStyles,
+        Util::WideFixedString VText = L"",
+        Win32::DWORD VControlId = 0,
+        Win32::DWORD VX = 100,
+        Win32::DWORD VY = 100,
+        Win32::DWORD VWidth = 100,
+        Win32::DWORD VHeight = 100
+    >
+    struct ControlTraits
     {
-        static constexpr std::wstring_view ControlClass = L"Button";
+        virtual ~ControlTraits() = default;
+        static constexpr std::wstring_view Class = VClassName;
+        Win32::DWORD Styles = VStyles;
+        std::wstring_view Text = VText;
+        Win32::DWORD Id = VControlId;
+        Win32::DWORD X = VX;
+        Win32::DWORD Y = VY;
+        Win32::DWORD Width = VWidth;
+        Win32::DWORD Height = VHeight;
+        Win32::HWND Handle = nullptr;
+    };
 
-        std::wstring_view Text = L"Button";
-        Win32::DWORD Id = 10;
-        Win32::HWND Control = nullptr;
-
-        Win32::DWORD Styles = Win32::Styles::PushButton | Win32::Styles::Child | Win32::Styles::Visible;
-
-        unsigned long X = 100;
-        unsigned long Y = 100;
-        unsigned long Width = 100;
-        unsigned long Height = 100;
-
+    template<
+        Util::WideFixedString VText,
+        Win32::DWORD VId,
+        Win32::DWORD VX,
+        Win32::DWORD VY,
+        Win32::DWORD VWidth,
+        Win32::DWORD VHeight
+    >
+    struct TestButtonTraits 
+        //: public ButtonTraits<VText, VId, VX, VY, VWidth, VHeight>
+        : public ControlTraits<L"Button", Win32::Styles::PushButton | Win32::Styles::Child | Win32::Styles::Visible, VText, VId, VX, VY, VWidth, VHeight>
+    {
         Win32::LRESULT Process(
             Win32::UINT msg,
             Win32::WPARAM wParam,
@@ -733,11 +755,12 @@ export namespace ObjectOrientedControl
                 case Win32::Messages::LeftButtonUp:
                     std::println("Button up!");
             }
-            return Win32::DefSubclassProc(Control, msg, wParam, lParam);
+            return Win32::DefSubclassProc(this->Handle, msg, wParam, lParam);
         }
     };
 
-    using Button = Control<TypeButton>;
+    using ButtonA = Control<TestButtonTraits<L"Hello, world!", 10, 100, 100, 100, 100>>;
+    using ButtonB = Control<TestButtonTraits<L"Hello again!!", 10, 250, 100, 100, 100>>;
 
     template<typename TType>
     class Window
@@ -750,6 +773,7 @@ export namespace ObjectOrientedControl
                 .cbSize = sizeof(wc),
                 .lpfnWndProc = WindowProc,
                 .hInstance = Win32::GetModuleHandleW(nullptr),
+                .hbrBackground = (Win32::HBRUSH)Win32::GetStockObject(Win32::White_Brush),   // white background brush 
                 .lpszClassName = TType::ClassName.data()
             };
             if (not Win32::RegisterClassExW(&wc))
@@ -808,7 +832,8 @@ export namespace ObjectOrientedControl
         static constexpr std::wstring_view WindowName = L"MainWindow";
 
         HWND WindowHandle = nullptr;
-        Button m_button{ WindowHandle };
+        ButtonA m_buttonA{ WindowHandle };
+        ButtonB m_buttonB{ WindowHandle };
 
         Win32::LRESULT HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam)
         {
