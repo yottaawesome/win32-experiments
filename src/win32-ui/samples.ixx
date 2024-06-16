@@ -728,6 +728,17 @@ export namespace ObjectOrientedControl
         Win32::DWORD Width = VWidth;
         Win32::DWORD Height = VHeight;
         Win32::HWND Handle = nullptr;
+
+        virtual Win32::LRESULT Process(
+            Win32::UINT msg,
+            Win32::WPARAM wParam,
+            Win32::LPARAM lParam,
+            Win32::UINT_PTR uIdSubclass,
+            Win32::DWORD_PTR dwRefData
+        )
+        {
+            return Win32::DefSubclassProc(this->Handle, msg, wParam, lParam);
+        }
     };
 
     template<
@@ -748,7 +759,7 @@ export namespace ObjectOrientedControl
             Win32::LPARAM lParam,
             Win32::UINT_PTR uIdSubclass,
             Win32::DWORD_PTR dwRefData
-        )
+        ) override
         {
             switch (msg)
             {
