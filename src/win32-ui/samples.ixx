@@ -706,6 +706,9 @@ export namespace ObjectOrientedControl
         TType m_control;
     };
 
+    template<typename T>
+    concept S = requires(T t) { t.Blah(); };
+
     template<
         Util::WideFixedString VClassName,
         Win32::DWORD VStyles,
@@ -728,6 +731,19 @@ export namespace ObjectOrientedControl
         Win32::DWORD Width = VWidth;
         Win32::DWORD Height = VHeight;
         Win32::HWND Handle = nullptr;
+
+        void Reposition(const long deltaLeft, const long deltaTop)
+        {
+            // https://stackoverflow.com/questions/18034975/how-do-i-find-position-of-a-win32-control-window-relative-to-its-parent-window
+            Win32::RECT rc;
+            Win32::GetClientRect(Handle, &rc);
+            Win32::MapWindowPoints(Handle, Win32::GetParent(Handle), (Win32::LPPOINT)&rc, 2);
+
+            rc.left += deltaLeft;
+            rc.top += deltaTop;
+
+            Win32::SetWindowPos(Handle, nullptr, rc.left, rc.top, 0, 0, Win32::NoSize);
+        }
 
         virtual Win32::LRESULT Process(
             Win32::UINT msg,
@@ -753,6 +769,36 @@ export namespace ObjectOrientedControl
         //: public ButtonTraits<VText, VId, VX, VY, VWidth, VHeight>
         : public ControlTraits<L"Button", Win32::Styles::PushButton | Win32::Styles::Child | Win32::Styles::Visible, VText, VId, VX, VY, VWidth, VHeight>
     {
+        void HandleKeyDown(Win32::WPARAM key)
+        {
+            switch (key)
+            {
+                case Win32::VirtualKeys::Up:
+                {
+                    this->Reposition(0, -10);
+                    break;
+                }
+
+                case Win32::VirtualKeys::Right:
+                {
+                    this->Reposition(10, 0);
+                    break;
+                }
+
+                case Win32::VirtualKeys::Down:
+                {
+                    this->Reposition(0, 10);
+                    break;
+                }
+
+                case Win32::VirtualKeys::Left:
+                {
+                    this->Reposition(-10, 0);
+                    break;
+                }
+            }
+        }
+
         Win32::LRESULT Process(
             Win32::UINT msg,
             Win32::WPARAM wParam,
@@ -764,7 +810,17 @@ export namespace ObjectOrientedControl
             switch (msg)
             {
                 case Win32::Messages::LeftButtonUp:
-                    std::println("Button up!");
+                {
+                    auto re = Win32::SetFocus(this->Handle);
+                    std::println("Left mouse button up!");
+                    break;
+                }
+                    
+                case Win32::Messages::KeyUp:
+                {
+                    HandleKeyDown(wParam);
+                    break;
+                }
             }
             return Win32::DefSubclassProc(this->Handle, msg, wParam, lParam);
         }

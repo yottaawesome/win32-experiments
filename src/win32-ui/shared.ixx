@@ -63,6 +63,7 @@ export namespace Win32
 		::LONG_PTR,
 		::PAINTSTRUCT,
 		::HDC,
+		::LPPOINT,
 		::CreateWindowExW,
 		::ShowWindow,
 		::UpdateWindow,
@@ -90,8 +91,15 @@ export namespace Win32
 		::GetWindowLongPtrW,
 		::FillRect,
 		::BeginPaint,
-		::EndPaint
+		::EndPaint,
+		::MapWindowPoints,
+		::GetParent,
+		::SetWindowPlacement,
+		::SetWindowPos,
+		::SetFocus
 		;
+
+	constexpr auto NoSize = SWP_NOSIZE;
 
 	constexpr auto Gwlp_UserData = GWLP_USERDATA;
 
@@ -127,6 +135,16 @@ export namespace Win32
 		constexpr auto LeftButtonUp = WM_LBUTTONUP;
 		constexpr auto NonClientCreate = WM_NCCREATE;
 		constexpr auto Paint = WM_PAINT;
+		constexpr auto KeyUp = WM_KEYUP;
+	}
+
+	// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+	namespace VirtualKeys
+	{
+		constexpr auto Up = VK_UP;
+		constexpr auto Down = VK_DOWN;
+		constexpr auto Left = VK_LEFT;
+		constexpr auto Right = VK_RIGHT;
 	}
 
 	template<typename R, typename T>
