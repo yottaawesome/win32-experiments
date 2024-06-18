@@ -661,17 +661,28 @@ export namespace ObjectOrientedControl
     class Control
     {
         public:
+        Control(Win32::HWND parent, const Win32::DWORD x, const Win32::DWORD y, const Win32::DWORD width, const Win32::DWORD height)
+        {
+            Init(parent, x, y, width, height);
+        }
+
         Control(Win32::HWND parent)
+        {
+            Init(parent, m_control.X, m_control.Y, m_control.Width, m_control.Height);
+        }
+
+        protected:
+        void Init(Win32::HWND parent, const Win32::DWORD x, const Win32::DWORD y, const Win32::DWORD width, const Win32::DWORD height)
         {
             m_control.Handle = CreateWindowExW(
                 0,
                 TType::Class.data(),
                 m_control.Text.data(),
                 m_control.Styles,
-                m_control.X,
-                m_control.Y,
-                m_control.Width,
-                m_control.Height,
+                x,
+                y,
+                width,
+                height,
                 parent,
                 (Win32::HMENU)(Win32::UINT_PTR)(m_control.Id),
                 GetModuleHandleW(nullptr),
@@ -686,7 +697,6 @@ export namespace ObjectOrientedControl
             }
         }
 
-        protected:
         static Win32::LRESULT __stdcall SubclassProc(
             Win32::HWND hwnd,
             Win32::UINT msg,
@@ -722,15 +732,6 @@ export namespace ObjectOrientedControl
     struct ControlTraits
     {
         virtual ~ControlTraits() = default;
-        constexpr ControlTraits() = default;
-        ControlTraits(
-            const Win32::DWORD x, 
-            const Win32::DWORD y,
-            const Win32::DWORD width, 
-            const Win32::DWORD height
-        ) : X(x), Y(y), Width(width), Height(height)
-        {}
-
         static constexpr std::wstring_view Class = VClassName;
         Win32::DWORD Styles = VStyles;
         std::wstring_view Text = VText;
@@ -778,16 +779,6 @@ export namespace ObjectOrientedControl
         //: public ButtonTraits<VText, VId, VX, VY, VWidth, VHeight>
         : public ControlTraits<L"Button", Win32::Styles::PushButton | Win32::Styles::Child | Win32::Styles::Visible, VText, VId, VX, VY, VWidth, VHeight>
     {
-        constexpr TestButtonTraits() = default;
-
-        TestButtonTraits(
-            const Win32::DWORD x,
-            const Win32::DWORD y,
-            const Win32::DWORD width,
-            const Win32::DWORD height
-        ) : ControlTraits(x, y, width, height)
-        {}
-
         void HandleKeyDown(Win32::WPARAM key)
         {
             switch (key)
