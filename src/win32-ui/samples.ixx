@@ -960,7 +960,7 @@ export namespace ObjectOrientedControl
     }
 }
 
-export namespace Gradient
+namespace Gradient
 {
     // https://stackoverflow.com/questions/18745447/how-can-i-change-the-background-color-of-a-button-winapi-c
     constexpr auto IDC_EXIT_BUTTON = 101;
@@ -1003,21 +1003,123 @@ export namespace Gradient
         return pattern;
     }
 
+    void CreateButtons(Win32::HWND hwnd)
+    {
+        Win32::HWND Exit_Button = Win32::CreateWindowExW(
+            0,
+            L"BUTTON",
+            L"EXIT",
+            Win32::Styles::Visible | Win32::Styles::Child | Win32::Styles::PushButton,
+            50,
+            50,
+            100,
+            100,
+            hwnd,
+            (Win32::HMENU)IDC_EXIT_BUTTON,
+            nullptr,
+            nullptr
+        );
+        if (Exit_Button == nullptr)
+        {
+            Win32::MessageBoxW(nullptr, L"Button Creation Failed!", L"Error!", Win32::MessageBoxes::IconExclamation);
+            std::terminate();
+        }
+
+        Win32::HWND Pushlike_Button = Win32::CreateWindowExW(
+            0,
+            L"BUTTON",
+            L"PUSH ME!",
+            Win32::Styles::Visible | Win32::Styles::Child | Win32::Styles::AutoCheckBox | Win32::Styles::PushLike,
+            200,
+            50,
+            100,
+            100,
+            hwnd,
+            (Win32::HMENU)IDC_PUSHLIKE_BUTTON,
+            nullptr,
+            nullptr
+        );
+        if (Pushlike_Button == nullptr)
+        {
+            Win32::MessageBoxW(nullptr, L"Button Creation Failed!", L"Error!", Win32::MessageBoxes::IconExclamation);
+            std::terminate();
+        }
+    }
+
     Win32::LRESULT __stdcall MainWindow(Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam)
     {
+        static HBRUSH defaultbrush = nullptr;
+        static HBRUSH hotbrush = nullptr;
+        static HBRUSH selectbrush = nullptr;
+        static HBRUSH push_uncheckedbrush = nullptr;
+        static HBRUSH push_checkedbrush = nullptr;
+        static HBRUSH push_hotbrush1 = nullptr;
+        static HBRUSH push_hotbrush2 = nullptr;
+
         switch (msg)
         {
-            case Win32::Messages::Close:
-                Win32::PostQuitMessage(0);
-                return 0;
+            case Win32::Messages::Create:
+            {
+                CreateButtons(hwnd);
+                break;
+            }
 
+            case Win32::Messages::Command:
+            {
+                switch (Win32::GetLowWord(wParam))
+                {
+                    case IDC_EXIT_BUTTON:
+                    {
+                        Win32::SendMessageW(hwnd, Win32::Messages::Close, 0, 0);
+                    }
+                    break;
+                }
+                break;
+            }
+
+            case Win32::Messages::CtlColorBtn: //In order to make those edges invisble when we use RoundRect(),
+            {                //we make the color of our button's background match window's background
+                return (Win32::LRESULT)Win32::GetSysColorBrush(Win32::ColorWindow + 1);
+            }
+
+            case Win32::Messages::Notify:
+            {
+                return Win32::DoDefault;
+            }
+
+            case Win32::Messages::Destroy:
+            {
+                if (defaultbrush)
+                    DeleteObject(defaultbrush);
+                if (selectbrush)
+                    DeleteObject(selectbrush);
+                if (hotbrush)
+                    DeleteObject(hotbrush);
+                if (push_checkedbrush)
+                    DeleteObject(push_checkedbrush);
+                if (push_hotbrush1)
+                    DeleteObject(push_hotbrush1);
+                if (push_hotbrush2)
+                    DeleteObject(push_hotbrush2);
+                if (push_uncheckedbrush)
+                    DeleteObject(push_uncheckedbrush);
+                PostQuitMessage(0);
+                return 0;
+            }
+
+            case Win32::Messages::Close:
+            {
+                DestroyWindow(hwnd);
+                break;
+            }
+                
             default:
                 return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
         }
         return 0;
     }
 
-    int Run()
+    export int Run()
     {
         const wchar_t ClassName[] = L"Main_Window";
         WNDCLASSEXW wc{
@@ -1047,7 +1149,7 @@ export namespace Gradient
 
         if (!Win32::RegisterClassExW(&wc))
         {
-            Win32::MessageBoxW(nullptr, L"Window Registration Failed!", L"Error", Win32::MessageBoxStuff::IconExclamation | Win32::MessageBoxStuff::OK);
+            Win32::MessageBoxW(nullptr, L"Window Registration Failed!", L"Error", Win32::MessageBoxes::IconExclamation | Win32::MessageBoxes::OK);
             std::terminate();
         }
 
@@ -1068,7 +1170,7 @@ export namespace Gradient
 
         if (hwnd == nullptr)
         {
-            Win32::MessageBoxW(nullptr, L"Window Creation Failed!", L"Error!", Win32::MessageBoxStuff::IconExclamation | Win32::MessageBoxStuff::OK);
+            Win32::MessageBoxW(nullptr, L"Window Creation Failed!", L"Error!", Win32::MessageBoxes::IconExclamation | Win32::MessageBoxes::OK);
             std::terminate();
         }
 

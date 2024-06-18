@@ -10,30 +10,6 @@ export import std;
 
 export namespace Win32
 {
-	namespace ExtendedStyles
-	{
-		constexpr auto ClientEdge = WS_EX_CLIENTEDGE;
-	}
-
-	namespace Styles
-	{
-		constexpr auto Child = WS_CHILD;
-		constexpr auto ClipSiblings = WS_CLIPSIBLINGS;
-		constexpr auto Visible = WS_VISIBLE;
-		constexpr auto OverlappedWindow = WS_OVERLAPPEDWINDOW;
-		constexpr auto HScroll = WS_HSCROLL;
-		constexpr auto VScroll = WS_VSCROLL;
-		constexpr auto PushButton = BS_DEFPUSHBUTTON;
-		constexpr auto VRedraw = CS_VREDRAW;
-		constexpr auto HRedraw = CS_HREDRAW;
-	}
-
-	namespace Controls
-	{
-		constexpr auto TabControl = WC_TABCONTROL;
-		constexpr auto Button = WC_BUTTON;
-	}
-
 	constexpr auto Sw_ShowDefault = SW_SHOWDEFAULT;
 	constexpr auto Icc_Tab_Classes = ICC_TAB_CLASSES;
 	constexpr auto Tcif_Text = TCIF_TEXT;
@@ -44,7 +20,7 @@ export namespace Win32
 	constexpr auto White_Brush = WHITE_BRUSH;
 	constexpr auto Swp_ShowWindow = SWP_SHOWWINDOW;
 	
-	namespace MessageBoxStuff
+	namespace MessageBoxes
 	{
 		constexpr auto IconExclamation = MB_ICONEXCLAMATION;
 		constexpr auto OK = MB_OK;
@@ -178,6 +154,34 @@ export namespace Win32
 		return SendMessageW((hwnd), TCM_INSERTITEM, (WPARAM)(int)(iItem), (LPARAM)(const TC_ITEM*)(&pitem));
 	}
 
+	namespace ExtendedStyles
+	{
+		constexpr auto ClientEdge = WS_EX_CLIENTEDGE;
+	}
+
+	namespace Styles
+	{
+		constexpr auto Child = WS_CHILD;
+		constexpr auto ClipSiblings = WS_CLIPSIBLINGS;
+		constexpr auto Visible = WS_VISIBLE;
+		constexpr auto OverlappedWindow = WS_OVERLAPPEDWINDOW;
+		constexpr auto HScroll = WS_HSCROLL;
+		constexpr auto VScroll = WS_VSCROLL;
+		constexpr auto PushButton = BS_DEFPUSHBUTTON;
+		constexpr auto VRedraw = CS_VREDRAW;
+		constexpr auto HRedraw = CS_HREDRAW;
+		constexpr auto AutoCheckBox = BS_AUTOCHECKBOX;
+		constexpr auto PushLike = BS_PUSHLIKE;
+	}
+
+	constexpr auto DoDefault = CDRF_DODEFAULT;
+
+	namespace Controls
+	{
+		constexpr auto TabControl = WC_TABCONTROL;
+		constexpr auto Button = WC_BUTTON;
+	}
+
 	namespace Messages
 	{
 		constexpr auto Quit = WM_QUIT;
@@ -188,6 +192,10 @@ export namespace Win32
 		constexpr auto NonClientCreate = WM_NCCREATE;
 		constexpr auto Paint = WM_PAINT;
 		constexpr auto KeyUp = WM_KEYUP;
+		constexpr auto Create = WM_CREATE;
+		constexpr auto Command = WM_COMMAND;
+		constexpr auto CtlColorBtn = WM_CTLCOLORBTN;
+		constexpr auto Notify = WM_NOTIFY;
 	}
 
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
