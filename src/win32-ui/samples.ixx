@@ -1007,6 +1007,10 @@ export namespace Gradient
     {
         switch (msg)
         {
+            case Win32::Messages::Close:
+                Win32::PostQuitMessage(0);
+                return 0;
+
             default:
                 return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
         }
@@ -1018,7 +1022,21 @@ export namespace Gradient
         const wchar_t ClassName[] = L"Main_Window";
         WNDCLASSEXW wc{
             .cbSize = sizeof(WNDCLASSEX),
-            .lpfnWndProc = MainWindow,
+            .lpfnWndProc = 
+                MainWindow,
+                /*[](Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> long long 
+                { 
+                    switch (msg)
+                    {
+                        case Win32::Messages::Close:
+                            Win32::PostQuitMessage(0);
+                            return 0;
+
+                        default:
+                            return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+                    }
+                    return 0;
+                },*/
             .hInstance = Win32::GetModuleHandleW(nullptr),
             .hIcon = Win32::LoadIconW(nullptr, Win32::IdiApplication()),
             .hCursor = Win32::LoadCursorW(nullptr, Win32::Cursors::Arrow),

@@ -3,5 +3,6 @@ import samples;
 int main()
 {
     //return BasicWindow::Run();
-    return ObjectOrientedControl::Run();
+    return Gradient::Run();
+    //return ObjectOrientedControl::Run();
 }
