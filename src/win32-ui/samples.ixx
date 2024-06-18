@@ -1090,20 +1090,20 @@ namespace Gradient
             case Win32::Messages::Destroy:
             {
                 if (defaultbrush)
-                    DeleteObject(defaultbrush);
+                    Win32::DeleteObject(defaultbrush);
                 if (selectbrush)
-                    DeleteObject(selectbrush);
+                    Win32::DeleteObject(selectbrush);
                 if (hotbrush)
-                    DeleteObject(hotbrush);
+                    Win32::DeleteObject(hotbrush);
                 if (push_checkedbrush)
-                    DeleteObject(push_checkedbrush);
+                    Win32::DeleteObject(push_checkedbrush);
                 if (push_hotbrush1)
-                    DeleteObject(push_hotbrush1);
+                    Win32::DeleteObject(push_hotbrush1);
                 if (push_hotbrush2)
-                    DeleteObject(push_hotbrush2);
+                    Win32::DeleteObject(push_hotbrush2);
                 if (push_uncheckedbrush)
-                    DeleteObject(push_uncheckedbrush);
-                PostQuitMessage(0);
+                    Win32::DeleteObject(push_uncheckedbrush);
+                Win32::PostQuitMessage(0);
                 return 0;
             }
 
