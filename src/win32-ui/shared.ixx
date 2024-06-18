@@ -2,6 +2,7 @@ module;
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <wingdi.h>
 #include <CommCtrl.h>
 
 export module shared;
@@ -9,6 +10,11 @@ export import std;
 
 export namespace Win32
 {
+	namespace ExtendedStyles
+	{
+		constexpr auto ClientEdge = WS_EX_CLIENTEDGE;
+	}
+
 	namespace Styles
 	{
 		constexpr auto Child = WS_CHILD;
@@ -37,6 +43,12 @@ export namespace Win32
 	constexpr auto Cs_VRedraw = CS_VREDRAW;
 	constexpr auto White_Brush = WHITE_BRUSH;
 	constexpr auto Swp_ShowWindow = SWP_SHOWWINDOW;
+	
+	namespace MessageBoxStuff
+	{
+		constexpr auto IconExclamation = MB_ICONEXCLAMATION;
+		constexpr auto OK = MB_OK;
+	}
 
 	using
 		::HINSTANCE,
@@ -64,6 +76,20 @@ export namespace Win32
 		::PAINTSTRUCT,
 		::HDC,
 		::LPPOINT,
+		::COLORREF,
+		::LPNMCUSTOMDRAW,
+		::HBITMAP,
+		::WNDCLASSEXW,
+		::GetSysColorBrush,
+		::CreateSolidBrush,
+		::LoadCursorW,
+		::FillRect,
+		::CreatePatternBrush,
+		::DeleteObject,
+		::DeleteDC,
+		::CreateCompatibleDC,
+		::CreateCompatibleBitmap,
+		::SelectObject,
 		::CreateWindowExW,
 		::ShowWindow,
 		::UpdateWindow,
@@ -72,6 +98,7 @@ export namespace Win32
 		::GetSystemMetrics,
 		::GetStockObject,
 		::RegisterClassExW,
+		::MessageBoxW,
 		::GetMessageW,
 		::TranslateMessage,
 		::DispatchMessageW,
@@ -98,6 +125,31 @@ export namespace Win32
 		::SetWindowPos,
 		::SetFocus
 		;
+
+	COLORREF GetRGB(DWORD r, DWORD g, DWORD b)
+	{
+		return RGB(r, g, b);
+	}
+
+	BYTE GetRedValue(DWORD rgb)
+	{
+		return GetRValue(rgb);
+	}
+
+	BYTE GetGreenValue(DWORD rgb)
+	{
+		return GetGValue(rgb);
+	}
+
+	BYTE GetBlueValue(DWORD rgb)
+	{
+		return GetBValue(rgb);
+	}
+
+	LPWSTR IdiApplication() noexcept
+	{
+		return IDI_APPLICATION;
+	}
 
 	constexpr auto NoSize = SWP_NOSIZE;
 

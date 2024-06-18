@@ -959,3 +959,111 @@ export namespace ObjectOrientedControl
         return 1;
     }
 }
+
+export namespace Gradient
+{
+    // https://stackoverflow.com/questions/18745447/how-can-i-change-the-background-color-of-a-button-winapi-c
+    constexpr auto IDC_EXIT_BUTTON = 101;
+    constexpr auto IDC_PUSHLIKE_BUTTON = 102;
+
+    Win32::HBRUSH CreateGradientBrush(Win32::COLORREF top, Win32::COLORREF bottom, Win32::LPNMCUSTOMDRAW item)
+    {
+        Win32::HBRUSH Brush = nullptr;
+        Win32::HDC hdcmem = Win32::CreateCompatibleDC(item->hdc);
+        Win32::HBITMAP hbitmap = Win32::CreateCompatibleBitmap(item->hdc, item->rc.right - item->rc.left, item->rc.bottom - item->rc.top);
+        Win32::SelectObject(hdcmem, hbitmap);
+
+        int r1 = Win32::GetRedValue(top), 
+            r2 = Win32::GetRedValue(bottom), 
+            g1 = Win32::GetGreenValue(top), 
+            g2 = Win32::GetGreenValue(bottom), 
+            b1 = Win32::GetBlueValue(top), 
+            b2 = Win32::GetBlueValue(bottom);
+        for (int i = 0; i < item->rc.bottom - item->rc.top; i++)
+        {
+            Win32::RECT temp;
+            int r, g, b;
+            r = int(r1 + double(i * (r2 - r1) / item->rc.bottom - item->rc.top));
+            g = int(g1 + double(i * (g2 - g1) / item->rc.bottom - item->rc.top));
+            b = int(b1 + double(i * (b2 - b1) / item->rc.bottom - item->rc.top));
+            Brush = Win32::CreateSolidBrush(Win32::GetRGB(r, g, b));
+            temp.left = 0;
+            temp.top = i;
+            temp.right = item->rc.right - item->rc.left;
+            temp.bottom = i + 1;
+            Win32::FillRect(hdcmem, &temp, Brush);
+            Win32::DeleteObject(Brush);
+        }
+        Win32::HBRUSH pattern = Win32::CreatePatternBrush(hbitmap);
+
+        Win32::DeleteDC(hdcmem);
+        Win32::DeleteObject(Brush);
+        Win32::DeleteObject(hbitmap);
+
+        return pattern;
+    }
+
+    Win32::LRESULT __stdcall MainWindow(Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam)
+    {
+        switch (msg)
+        {
+            default:
+                return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+        }
+        return 0;
+    }
+
+    int Run()
+    {
+        const wchar_t ClassName[] = L"Main_Window";
+        WNDCLASSEXW wc{
+            .cbSize = sizeof(WNDCLASSEX),
+            .lpfnWndProc = MainWindow,
+            .hInstance = Win32::GetModuleHandleW(nullptr),
+            .hIcon = Win32::LoadIconW(nullptr, Win32::IdiApplication()),
+            .hCursor = Win32::LoadCursorW(nullptr, Win32::Cursors::Arrow),
+            .hbrBackground = Win32::GetSysColorBrush(Win32::ColorWindow + 1),
+            .lpszClassName = ClassName,
+            .hIconSm = Win32::LoadIconW(nullptr, Win32::IdiApplication())
+        };
+
+        if (!Win32::RegisterClassExW(&wc))
+        {
+            Win32::MessageBoxW(nullptr, L"Window Registration Failed!", L"Error", Win32::MessageBoxStuff::IconExclamation | Win32::MessageBoxStuff::OK);
+            std::terminate();
+        }
+
+        Win32::HWND hwnd = Win32::CreateWindowExW(
+            Win32::ExtendedStyles::ClientEdge,
+            ClassName, 
+            L"Window", 
+            Win32::Styles::OverlappedWindow,
+            Win32::Cw_UseDefault,
+            Win32::Cw_UseDefault,
+            368, 
+            248, 
+            nullptr, 
+            nullptr, 
+            Win32::GetModuleHandleW(nullptr),
+            nullptr
+        );
+
+        if (hwnd == nullptr)
+        {
+            Win32::MessageBoxW(nullptr, L"Window Creation Failed!", L"Error!", Win32::MessageBoxStuff::IconExclamation | Win32::MessageBoxStuff::OK);
+            std::terminate();
+        }
+
+        Win32::ShowWindow(hwnd, Win32::Sw_ShowDefault);
+        Win32::UpdateWindow(hwnd);
+
+        MSG msg;
+        while (Win32::GetMessageW(&msg, nullptr, 0, 0) > 0)
+        {
+            Win32::TranslateMessage(&msg);
+            Win32::DispatchMessageW(&msg);
+        }
+
+        return msg.message;
+    }
+}
