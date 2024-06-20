@@ -313,21 +313,22 @@ export namespace Error
 		return msg;
 	}
 
+	template<typename...TArgs>
 	struct Win32Error final : public std::runtime_error
 	{
-		Win32Error(const DWORD errorCode, const std::source_location loc = std::source_location::current()) 
-			: m_code(errorCode),
+		Win32Error(std::format_string<TArgs...> fmt, TArgs&&...args, const std::source_location loc = std::source_location::current())
+			: m_code(0),
 			std::runtime_error(
 				std::format(
-					"{}\n\tfunction: {}\n\tfile: {}:{}",
-					TranslateErrorCode(errorCode),
+					"{} -> {}\n\tfunction: {}\n\tfile: {}:{}",
+					std::format(fmt, std::forward<TArgs>(args)...),
+					TranslateErrorCode(0),
 					loc.function_name(),
 					loc.file_name(),
-					loc.line())) 
+					loc.line()))
 		{}
 
-		template<typename...TArgs>
-		Win32Error(std::format_string<TArgs...> fmt, const DWORD errorCode, TArgs&&...args, const std::source_location loc = std::source_location::current()) 
+		Win32Error(const DWORD errorCode, std::format_string<TArgs...> fmt, TArgs&&...args, const std::source_location loc = std::source_location::current())
 			: m_code(errorCode), 
 			std::runtime_error(
 				std::format(
@@ -352,6 +353,14 @@ export namespace Error
 		private:
 		Win32::DWORD m_code = 0;
 	};
+	template<typename...Ts>
+	Win32Error(Win32::DWORD, const char*, Ts&&...) -> Win32Error<Ts...>;
+	template<typename...Ts>
+	Win32Error(Win32::DWORD, std::string, Ts&&...) -> Win32Error<Ts...>;
+	template<typename...Ts>
+	Win32Error(const char*, Ts&&...) -> Win32Error<Ts...>;
+	template<typename...Ts>
+	Win32Error(std::string, Ts&&...) -> Win32Error<Ts...>;
 
 	struct TestTranslator
 	{
