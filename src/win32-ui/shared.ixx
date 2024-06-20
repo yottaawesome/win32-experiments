@@ -315,23 +315,42 @@ export namespace Error
 
 	struct Win32Error final : public std::runtime_error
 	{
+		Win32Error(const DWORD errorCode, const std::source_location loc = std::source_location::current()) 
+			: m_code(errorCode),
+			std::runtime_error(
+				std::format(
+					"{}\n\tfunction: {}\n\tfile: {}:{}",
+					TranslateErrorCode(errorCode),
+					loc.function_name(),
+					loc.file_name(),
+					loc.line())) 
+		{}
+
 		template<typename...TArgs>
-		Win32Error(
-			const DWORD errorCode, 
-			std::format_string<TArgs...> fmt, 
-			TArgs&&...args, 
-			const std::source_location loc = std::source_location::current()
-		) : std::runtime_error(
+		Win32Error(std::format_string<TArgs...> fmt, const DWORD errorCode, TArgs&&...args, const std::source_location loc = std::source_location::current()) 
+			: m_code(errorCode), 
+			std::runtime_error(
 				std::format(
 					"{} -> {}\n\tfunction: {}\n\tfile: {}:{}", 
 					std::format(fmt, std::forward<TArgs>(args)...), 
 					TranslateErrorCode(errorCode), 
 					loc.function_name(),
 					loc.file_name(),
-					loc.line()
-				)
-			)
+					loc.line())) 
 		{}
+
+		bool operator==(const Win32::DWORD code) const noexcept
+		{
+			return m_code == code;
+		}
+
+		Win32::DWORD Code() const noexcept
+		{
+			return m_code;
+		}
+
+		private:
+		Win32::DWORD m_code = 0;
 	};
 
 	struct TestTranslator
