@@ -59,6 +59,11 @@ export namespace Win32
 		::LPNMHDR,
 		::HPEN,
 		::HGDIOBJ,
+		::HMODULE,
+		::__fastfail,
+		::FormatMessageA,
+		::FormatMessageW,
+		::LocalFree,
 		::IsDlgButtonChecked,
 		::RoundRect,
 		::CreatePen,
@@ -111,6 +116,19 @@ export namespace Win32
 	constexpr auto CdisSelected = CDIS_SELECTED;
 	constexpr auto CdisHot = CDIS_HOT;
 	constexpr auto PsInsideFrame = PS_INSIDEFRAME;
+
+	constexpr auto FormatMessageAllocateBuffer = FORMAT_MESSAGE_ALLOCATE_BUFFER;
+	constexpr auto FormatMessageFromSystem = FORMAT_MESSAGE_FROM_SYSTEM;
+	constexpr auto FormatMessageIgnoreInserts = FORMAT_MESSAGE_IGNORE_INSERTS;
+	constexpr auto FormatMessageFromHModule = FORMAT_MESSAGE_FROM_HMODULE;
+
+	namespace FailFast
+	{
+		enum
+		{
+			FatalExit = FAST_FAIL_FATAL_APP_EXIT // FatalAppExit is deffed to something else
+		};
+	}
 
 	COLORREF GetRGB(DWORD r, DWORD g, DWORD b)
 	{
@@ -252,12 +270,67 @@ export namespace Win32
 
 export namespace Error
 {
-	struct Win32Error final : public std::system_error
+	std::string TranslateErrorCode(Win32::DWORD errorCode, std::wstring_view moduleName = L"")
 	{
+		Win32::HMODULE moduleToSearch =
+			moduleName.empty()
+			? nullptr
+			: Win32::GetModuleHandleW(moduleName.data());
+
+		const Win32::DWORD flags =
+			Win32::FormatMessageAllocateBuffer
+			| Win32::FormatMessageFromSystem
+			| Win32::FormatMessageIgnoreInserts
+			| (moduleToSearch ? Win32::FormatMessageFromHModule : 0);
+
+		void* messageBuffer = nullptr;
+		Win32::FormatMessageA(
+			flags,
+			moduleToSearch,
+			errorCode,
+			0,
+			reinterpret_cast<char*>(&messageBuffer),
+			0,
+			nullptr
+		);
+		if (not messageBuffer)
+		{
+			const auto lastError = Win32::GetLastError();
+			return std::format(
+				"FormatMessageA() failed on code {} with error {}",
+				errorCode,
+				lastError
+			);
+		}
+
+		std::string msg(static_cast<char*>(messageBuffer));
+		// This should never happen
+		// See also https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-raisefailfastexception
+		if (Win32::LocalFree(messageBuffer))
+			Win32::__fastfail(Win32::FailFast::FatalExit);
+
+		std::erase_if(msg, [](const char x) { return x == '\n' || x == '\r'; });
+		return msg;
+	}
+
+	struct Win32Error final : public std::runtime_error
+	{
+		template<typename...TArgs>
 		Win32Error(
-			std::string_view msg,
-			const DWORD errorCode = GetLastError()
-		) : system_error(std::error_code{ static_cast<int>(errorCode), std::system_category() }, std::string{ msg })
+			const DWORD errorCode, 
+			std::format_string<TArgs...> fmt, 
+			TArgs&&...args, 
+			const std::source_location loc = std::source_location::current()
+		) : std::runtime_error(
+				std::format(
+					"{} -> {}\n\tfunction: {}\n\tfile: {}:{}", 
+					std::format(fmt, std::forward<TArgs>(args)...), 
+					TranslateErrorCode(errorCode), 
+					loc.function_name(),
+					loc.file_name(),
+					loc.line()
+				)
+			)
 		{}
 	};
 

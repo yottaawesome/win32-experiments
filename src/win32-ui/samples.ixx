@@ -689,7 +689,7 @@ export namespace ObjectOrientedControl
                 nullptr
             );
             if (not m_control.Handle)
-                throw Error::Win32Error("Failed creating button.");
+                throw Error::Win32Error(Win32::GetLastError(), "Failed creating button.");
             if (not Win32::SetWindowSubclass(m_control.Handle, SubclassProc, 5, reinterpret_cast<Win32::DWORD_PTR>(this)))
             {
                 std::println("Failed subclassing button.");
@@ -855,7 +855,7 @@ export namespace ObjectOrientedControl
                 .lpszClassName = TType::ClassName.data()
             };
             if (not Win32::RegisterClassExW(&wc))
-                throw Error::Win32Error("Failed registering class");
+                throw Error::Win32Error(Win32::GetLastError(), "Failed registering class");
 
             Win32::HWND hwnd = Win32::CreateWindowExW(
                 0,
@@ -872,7 +872,7 @@ export namespace ObjectOrientedControl
                 this
             );
             if (not hwnd)
-                throw Error::Win32Error("Failed creating window");
+                throw Error::Win32Error(Win32::GetLastError(), "Failed creating window");
 
             Win32::ShowWindow(hwnd, Win32::Sw_ShowDefault);
             Win32::UpdateWindow(hwnd);
