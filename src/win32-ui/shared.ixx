@@ -56,6 +56,12 @@ export namespace Win32
 		::LPNMCUSTOMDRAW,
 		::HBITMAP,
 		::WNDCLASSEXW,
+		::LPNMHDR,
+		::HPEN,
+		::HGDIOBJ,
+		::IsDlgButtonChecked,
+		::RoundRect,
+		::CreatePen,
 		::GetSysColorBrush,
 		::CreateSolidBrush,
 		::LoadCursorW,
@@ -101,6 +107,10 @@ export namespace Win32
 		::SetWindowPos,
 		::SetFocus
 		;
+
+	constexpr auto CdisSelected = CDIS_SELECTED;
+	constexpr auto CdisHot = CDIS_HOT;
+	constexpr auto PsInsideFrame = PS_INSIDEFRAME;
 
 	COLORREF GetRGB(DWORD r, DWORD g, DWORD b)
 	{
@@ -196,6 +206,7 @@ export namespace Win32
 		constexpr auto Command = WM_COMMAND;
 		constexpr auto CtlColorBtn = WM_CTLCOLORBTN;
 		constexpr auto Notify = WM_NOTIFY;
+		constexpr auto CustomDraw = NM_CUSTOMDRAW;
 	}
 
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes

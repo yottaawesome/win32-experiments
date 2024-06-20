@@ -1084,6 +1084,158 @@ namespace Gradient
 
             case Win32::Messages::Notify:
             {
+                Win32::LPNMHDR some_item = (Win32::LPNMHDR)lParam;
+
+                if (some_item->idFrom == IDC_EXIT_BUTTON && some_item->code == Win32::Messages::CustomDraw)
+                {
+                    Win32::LPNMCUSTOMDRAW item = (Win32::LPNMCUSTOMDRAW)some_item;
+
+                    if (item->uItemState & Win32::CdisSelected)
+                    {
+                        //Select our color when the button is selected
+                        if (selectbrush == nullptr)
+                            selectbrush = CreateGradientBrush(Win32::GetRGB(180, 0, 0), Win32::GetRGB(255, 180, 0), item);
+
+                        //Create pen for button border
+                        Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+
+                        //Select our brush into hDC
+                        Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
+                        Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, selectbrush);
+
+                        //If you want rounded button, then use this, otherwise use FillRect().
+                        Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 5, 5);
+
+                        //Clean up
+                        Win32::SelectObject(item->hdc, old_pen);
+                        Win32::SelectObject(item->hdc, old_brush);
+                        Win32::DeleteObject(pen);
+
+                        //Now, I don't want to do anything else myself (draw text) so I use this value for return:
+                        return Win32::DoDefault;
+                        //Let's say I wanted to draw text and stuff, then I would have to do it before return with
+                        //DrawText() or other function and return CDRF_SKIPDEFAULT
+                    }
+                    else
+                    {
+                        if (item->uItemState & Win32::CdisHot) //Our mouse is over the button
+                        {
+                            //Select our color when the mouse hovers our button
+                            if (hotbrush == nullptr)
+                                hotbrush = CreateGradientBrush(Win32::GetRGB(255, 230, 0), Win32::GetRGB(245, 0, 0), item);
+
+                            Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+
+                            Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
+                            Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, hotbrush);
+
+                            Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 5, 5);
+
+                            Win32::SelectObject(item->hdc, old_pen);
+                            Win32::SelectObject(item->hdc, old_brush);
+                            Win32::DeleteObject(pen);
+
+                            return Win32::DoDefault;
+                        }
+
+                        //Select our color when our button is doing nothing
+                        if (defaultbrush == nullptr)
+                            defaultbrush = CreateGradientBrush(Win32::GetRGB(255, 180, 0), Win32::GetRGB(180, 0, 0), item);
+
+                        Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+
+                        Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
+                        Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, defaultbrush);
+
+                        Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 5, 5);
+
+                        Win32::SelectObject(item->hdc, old_pen);
+                        Win32::SelectObject(item->hdc, old_brush);
+                        Win32::DeleteObject(pen);
+
+                        return Win32::DoDefault;
+                    }
+                }
+                else if (some_item->idFrom == IDC_PUSHLIKE_BUTTON && some_item->code == Win32::Messages::CustomDraw)
+                {
+                    Win32::LPNMCUSTOMDRAW item = (Win32::LPNMCUSTOMDRAW)some_item;
+
+                    if (Win32::IsDlgButtonChecked(hwnd, some_item->idFrom))
+                    {
+                        if (item->uItemState & Win32::CdisHot)
+                        {
+
+                            if (push_hotbrush1 == nullptr)
+                                push_hotbrush1 = CreateGradientBrush(Win32::GetRGB(0, 0, 245), Win32::GetRGB(0, 230, 255), item);
+
+                            Win32::HPEN pen = CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+
+                            Win32::HGDIOBJ old_pen = SelectObject(item->hdc, pen);
+                            Win32::HGDIOBJ old_brush = SelectObject(item->hdc, push_hotbrush1);
+
+                            Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 10, 10);
+
+                            Win32::SelectObject(item->hdc, old_pen);
+                            Win32::SelectObject(item->hdc, old_brush);
+                            Win32::DeleteObject(pen);
+
+                            return Win32::DoDefault;
+                        }
+
+                        if (push_checkedbrush == nullptr)
+                            push_checkedbrush = CreateGradientBrush(Win32::GetRGB(0, 0, 180), Win32::GetRGB(0, 222, 200), item);
+
+                        Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+                        Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
+                        Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, push_checkedbrush);
+
+                        Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 10, 10);
+
+                        Win32::SelectObject(item->hdc, old_pen);
+                        Win32::SelectObject(item->hdc, old_brush);
+                        Win32::DeleteObject(pen);
+
+                        return Win32::DoDefault;
+                    }
+                    else
+                    {
+                        if (item->uItemState & Win32::CdisHot)
+                        {
+                            if (push_hotbrush2 == nullptr)
+                                push_hotbrush2 = CreateGradientBrush(Win32::GetRGB(255, 230, 0), Win32::GetRGB(245, 0, 0), item);
+
+                            Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+
+                            Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
+                            Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, push_hotbrush2);
+
+                            Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 10, 10);
+
+                            Win32::SelectObject(item->hdc, old_pen);
+                            Win32::SelectObject(item->hdc, old_brush);
+                            Win32::DeleteObject(pen);
+
+                            return Win32::DoDefault;
+                        }
+
+                        if (push_uncheckedbrush == nullptr)
+                            push_uncheckedbrush = CreateGradientBrush(Win32::GetRGB(255, 180, 0), Win32::GetRGB(180, 0, 0), item);
+
+                        Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+
+                        Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
+                        Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, defaultbrush);
+
+                        Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 10, 10);
+
+                        Win32::SelectObject(item->hdc, old_pen);
+                        Win32::SelectObject(item->hdc, old_brush);
+                        Win32::DeleteObject(pen);
+
+                        return Win32::DoDefault;
+                    }
+                }
+
                 return Win32::DoDefault;
             }
 
@@ -1109,7 +1261,7 @@ namespace Gradient
 
             case Win32::Messages::Close:
             {
-                DestroyWindow(hwnd);
+                Win32::DestroyWindow(hwnd);
                 break;
             }
                 
