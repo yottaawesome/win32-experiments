@@ -296,11 +296,7 @@ export namespace Error
 		if (not messageBuffer)
 		{
 			const auto lastError = Win32::GetLastError();
-			return std::format(
-				"FormatMessageA() failed on code {} with error {}",
-				errorCode,
-				lastError
-			);
+			return std::format("FormatMessageA() failed on code {} with error {}", errorCode, lastError);
 		}
 
 		std::string msg(static_cast<char*>(messageBuffer));
@@ -317,12 +313,10 @@ export namespace Error
 	struct Win32Error final : public std::runtime_error
 	{
 		Win32Error(std::format_string<TArgs...> fmt, TArgs&&...args, const std::source_location loc = std::source_location::current())
-			: m_code(0),
-			std::runtime_error(
+			: std::runtime_error(
 				std::format(
-					"{} -> {}\n\tfunction: {}\n\tfile: {}:{}",
+					"{}\n\tfunction: {}\n\tfile: {}:{}",
 					std::format(fmt, std::forward<TArgs>(args)...),
-					TranslateErrorCode(0),
 					loc.function_name(),
 					loc.file_name(),
 					loc.line()))
@@ -370,22 +364,45 @@ export namespace Error
 		}
 	};
 
-	template<typename TException, typename TDummyUnique, typename TTranslator = void>
-	struct Error final : public TException
+	struct Win32Translator
 	{
-		template<typename...TArgs>
-		requires std::same_as<void, TTranslator>
-		Error(std::format_string<TArgs...> str, TArgs&&...args) 
-			: TException(std::format(str, std::forward<TArgs>(args)...)) 
-		{}
-
-		template<typename...TArgs>
-		requires (not std::same_as<void, TTranslator>)
-		Error(auto&& value, std::format_string<TArgs...> str, TArgs&&...args)
-			: TException(std::format("{} -> {}", TTranslator::Translate(value), std::format(str, std::forward<TArgs>(args)...)))
-		{ }
+		static std::string Translate(DWORD x)
+		{
+			return TranslateErrorCode(x);
+		}
 	};
 
-	using RuntimeError = Error<std::runtime_error, struct BasicRuntimeError>;
-	using RuntimeError2 = Error<std::runtime_error, struct BasicRuntimeErrorTest, TestTranslator>;
+	template<typename TException, typename TDummyUnique, typename TTranslator = void, typename...TArgs>
+	struct Error : public TException
+	{
+		virtual ~Error() = default;
+		Error(
+			std::format_string<TArgs...> str, 
+			TArgs&&...args, 
+			const std::source_location loc = std::source_location::current()
+		) : TException(std::format(str, std::forward<TArgs>(args)...))
+		{}
+
+		Error(
+			unsigned long value, 
+			std::format_string<TArgs...> str, 
+			TArgs&&...args, 
+			const std::source_location loc = std::source_location::current()
+		) requires (not std::same_as<void, TTranslator>)
+		: TException(std::format("{} -> {}", TTranslator::Translate(value), std::format(str, std::forward<TArgs>(args)...)))
+		{}
+	};
+	template<typename TException, typename TDummyUnique, typename TTranslator, typename...Ts>
+	Error(const char*, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
+	template<typename TException, typename TDummyUnique, typename TTranslator, typename...Ts>
+	Error(std::string, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
+	template<typename TException, typename TDummyUnique, typename TTranslator, typename...Ts>
+	Error(unsigned long, const char*, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
+	template<typename TException, typename TDummyUnique, typename TTranslator, typename...Ts>
+	Error(unsigned long, std::string, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
+
+	template<typename...T>
+	using RuntimeError = Error<std::runtime_error, struct BasicRuntimeError, void, T...>;
+	template<typename...T>
+	using Win32Error2 = Error<std::runtime_error, struct BasicRuntimeErrorTest, Win32Translator, T...>;
 }
