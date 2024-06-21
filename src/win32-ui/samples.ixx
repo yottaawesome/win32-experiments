@@ -1329,6 +1329,7 @@ namespace Gradient
         Win32::ShowWindow(hwnd, Win32::Sw_ShowDefault);
         Win32::UpdateWindow(hwnd);
 
+       
         MSG msg;
         while (Win32::GetMessageW(&msg, nullptr, 0, 0) > 0)
         {

@@ -348,13 +348,13 @@ export namespace Error
 		Win32::DWORD m_code = 0;
 	};
 	template<typename...Ts>
-	Win32Error(Win32::DWORD, const char*, Ts&&...) -> Win32Error<Ts...>;
+	Win32Error(Win32::DWORD, std::format_string<Ts...>, Ts&&...) -> Win32Error<Ts...>;
+	/*template<typename...Ts>
+	Win32Error(Win32::DWORD, std::string, Ts&&...) -> Win32Error<Ts...>;*/
+	/*template<typename...Ts>
+	Win32Error(const char*, Ts&&...) -> Win32Error<Ts...>;*/
 	template<typename...Ts>
-	Win32Error(Win32::DWORD, std::string, Ts&&...) -> Win32Error<Ts...>;
-	template<typename...Ts>
-	Win32Error(const char*, Ts&&...) -> Win32Error<Ts...>;
-	template<typename...Ts>
-	Win32Error(std::string, Ts&&...) -> Win32Error<Ts...>;
+	Win32Error(std::format_string<Ts...>, Ts&&...) -> Win32Error<Ts...>;
 
 	struct TestTranslator
 	{
@@ -372,15 +372,37 @@ export namespace Error
 		}
 	};
 
+	struct ExactMessage 
+	{ 
+		explicit ExactMessage(std::string msg) 
+			: Message(std::move(msg)) {} 
+		std::string Message; 
+	};
+
 	template<typename TException, typename TDummyUnique, typename TTranslator = void, typename...TArgs>
 	struct Error : public TException
 	{
 		virtual ~Error() = default;
+
+		//// Required for cases where we inherit from Error.
+		Error(ExactMessage e)
+			: TException(std::move(e.Message)) 
+		{}
+
 		Error(
 			std::format_string<TArgs...> str, 
 			TArgs&&...args, 
 			const std::source_location loc = std::source_location::current()
-		) : TException(std::format(str, std::forward<TArgs>(args)...))
+		) requires std::same_as<TException, std::runtime_error>
+			: TException(std::format(str, std::forward<TArgs>(args)...))
+		{}
+
+		Error(
+			std::format_string<TArgs...> str,
+			TArgs&&...args,
+			const std::source_location loc = std::source_location::current()
+		) requires (not std::same_as<TException, std::runtime_error>)
+			: TException(ExactMessage(std::format(str, std::forward<TArgs>(args)...)))
 		{}
 
 		Error(
@@ -388,21 +410,53 @@ export namespace Error
 			std::format_string<TArgs...> str, 
 			TArgs&&...args, 
 			const std::source_location loc = std::source_location::current()
-		) requires (not std::same_as<void, TTranslator>)
-		: TException(std::format("{} -> {}", TTranslator::Translate(value), std::format(str, std::forward<TArgs>(args)...)))
+		) requires (std::same_as<TException, std::runtime_error> and not std::same_as<void, TTranslator>)
+			: TException(std::format("{} -> {}", TTranslator::Translate(value), std::format(str, std::forward<TArgs>(args)...)))
+		{}
+
+		Error(
+			unsigned long value,
+			std::format_string<TArgs...> str,
+			TArgs&&...args,
+			const std::source_location loc = std::source_location::current()
+		) requires (not std::same_as<TException, std::runtime_error> and not std::same_as<void, TTranslator>)
+			: TException(ExactMessage(std::format("{} -> {}", TTranslator::Translate(value), std::format(str, std::forward<TArgs>(args)...))))
 		{}
 	};
 	template<typename TException, typename TDummyUnique, typename TTranslator, typename...Ts>
-	Error(const char*, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
+	Error(std::format_string<Ts...>, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
 	template<typename TException, typename TDummyUnique, typename TTranslator, typename...Ts>
-	Error(std::string, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
-	template<typename TException, typename TDummyUnique, typename TTranslator, typename...Ts>
-	Error(unsigned long, const char*, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
-	template<typename TException, typename TDummyUnique, typename TTranslator, typename...Ts>
-	Error(unsigned long, std::string, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
+	Error(unsigned long, std::format_string<Ts...>, Ts&&...) -> Error<TException, TDummyUnique, TTranslator, Ts...>;
 
 	template<typename...T>
-	using RuntimeError = Error<std::runtime_error, struct BasicRuntimeError, void, T...>;
+	using RuntimeError = Error<std::runtime_error, struct BasicRuntimeError1, void, T...>;
 	template<typename...T>
-	using Win32Error2 = Error<std::runtime_error, struct BasicRuntimeErrorTest, Win32Translator, T...>;
+	using Win32Error2 = Error<std::runtime_error, struct BasicRuntimeError2, Win32Translator, T...>;
+
+	//// Inherits from WinSockError
+	template<typename...T>
+	using WinSockError = Error<Win32Error2<T...>, struct BasicRuntimeError3, Win32Translator, T...>;
+	template<typename...T>
+	using WinSockError2 = Error<std::runtime_error, struct BasicRuntimeError4, Win32Translator, T...>;
+
+	void Blah()
+	{
+		try
+		{
+			Win32Error b(0, "a {}", 1);
+			Win32Error a(0, "a");
+			WinSockError c(0, "a {}", 1);
+			WinSockError d(0, "a");
+			WinSockError e("a");
+			WinSockError f("a {}", 1);
+			WinSockError2 g(0, "a {}", 1);
+			WinSockError2 h(0, "a");
+			WinSockError2 i("a");
+			WinSockError2 j("a {}", 1);
+		}
+		catch (...)
+		{
+
+		}
+	}
 }
