@@ -1,3 +1,4 @@
+import std;
 import samples;
 
 int main()
