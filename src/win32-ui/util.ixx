@@ -249,7 +249,6 @@ export namespace Error
 		}
 		catch (...)
 		{
-
 		}
 	}
 }
