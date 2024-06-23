@@ -66,15 +66,14 @@ export namespace Util
             0,
             nullptr
         );
-        LocalAllocUniquePtr ptr(msgBuffer);
         if (not msgBuffer) return std::format(
             "Failed formatting message: {} -- {}", 
             errorCode, 
             Win32::GetLastError()
         );
 
-        std::string returnValue(reinterpret_cast<char*>(msgBuffer));
-        return returnValue;
+        LocalAllocUniquePtr ptr(msgBuffer);
+        return { reinterpret_cast<char*>(msgBuffer) };
     }
 
     struct HResult
