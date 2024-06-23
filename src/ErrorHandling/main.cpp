@@ -51,18 +51,21 @@ long __stdcall Handler(Win32::_EXCEPTION_POINTERS* info)
 	Win32::K32GetModuleFileNameExA(Win32::GetCurrentProcess(), hm, modulePath.data(), static_cast<Win32::DWORD>(modulePath.size()));
 	modulePath = modulePath.c_str();
 
-    std::println(
+	constexpr std::string_view fmt =
 R"(hello from the exception handler!
 	msg: {}
 	code: {:#x}
 	address: {:#x}
 	module: {}
-)", 
+)";
+    std::println(
+		fmt, 
 		TranslateErrorCode(info->ExceptionRecord->ExceptionCode, L"ntdll.dll"),
 		info->ExceptionRecord->ExceptionCode,
 		reinterpret_cast<unsigned long long>(info->ExceptionRecord->ExceptionAddress),
 		modulePath
 	);
+
     return Win32::Continue;
 }
 
