@@ -58,7 +58,7 @@ export namespace Util
 
         void* msgBuffer = nullptr;
         Win32::FormatMessageA(
-            flags | (moduleName.empty() ? 0 : Win32::FormatMessageFlags::FromHModule),
+            flags | (moduleToSearch ? Win32::FormatMessageFlags::FromHModule : 0),
             moduleToSearch.get(),
             errorCode,
             Win32::UserDefault,
