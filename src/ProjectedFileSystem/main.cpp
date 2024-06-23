@@ -2,31 +2,13 @@
 // https://scorpiosoftware.net/2024/02/20/projected-file-system/
 
 import std;
-import win32;
+import common.win32;
+import common.util;
 
 bool operator==(const Win32::GUID g1, const Win32::GUID g2)
 {
     return Win32::IsEqualGUID(g1, g2);
 }
-
-struct HResult
-{
-    HResult(Win32::HRESULT hr)
-        : m_hr(hr)
-    { }
-
-    Win32::HRESULT m_hr;
-
-    operator bool() const noexcept
-    {
-        return Win32::HrSucceeded(m_hr);
-    }
-
-    operator Win32::HRESULT() const noexcept
-    {
-        return m_hr;
-    }
-};
 
 std::wstring m_RootDir = L"";
 Win32::PRJ_NAMESPACE_VIRTUALIZATION_CONTEXT m_VirtContext;
@@ -88,7 +70,7 @@ void Init(Win32::PCWSTR root)
         }
     }
 
-    HResult hr = Win32::PrjMarkDirectoryAsPlaceholder(
+    Util::HResult hr = Win32::PrjMarkDirectoryAsPlaceholder(
         root, 
         nullptr, 
         nullptr, 

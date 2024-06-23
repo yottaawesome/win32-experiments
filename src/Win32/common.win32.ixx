@@ -6,7 +6,7 @@ module;
 #include <projectedfslib.h>
 #include <guiddef.h>
 
-export module win32;
+export module common.win32;
 
 export namespace Win32
 {
@@ -17,7 +17,16 @@ export namespace Win32
 		::DWORD,
 		::HANDLE,
 		::PRJ_CALLBACKS,
+		::LPSTR,
 		::PRJ_NAMESPACE_VIRTUALIZATION_CONTEXT,
+		::HMODULE,
+		::BOOL,
+		::HLOCAL,
+		::LoadLibraryA,
+		::LoadLibraryW,
+		::FreeLibrary,
+		::LocalFree,
+		::FormatMessageA,
 		::GetLastError,
 		::CreateFileW,
 		::ReadFile,
@@ -31,6 +40,7 @@ export namespace Win32
 		::PrjStartVirtualizing
 		;
 
+	constexpr auto UserDefault = LANG_USER_DEFAULT;
 	constexpr auto GenericRead = GENERIC_READ;
 	constexpr auto ShareRead = FILE_SHARE_READ;
 	constexpr auto OpenExisting = OPEN_EXISTING;
@@ -38,6 +48,14 @@ export namespace Win32
 	constexpr auto CreateNew = CREATE_NEW;
 	constexpr auto FileAttributeHidden = FILE_ATTRIBUTE_HIDDEN;
 
+	namespace FormatMessageFlags
+	{
+		constexpr auto AllocateBuffer = FORMAT_MESSAGE_ALLOCATE_BUFFER;
+		constexpr auto FromSystem = FORMAT_MESSAGE_FROM_SYSTEM;
+		constexpr auto IgnoreInserts = FORMAT_MESSAGE_IGNORE_INSERTS;
+		constexpr auto FromHModule = FORMAT_MESSAGE_FROM_HMODULE;
+	}
+	
 	constexpr ::HRESULT OK = S_OK;
 
 	constexpr GUID NullGuid = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
