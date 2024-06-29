@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="projectedfilesystem.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Win32\Win32.vcxproj">

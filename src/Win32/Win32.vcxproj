@@ -144,6 +144,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="common.ixx" />
     <ClCompile Include="common.util.ixx" />
     <ClCompile Include="common.win32.ixx" />
   </ItemGroup>
