@@ -94,4 +94,46 @@ export namespace Util
             return m_hr;
         }
     };
+
+    template<auto VDeleter>
+    struct GenericDeleter
+    {
+        void operator()(auto&& object)
+        {
+            VDeleter(object);
+        }
+    };
+    using HandleDeleter = std::unique_ptr<std::remove_pointer_t<Win32::HANDLE>, GenericDeleter<Win32::CloseHandle>>;
+
+    template<typename...TArgs>
+    struct Error : public std::runtime_error
+    {
+        public:
+        Error(std::format_string<TArgs...> fmt, TArgs&&...args, std::source_location loc = std::source_location::current())
+            : std::runtime_error(
+                std::format("{} in {}", 
+                    std::format(fmt, std::forward<TArgs>(args)...),
+                    loc.function_name()
+                )
+            )
+        { }
+    };
+    template<typename...TArgs>
+    Error(std::format_string<TArgs...>, TArgs&&...) -> Error<TArgs...>;
+
+    struct GloballyUniqueID
+    {
+        constexpr GloballyUniqueID(Win32::GUID guid) : m_guid(guid) {}
+
+        GloballyUniqueID()
+        {
+            Win32::HRESULT result = Win32::CoCreateGuid(&m_guid);
+            if (Win32::HrFailed(result))
+                throw Error("CoCreateGuid() failed", result);
+        }
+
+        Win32::GUID m_guid{ 0 };
+
+        static constexpr Win32::GUID Null = Win32::NullGuid;
+    };
 }

@@ -2,8 +2,7 @@
 // https://scorpiosoftware.net/2024/02/20/projected-file-system/
 
 import std;
-import common.win32;
-import common.util;
+import common;
 
 bool operator==(const Win32::GUID g1, const Win32::GUID g2)
 {

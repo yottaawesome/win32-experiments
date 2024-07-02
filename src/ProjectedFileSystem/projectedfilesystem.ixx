@@ -10,6 +10,10 @@ export namespace projected_file_system
 {
 	class pfs_context
 	{
+		std::filesystem::path m_root;
+		std::filesystem::path m_instanceFile = std::format("{}\\objproj.guid", m_root.string());
+		Util::GloballyUniqueID m_guid{ Util::GloballyUniqueID::Null };
+
 		public:
 		pfs_context(std::filesystem::path root) : m_root(std::move(root)) 
 		{
@@ -37,11 +41,25 @@ export namespace projected_file_system
 
 		void create_or_open_instance_file()
 		{
-
+			Util::HandleDeleter file;
+			if (std::filesystem::exists(m_instanceFile))
+			{
+				
+			}
+			else
+			{
+				Win32::HANDLE hFile = Win32::CreateFileW(
+					m_instanceFile.wstring().data(),
+					Win32::Permission::GenericWrite,
+					0,
+					nullptr,
+					Win32::CreateNew,
+					Win32::FileAttribute::Hidden,
+					nullptr
+				);
+				file = Util::HandleDeleter(hFile);
+				m_guid = Util::GloballyUniqueID();
+			}
 		}
-
-		private:
-		std::filesystem::path m_root;
-		std::filesystem::path m_instance = std::format("{}\\objproj.guid", m_root.string());
 	};
 }

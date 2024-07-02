@@ -37,16 +37,31 @@ export namespace Win32
 		::WriteFile,
 		::IsEqualGUID,
 		::PrjMarkDirectoryAsPlaceholder,
-		::PrjStartVirtualizing
+		::PrjStartVirtualizing,
+		::CreateFileW
 		;
 
 	constexpr auto UserDefault = LANG_USER_DEFAULT;
-	constexpr auto GenericRead = GENERIC_READ;
 	constexpr auto ShareRead = FILE_SHARE_READ;
 	constexpr auto OpenExisting = OPEN_EXISTING;
-	constexpr auto GenericWrite = GENERIC_WRITE;
 	constexpr auto CreateNew = CREATE_NEW;
-	constexpr auto FileAttributeHidden = FILE_ATTRIBUTE_HIDDEN;
+
+	namespace Permission
+	{
+		enum
+		{
+			GenericRead = GENERIC_READ,
+			GenericWrite = GENERIC_WRITE
+		};
+	}
+
+	namespace FileAttribute
+	{
+		enum
+		{
+			Hidden = FILE_ATTRIBUTE_HIDDEN
+		};
+	}
 
 	namespace FormatMessageFlags
 	{
