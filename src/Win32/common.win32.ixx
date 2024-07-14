@@ -22,6 +22,11 @@ export namespace Win32
 		::HMODULE,
 		::BOOL,
 		::HLOCAL,
+		::LONG,
+		::LSTATUS,
+		::BYTE,
+		::LPCVOID,
+		::PVOID,
 		::LoadLibraryA,
 		::LoadLibraryW,
 		::FreeLibrary,
@@ -45,6 +50,74 @@ export namespace Win32
 	constexpr auto ShareRead = FILE_SHARE_READ;
 	constexpr auto OpenExisting = OPEN_EXISTING;
 	constexpr auto CreateNew = CREATE_NEW;
+
+	namespace Registry
+	{
+		using
+			::HKEY,
+			::RegGetValueW,
+			::RegCloseKey,
+			::RegOpenKeyExW,
+			::RegDeleteKeyW,
+			::RegDeleteTreeW,
+			::RegCreateKeyExW,
+			::RegCloseKey,
+			::RegSetValueExW,
+			::RegSetValueW,
+			::RegSetKeyValueW
+			;
+
+		namespace ValueTypes
+		{
+			enum
+			{
+				String = RRF_RT_REG_SZ,
+				DWORD = RRF_RT_REG_DWORD,
+				QWORD = RRF_RT_REG_QWORD
+			};
+		}
+
+		namespace Permissions
+		{
+			enum
+			{
+				Read = KEY_READ
+			};
+		}
+
+		namespace Keys
+		{
+			template<auto T>
+			struct Parent { operator HKEY() const noexcept { return T; } };
+
+			constexpr Parent<HKEY_LOCAL_MACHINE> HKLM;
+			constexpr Parent<HKEY_CURRENT_USER> HKCU;
+		}
+
+		namespace Options
+		{
+			enum
+			{
+				NonVolatile = REG_OPTION_NON_VOLATILE
+			};
+		}
+
+		namespace Access
+		{
+			enum
+			{
+				AllAccess = KEY_ALL_ACCESS
+			};
+		}
+
+		namespace Disposition
+		{
+			enum
+			{
+				NewKey = REG_CREATED_NEW_KEY
+			};
+		}
+	}
 
 	namespace Permission
 	{
@@ -76,6 +149,7 @@ export namespace Win32
 	constexpr GUID NullGuid = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 	namespace Error
 	{
+		constexpr auto Success = ERROR_SUCCESS;
 		constexpr auto AlreadyExists = ERROR_ALREADY_EXISTS;
 	}
 

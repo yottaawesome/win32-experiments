@@ -181,9 +181,9 @@ namespace WinReg
 
     void WriteKey(
         HKEY hKey,
-        std::wstring& subKey,
-        std::wstring& keyName,
-        std::wstring& keyValue
+        const std::wstring& subKey,
+        const std::wstring& keyName,
+        const std::wstring& keyValue
     )
     {
         HKEY openedKey = nullptr;
@@ -214,5 +214,15 @@ namespace WinReg
         {
             throw RegistryError{ "Failed to write to registry key", (LONG)setValueStatus };
         }
+    }
+
+    void DeleteTree(HKEY hkey, const std::wstring& subkey)
+    {
+        LSTATUS status = RegDeleteTreeW(
+            hkey,
+            subkey.c_str()
+        );
+        if (status != ERROR_SUCCESS)
+            throw RegistryError{ "Failed to write to registry key", (LONG)status };
     }
 }
