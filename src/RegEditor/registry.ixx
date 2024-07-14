@@ -104,10 +104,7 @@ export namespace Registry
         return data;
     }
 
-    bool CreateKey(
-        Win32::Registry::HKEY hKey,
-        const std::wstring& subKey
-    )
+    bool CreateKey(Win32::Registry::HKEY hKey, const std::wstring& subKey)
     {
         // https://docs.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyexw
         Win32::DWORD disposition;
@@ -184,4 +181,33 @@ export namespace Registry
 
         return result == Win32::Error::Success;
     }
+
+    template<auto VParent, Util::WideFixedString VSubkey, Util::WideFixedString VValueName, typename TValueType>
+    struct RegistryPath
+    {
+        template<bool VThrowOnError = true>
+        auto Get() const noexcept(not VThrowOnError)
+        {
+            return Registry::Get<TValueType, VThrowOnError>(VParent, VSubkey, VValueName);
+        }
+
+        template<bool VThrowOnError = true>
+        auto Set(auto&& value) const noexcept(not VThrowOnError)
+        {
+            return Registry::Set<TValueType, VThrowOnError>(VParent, VSubkey, VValueName, value);
+        }
+    };
+
+    constexpr RegistryPath<Win32::Registry::Keys::HKLM, L"A", L"A", std::wstring> Blah;
+
+    struct M : public RegistryPath<Win32::Registry::Keys::HKLM, L"A", L"A", std::wstring>
+    {
+        template<bool VThrowOnError = true>
+        auto Get() const noexcept(not VThrowOnError)
+        {
+            return RegistryPath<Win32::Registry::Keys::HKLM, L"A", L"A", std::wstring>::Get();
+        }
+    };
+
+    constexpr M mmmm;
 }

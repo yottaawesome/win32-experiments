@@ -87,8 +87,8 @@ export namespace Win32
 
 		namespace Keys
 		{
-			template<auto T>
-			struct Parent { operator HKEY() const noexcept { return T; } };
+			template<HKEY T>
+			struct Parent { constexpr operator HKEY() const noexcept { return T; } };
 
 			constexpr Parent<HKEY_LOCAL_MACHINE> HKLM;
 			constexpr Parent<HKEY_CURRENT_USER> HKCU;
