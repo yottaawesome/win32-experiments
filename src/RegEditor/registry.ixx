@@ -182,7 +182,10 @@ export namespace Registry
         return result == Win32::Error::Success;
     }
 
-    template<auto VParent, Util::WideFixedString VSubkey, Util::WideFixedString VValueName, typename TValueType>
+    template<typename T>
+    concept HKeyLike = std::same_as<T, Win32::Registry::HKEY> or std::convertible_to<T, Win32::Registry::HKEY>;
+
+    template<HKeyLike auto VParent, Util::WideFixedString VSubkey, Util::WideFixedString VValueName, typename TValueType>
     struct RegistryPath
     {
         template<bool VThrowOnError = true>

@@ -33,7 +33,7 @@ void OldTests()
 
 void NewTests()
 {
-    const auto key = Win32::Registry::Keys::HKCU;
+    constexpr auto key = Win32::Registry::Keys::HKCU;
     std::wstring subKey = L"SOFTWARE\\WinRegTest";
     std::wstring valueName = L"ValueName";
     std::wstring data = L"test";
