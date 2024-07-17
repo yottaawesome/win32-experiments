@@ -104,14 +104,23 @@ export namespace Registry
         return data;
     }
 
-    bool CreateKey(Win32::Registry::HKEY hKey, const std::wstring& subKey)
+    struct RegKeyDeleter
+    {
+        void operator()(Win32::Registry::HKEY key) const
+        {
+            Win32::Registry::RegCloseKey(key);
+        }
+    };
+    using HKeyUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::Registry::HKEY>, RegKeyDeleter>;
+
+    HKeyUniquePtr CreateKey(Win32::Registry::HKEY hKey, std::wstring_view subKey)
     {
         // https://docs.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regcreatekeyexw
         Win32::DWORD disposition;
         Win32::Registry::HKEY openedKey;
         Win32::DWORD createKeyStatus = Win32::Registry::RegCreateKeyExW(
             hKey,
-            subKey.c_str(),
+            subKey.data(),
             0,
             nullptr,
             Win32::Registry::Options::NonVolatile,
@@ -123,8 +132,7 @@ export namespace Registry
         if (createKeyStatus != Win32::Error::Success)
             throw RegistryError{ "Failed to write to registry", (Win32::LONG)createKeyStatus };
 
-        Win32::Registry::RegCloseKey(openedKey);
-        return disposition == Win32::Registry::Disposition::NewKey;
+        return HKeyUniquePtr{ openedKey };
     }
 
     template<typename T>
@@ -212,5 +220,23 @@ export namespace Registry
         }
     };
 
-    constexpr M mmmm;
+    template<HKeyLike auto VParent, Util::WideFixedString VSubkey>
+    struct RegistryKey
+    {
+        Win32::Registry::HKEY Get() const
+        {
+            std::call_once(
+                m_flag,
+                [](HKeyUniquePtr& key) { key = CreateKey(VParent, VSubkey); },
+                m_key
+            );
+            return m_key.get();
+        }
+
+        protected:
+        mutable HKeyUniquePtr m_key;
+        mutable std::once_flag m_flag;
+    };
+
+    constexpr RegistryKey<Win32::Registry::Keys::HKCU, L"A"> ML;
 }

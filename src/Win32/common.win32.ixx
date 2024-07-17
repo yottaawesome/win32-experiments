@@ -64,7 +64,8 @@ export namespace Win32
 			::RegCloseKey,
 			::RegSetValueExW,
 			::RegSetValueW,
-			::RegSetKeyValueW
+			::RegSetKeyValueW,
+			::RegCreateKeyExW
 			;
 
 		namespace ValueTypes
@@ -81,7 +82,8 @@ export namespace Win32
 		{
 			enum
 			{
-				Read = KEY_READ
+				Read = KEY_READ,
+				All = KEY_ALL_ACCESS
 			};
 		}
 
@@ -89,6 +91,8 @@ export namespace Win32
 		{
 			template<HKEY T>
 			struct Parent { operator HKEY() const noexcept { return T; } };
+
+			const constinit HKEY s = HKEY_LOCAL_MACHINE;
 
 			constexpr Parent<HKEY_LOCAL_MACHINE> HKLM;
 			constexpr Parent<HKEY_CURRENT_USER> HKCU;
@@ -114,7 +118,7 @@ export namespace Win32
 		{
 			enum
 			{
-				NewKey = REG_CREATED_NEW_KEY
+				CreatedNewKey = REG_CREATED_NEW_KEY
 			};
 		}
 	}
