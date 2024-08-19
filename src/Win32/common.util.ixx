@@ -171,8 +171,6 @@ export namespace Util
     };
     using HandleDeleter = std::unique_ptr<std::remove_pointer_t<Win32::HANDLE>, GenericDeleter<Win32::CloseHandle>>;
 
-    
-
     struct GloballyUniqueID
     {
         constexpr GloballyUniqueID(Win32::GUID guid) : m_guid(guid) {}
@@ -284,4 +282,9 @@ export namespace Util
     using WideFixedString = FixedString<wchar_t, std::wstring_view, std::wstring, N>;
     template<size_t N>
     using NarrowFixedString = FixedString<char, std::string_view, std::string, N>;
+}
+
+export bool operator==(const Win32::GUID g1, const Win32::GUID g2)
+{
+    return Win32::IsEqualGUID(g1, g2);
 }

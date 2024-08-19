@@ -734,7 +734,7 @@ export namespace ObjectOrientedControl
         virtual ~ControlTraits() = default;
         static constexpr std::wstring_view Class = VClassName;
         Win32::DWORD Styles = VStyles;
-        std::wstring_view Text = VText;
+        std::wstring_view Text = VText.ToView();
         Win32::DWORD Id = VControlId;
         Win32::DWORD X = VX;
         Win32::DWORD Y = VY;
