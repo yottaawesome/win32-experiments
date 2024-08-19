@@ -21,10 +21,16 @@ export namespace projected_file_system
 		}
 
 		private:
+		struct disposition
+		{
+			Util::HandleDeleter File;
+			bool IsNewFile = false;
+		};
+
 		void init()
 		{
 			check_and_create_root();
-			create_or_open_instance_file();
+			disposition disp = create_or_open_instance_file();
 		}
 
 		bool check_and_create_root()
@@ -39,27 +45,43 @@ export namespace projected_file_system
 			return false;
 		}
 
-		void create_or_open_instance_file()
+		disposition create_or_open_instance_file()
 		{
-			Util::HandleDeleter file;
+			Win32::HANDLE hFile = nullptr;
 			if (std::filesystem::exists(m_instanceFile))
 			{
-				
-			}
-			else
-			{
-				Win32::HANDLE hFile = Win32::CreateFileW(
+				hFile = Win32::CreateFileW(
 					m_instanceFile.wstring().data(),
-					Win32::Permission::GenericWrite,
+					Win32::Permission::GenericRead,
 					0,
 					nullptr,
-					Win32::CreateNew,
+					Win32::OpenExisting,
 					Win32::FileAttribute::Hidden,
 					nullptr
 				);
-				file = Util::HandleDeleter(hFile);
-				m_guid = Util::GloballyUniqueID();
+				if (hFile == Win32::InvalidHandleValue)
+					throw Error::Win32Error(Win32::GetLastError(), "Failed opening existing instance file.");
+				return disposition{ Util::HandleDeleter{hFile}, false };
 			}
+
+			hFile = Win32::CreateFileW(
+				m_instanceFile.wstring().data(),
+				Win32::Permission::GenericWrite,
+				0,
+				nullptr,
+				Win32::CreateNew,
+				Win32::FileAttribute::Hidden,
+				nullptr
+			);
+			if (hFile == Win32::InvalidHandleValue)
+				throw Error::Win32Error(Win32::GetLastError(), "Failed creating instance file.");
+			return disposition{ Util::HandleDeleter{hFile}, true };
+		}
+
+		void read_or_write_guid(disposition& disp)
+		{
+			if (disp.IsNewFile)
+				m_guid = Util::GloballyUniqueID();
 		}
 	};
 }

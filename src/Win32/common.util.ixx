@@ -2,6 +2,72 @@ export module common.util;
 import std;
 import common.win32;
 
+export namespace Error
+{
+    std::string TranslateErrorCode(Win32::DWORD errorCode)
+    {
+        constexpr Win32::DWORD flags =
+            Win32::FormatMessageFlags::AllocateBuffer
+            | Win32::FormatMessageFlags::FromSystem
+            | Win32::FormatMessageFlags::IgnoreInserts;
+
+        void* messageBuffer = nullptr;
+        Win32::FormatMessageA(
+            flags,
+            nullptr,
+            errorCode,
+            0,
+            reinterpret_cast<char*>(&messageBuffer),
+            0,
+            nullptr
+        );
+        if (not messageBuffer)
+        {
+            const auto lastError = Win32::GetLastError();
+            return std::format("FormatMessageA() failed on code {} with error {}", errorCode, lastError);
+        }
+
+        std::string msg(static_cast<char*>(messageBuffer));
+        // This should never happen
+        // See also https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-raisefailfastexception
+        if (Win32::LocalFree(messageBuffer))
+            std::abort();
+
+        std::erase_if(msg, [](const char x) { return x == '\n' || x == '\r'; });
+        return msg;
+    }
+
+    struct Error : public std::runtime_error
+    {
+        Error(std::string_view s) : std::runtime_error(std::string{s})
+        { }
+
+        template<typename...TArgs>
+        Error(std::format_string<TArgs...> fmt, TArgs&&...args)
+            : std::runtime_error(Format(fmt, std::forward<TArgs>(args)...))
+        { }
+
+        template<typename...TArgs>
+        constexpr std::string Format(std::format_string<TArgs...> fmt, TArgs&&...args)
+        {
+            return std::format("{}", std::format(fmt, std::forward<TArgs>(args)...));
+        }
+    };
+
+    template<typename...TArgs>
+    struct Win32Error : public Error
+    {
+        Win32Error(Win32::DWORD errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
+            : Error(Format(errorCode, fmt, std::forward<TArgs>(args)...))
+        { }
+
+        constexpr std::string Format(Win32::DWORD errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
+        {
+            return std::format("{}: {}", std::format(fmt, std::forward<TArgs>(args)...), TranslateErrorCode(errorCode));
+        }
+    };
+}
+
 export namespace Util
 {
     template<typename T>
@@ -105,21 +171,7 @@ export namespace Util
     };
     using HandleDeleter = std::unique_ptr<std::remove_pointer_t<Win32::HANDLE>, GenericDeleter<Win32::CloseHandle>>;
 
-    template<typename...TArgs>
-    struct Error : public std::runtime_error
-    {
-        public:
-        Error(std::format_string<TArgs...> fmt, TArgs&&...args, std::source_location loc = std::source_location::current())
-            : std::runtime_error(
-                std::format("{} in {}", 
-                    std::format(fmt, std::forward<TArgs>(args)...),
-                    loc.function_name()
-                )
-            )
-        { }
-    };
-    template<typename...TArgs>
-    Error(std::format_string<TArgs...>, TArgs&&...) -> Error<TArgs...>;
+    
 
     struct GloballyUniqueID
     {
@@ -129,7 +181,7 @@ export namespace Util
         {
             Win32::HRESULT result = Win32::CoCreateGuid(&m_guid);
             if (Win32::HrFailed(result))
-                throw Error("CoCreateGuid() failed", result);
+                throw Error::Error("CoCreateGuid() failed", result);
         }
 
         Win32::GUID m_guid{ 0 };
