@@ -5,10 +5,10 @@ namespace projected_file_system
 {
 	struct instance_file_disposition
 	{
-		Util::HandleDeleter file_ptr;
+		RAII::HandleDeleter file_ptr;
 		bool is_new_file = false;
 
-		instance_file_disposition(Util::HandleDeleter&& file_ptr, bool is_new_file) noexcept
+		instance_file_disposition(RAII::HandleDeleter&& file_ptr, bool is_new_file) noexcept
 			: file_ptr(std::move(file_ptr)), is_new_file(is_new_file)
 		{ }
 	};
@@ -30,6 +30,18 @@ export namespace projected_file_system
 			check_and_create_root();
 			instance_file_disposition disp = create_or_open_instance_file();
 			read_or_write_guid(disp);
+			start_virtualising();
+		}
+
+		void start_virtualising()
+		{
+			Win32::HRESULT hr = Win32::ProjectedFileSystem::PrjMarkDirectoryAsPlaceholder(
+				m_root.c_str(), 
+				nullptr, 
+				nullptr, 
+				&m_guid.m_guid
+			);
+			Error::CheckHResult(hr, "PrjMarkDirectoryAsPlaceholder() failed.");
 		}
 
 		bool check_and_create_root()
@@ -60,7 +72,7 @@ export namespace projected_file_system
 				);
 				if (hFile == Win32::InvalidHandleValue)
 					throw Error::Win32Error(Win32::GetLastError(), "Failed opening existing instance file.");
-				return { Util::HandleDeleter{hFile}, false };
+				return { RAII::HandleDeleter{hFile}, false };
 			}
 
 			hFile = Win32::CreateFileW(
@@ -74,7 +86,7 @@ export namespace projected_file_system
 			);
 			if (hFile == Win32::InvalidHandleValue)
 				throw Error::Win32Error(Win32::GetLastError(), "Failed creating instance file.");
-			return { Util::HandleDeleter{hFile}, true };
+			return { RAII::HandleDeleter{hFile}, true };
 		}
 
 		void read_or_write_guid(instance_file_disposition& disp)

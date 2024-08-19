@@ -41,8 +41,6 @@ export namespace Win32
 		::CoCreateGuid,
 		::WriteFile,
 		::IsEqualGUID,
-		::PrjMarkDirectoryAsPlaceholder,
-		::PrjStartVirtualizing,
 		::CreateFileW
 		;
 
@@ -50,6 +48,14 @@ export namespace Win32
 	constexpr auto ShareRead = FILE_SHARE_READ;
 	constexpr auto OpenExisting = OPEN_EXISTING;
 	constexpr auto CreateNew = CREATE_NEW;
+
+	namespace ProjectedFileSystem
+	{
+		using
+			::PrjStartVirtualizing,
+			::PrjMarkDirectoryAsPlaceholder,
+			::PrjStopVirtualizing;
+	}
 
 	namespace Registry
 	{

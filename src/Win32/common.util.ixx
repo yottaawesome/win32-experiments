@@ -2,6 +2,63 @@ export module common.util;
 import std;
 import common.win32;
 
+export namespace Concepts
+{
+    template<typename T>
+    constexpr bool AlwaysFalseT = std::false_type::value;
+
+    template<auto T>
+    constexpr bool AlwaysFalseV = std::false_type::value;
+}
+
+export namespace RAII
+{
+    template<auto VDeleter, auto...VStaticArgs>
+    struct Deleter
+    {
+        using TDeleter = decltype(VDeleter);
+
+        void operator()(auto&& objectToDelete) const noexcept
+        {
+            using THandle = decltype(objectToDelete);
+
+            if constexpr (std::invocable<TDeleter, THandle, decltype(VStaticArgs)...>)
+            {
+                std::invoke(
+                    VDeleter,
+                    objectToDelete,
+                    std::forward<decltype(VStaticArgs)>(VStaticArgs)...
+                );
+            }
+            else if constexpr (std::invocable<TDeleter, decltype(VStaticArgs)..., THandle>)
+            {
+                std::invoke(
+                    VDeleter,
+                    std::forward<decltype(VStaticArgs)>(VStaticArgs)...,
+                    objectToDelete
+                );
+            }
+            else
+            {
+                static_assert(Concepts::AlwaysFalseT<VDeleter>, "Deleter is not invocable in any order.");
+            }
+        }
+    };
+    using HandleUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HANDLE>, Deleter<Win32::CloseHandle>>;
+    using LibraryUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HMODULE>, Deleter<Win32::FreeLibrary>>;
+    using LocalAllocUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HLOCAL>, Deleter<Win32::LocalFree>>;
+
+    template<auto VDeleter>
+    struct GenericDeleter
+    {
+        void operator()(auto&& object)
+        {
+            VDeleter(object);
+        }
+    };
+    using HandleDeleter = std::unique_ptr<std::remove_pointer_t<Win32::HANDLE>, GenericDeleter<Win32::CloseHandle>>;
+}
+
 export namespace Error
 {
     std::string TranslateErrorCode(Win32::DWORD errorCode)
@@ -37,13 +94,13 @@ export namespace Error
         return msg;
     }
 
-    struct Error : public std::runtime_error
+    struct BasicError : public std::runtime_error
     {
-        Error(std::string_view s) : std::runtime_error(std::string{s})
+        BasicError(std::string_view s) : std::runtime_error(std::string{s})
         { }
 
         template<typename...TArgs>
-        Error(std::format_string<TArgs...> fmt, TArgs&&...args)
+        BasicError(std::format_string<TArgs...> fmt, TArgs&&...args)
             : std::runtime_error(Format(fmt, std::forward<TArgs>(args)...))
         { }
 
@@ -54,68 +111,72 @@ export namespace Error
         }
     };
 
-    template<typename...TArgs>
-    struct Win32Error : public Error
+    struct Win32Error : public BasicError
     {
-        Win32Error(Win32::DWORD errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
-            : Error(Format(errorCode, fmt, std::forward<TArgs>(args)...))
+        Win32Error(Win32::DWORD errorCode, std::string_view s) : BasicError(s)
         { }
 
+        template<typename...TArgs>
+        Win32Error(Win32::DWORD errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
+            : BasicError(Format(errorCode, fmt, std::forward<TArgs>(args)...))
+        { }
+
+        DWORD ErrorCode() const noexcept
+        {
+            return m_errorCode;
+        }
+
+        private:
+        template<typename...TArgs>
         constexpr std::string Format(Win32::DWORD errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
         {
             return std::format("{}: {}", std::format(fmt, std::forward<TArgs>(args)...), TranslateErrorCode(errorCode));
         }
+
+        private:
+        DWORD m_errorCode = 0;
     };
+
+    struct COMError : public BasicError
+    {
+        COMError(Win32::HRESULT errorCode, std::string_view s) : BasicError(s)
+        { }
+
+        template<typename...TArgs>
+        COMError(Win32::HRESULT errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
+            : BasicError(Format(errorCode, fmt, std::forward<TArgs>(args)...))
+        { }
+
+        HRESULT ErrorCode() const noexcept
+        {
+            return m_errorCode;
+        }
+
+        private:
+        template<typename...TArgs>
+        constexpr std::string Format(Win32::HRESULT errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
+        {
+            return std::format("{}: {}", std::format(fmt, std::forward<TArgs>(args)...), TranslateErrorCode(errorCode));
+        }
+
+        private:
+        HRESULT m_errorCode = 0;
+    };
+
+    void CheckHResult(Win32::HRESULT hr, std::string_view msg)
+    {
+        if (Win32::HrFailed(hr))
+            throw COMError(hr, msg);
+    }
 }
 
 export namespace Util
 {
-    template<typename T>
-    constexpr bool AlwaysFalseT = std::false_type::value;
-
-    template<auto T>
-    constexpr bool AlwaysFalseV = std::false_type::value;
-
-    template<auto VDeleter, auto...VStaticArgs>
-    struct Deleter
-    {
-        using TDeleter = decltype(VDeleter);
-
-        void operator()(auto&& objectToDelete) const noexcept 
-        {
-            using THandle = decltype(objectToDelete);
-
-            if constexpr (std::invocable<TDeleter, THandle, decltype(VStaticArgs)...>)
-            {
-                std::invoke(
-                    VDeleter,
-                    objectToDelete,
-                    std::forward<decltype(VStaticArgs)>(VStaticArgs)...
-                );
-            }
-            else if constexpr (std::invocable<TDeleter, decltype(VStaticArgs)..., THandle>)
-            {
-                std::invoke(
-                    VDeleter,
-                    std::forward<decltype(VStaticArgs)>(VStaticArgs)...,
-                    objectToDelete
-                );
-            }
-            else
-            {
-                static_assert(AlwaysFalseT<VDeleter>, "Deleter is not invocable in any order.");
-            }
-        }
-    };
-    using HandleUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HANDLE>, Deleter<Win32::CloseHandle>>;
-    using LibraryUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HMODULE>, Deleter<Win32::FreeLibrary>>;
-    using LocalAllocUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HLOCAL>, Deleter<Win32::LocalFree>>;
-
     std::string Format(Win32::DWORD errorCode, std::wstring_view moduleName = L"")
     {
-        LibraryUniquePtr moduleToSearch = moduleName.empty()
+        RAII::LibraryUniquePtr moduleToSearch = moduleName.empty()
             ? nullptr
-            : LibraryUniquePtr(Win32::LoadLibraryW(moduleName.data()));
+            : RAII::LibraryUniquePtr(Win32::LoadLibraryW(moduleName.data()));
 
         constexpr auto flags =
             Win32::FormatMessageFlags::AllocateBuffer
@@ -138,7 +199,7 @@ export namespace Util
             Win32::GetLastError()
         );
 
-        LocalAllocUniquePtr ptr(msgBuffer);
+        RAII::LocalAllocUniquePtr ptr(msgBuffer);
         return { reinterpret_cast<char*>(msgBuffer) };
     }
 
@@ -161,16 +222,6 @@ export namespace Util
         }
     };
 
-    template<auto VDeleter>
-    struct GenericDeleter
-    {
-        void operator()(auto&& object)
-        {
-            VDeleter(object);
-        }
-    };
-    using HandleDeleter = std::unique_ptr<std::remove_pointer_t<Win32::HANDLE>, GenericDeleter<Win32::CloseHandle>>;
-
     struct GloballyUniqueID
     {
         constexpr GloballyUniqueID(Win32::GUID guid) : m_guid(guid) {}
@@ -179,7 +230,7 @@ export namespace Util
         {
             Win32::HRESULT result = Win32::CoCreateGuid(&m_guid);
             if (Win32::HrFailed(result))
-                throw Error::Error("CoCreateGuid() failed", result);
+                throw Error::COMError(result, "CoCreateGuid() failed");
         }
 
         Win32::GUID m_guid{ 0 };
