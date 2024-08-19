@@ -16,9 +16,7 @@ export namespace Win32
 		::PCWSTR,
 		::DWORD,
 		::HANDLE,
-		::PRJ_CALLBACKS,
 		::LPSTR,
-		::PRJ_NAMESPACE_VIRTUALIZATION_CONTEXT,
 		::HMODULE,
 		::BOOL,
 		::HLOCAL,
@@ -27,6 +25,8 @@ export namespace Win32
 		::BYTE,
 		::LPCVOID,
 		::PVOID,
+		::UINT32,
+		::UINT64,
 		::LoadLibraryA,
 		::LoadLibraryW,
 		::FreeLibrary,
@@ -52,6 +52,10 @@ export namespace Win32
 	namespace ProjectedFileSystem
 	{
 		using
+			::PRJ_NAMESPACE_VIRTUALIZATION_CONTEXT,
+			::PRJ_CALLBACKS,
+			::PRJ_CALLBACK_DATA,
+			::PRJ_DIR_ENTRY_BUFFER_HANDLE,
 			::PrjStartVirtualizing,
 			::PrjMarkDirectoryAsPlaceholder,
 			::PrjStopVirtualizing;
@@ -173,5 +177,13 @@ export namespace Win32
 	bool HrSucceeded(::HRESULT hr)
 	{
 		return SUCCEEDED(hr);
+	}
+
+	namespace HrCodes
+	{
+		enum : HRESULT
+		{
+			OK = S_OK
+		};
 	}
 }

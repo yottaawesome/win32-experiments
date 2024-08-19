@@ -12,6 +12,51 @@ namespace projected_file_system
 			: file_ptr(std::move(file_ptr)), is_new_file(is_new_file)
 		{ }
 	};
+
+	namespace callbacks
+	{
+		template<typename T>
+		Win32::HRESULT start_directory_enumeration(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, const Win32::GUID* enumerationId)
+		{
+			return reinterpret_cast<T*>(callbackData->InstanceContext)->start_directory_enumeration(callbackData, enumerationId);
+		}
+
+		template<typename T>
+		Win32::HRESULT get_directory_enumeration(
+			const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData,
+			const Win32::GUID* enumerationId,
+			Win32::PCWSTR searchExpression,
+			Win32::ProjectedFileSystem::PRJ_DIR_ENTRY_BUFFER_HANDLE dirEntryBufferHandle
+		)
+		{
+			return reinterpret_cast<T*>(callbackData->InstanceContext)->get_directory_enumeration(callbackData, enumerationId, searchExpression, dirEntryBufferHandle);
+		}
+
+		template<typename T>
+		Win32::HRESULT get_placeholder_information(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData)
+		{
+			return reinterpret_cast<T*>(callbackData->InstanceContext)->get_placeholder_information(callbackData);
+		}
+
+		template<typename T>
+		Win32::HRESULT get_file_data(
+			const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData,
+			std::uint64_t byteOffset,
+			std::uint32_t length
+		)
+		{
+			return reinterpret_cast<T*>(callbackData->InstanceContext)->get_file_data(callbackData, byteOffset, length);
+		}
+
+		template<typename T>
+		Win32::HRESULT end_directory_enumeration(
+			const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData,
+			const Win32::GUID* enumerationId
+		)
+		{
+			return reinterpret_cast<T*>(callbackData->InstanceContext)->end_directory_enumeration(callbackData, enumerationId);
+		}
+	}
 }
 
 export namespace projected_file_system
@@ -108,6 +153,36 @@ export namespace projected_file_system
 				if (not success)
 					throw Error::Win32Error(GetLastError(), "Failed reading existing GUID.");
 			}
+		}
+
+		Win32::HRESULT start_directory_enumeration(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, const GUID* enumerationId)
+		{
+			return Win32::HrCodes::OK;
+		}
+
+		Win32::HRESULT get_directory_enumeration(
+			const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData,
+			const Win32::GUID* enumerationId,
+			Win32::PCWSTR searchExpression,
+			Win32::ProjectedFileSystem::PRJ_DIR_ENTRY_BUFFER_HANDLE dirEntryBufferHandle
+		)
+		{
+			return Win32::HrCodes::OK;
+		}
+
+		Win32::HRESULT get_placeholder_information(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData)
+		{
+			return Win32::HrCodes::OK;
+		}
+
+		Win32::HRESULT get_file_data(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, std::uint64_t byteOffset, std::uint32_t length)
+		{
+			return Win32::HrCodes::OK;
+		}
+
+		Win32::HRESULT end_directory_enumeration(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, const GUID* enumerationId)
+		{
+			return Win32::HrCodes::OK;
 		}
 
 		private:
