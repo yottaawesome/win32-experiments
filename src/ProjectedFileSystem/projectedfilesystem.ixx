@@ -1,19 +1,23 @@
 export module projectedfilesystem;
 import common;
 
-namespace
+namespace projected_file_system
 {
+	struct instance_file_disposition
+	{
+		Util::HandleDeleter file_ptr;
+		bool is_new_file = false;
 
+		instance_file_disposition(Util::HandleDeleter&& file_ptr, bool is_new_file) noexcept
+			: file_ptr(std::move(file_ptr)), is_new_file(is_new_file)
+		{ }
+	};
 }
 
 export namespace projected_file_system
 {
 	class pfs_context
 	{
-		std::filesystem::path m_root;
-		std::filesystem::path m_instanceFile = std::format("{}\\objproj.guid", m_root.string());
-		Util::GloballyUniqueID m_guid{ Util::GloballyUniqueID::Null };
-
 		public:
 		pfs_context(std::filesystem::path root) : m_root(std::move(root)) 
 		{
@@ -21,16 +25,11 @@ export namespace projected_file_system
 		}
 
 		private:
-		struct disposition
-		{
-			Util::HandleDeleter File;
-			bool IsNewFile = false;
-		};
-
 		void init()
 		{
 			check_and_create_root();
-			disposition disp = create_or_open_instance_file();
+			instance_file_disposition disp = create_or_open_instance_file();
+			read_or_write_guid(disp);
 		}
 
 		bool check_and_create_root()
@@ -40,12 +39,12 @@ export namespace projected_file_system
 
 			if (std::filesystem::exists(m_root))
 				throw std::runtime_error("Specified root is not a directory.");
-			
+
 			std::filesystem::create_directory(m_root);
 			return false;
 		}
 
-		disposition create_or_open_instance_file()
+		instance_file_disposition create_or_open_instance_file()
 		{
 			Win32::HANDLE hFile = nullptr;
 			if (std::filesystem::exists(m_instanceFile))
@@ -56,12 +55,12 @@ export namespace projected_file_system
 					0,
 					nullptr,
 					Win32::OpenExisting,
-					Win32::FileAttribute::Hidden,
+					0,
 					nullptr
 				);
 				if (hFile == Win32::InvalidHandleValue)
 					throw Error::Win32Error(Win32::GetLastError(), "Failed opening existing instance file.");
-				return disposition{ Util::HandleDeleter{hFile}, false };
+				return { Util::HandleDeleter{hFile}, false };
 			}
 
 			hFile = Win32::CreateFileW(
@@ -75,13 +74,30 @@ export namespace projected_file_system
 			);
 			if (hFile == Win32::InvalidHandleValue)
 				throw Error::Win32Error(Win32::GetLastError(), "Failed creating instance file.");
-			return disposition{ Util::HandleDeleter{hFile}, true };
+			return { Util::HandleDeleter{hFile}, true };
 		}
 
-		void read_or_write_guid(disposition& disp)
+		void read_or_write_guid(instance_file_disposition& disp)
 		{
-			if (disp.IsNewFile)
+			Win32::DWORD operationBytes = 0;
+			if (disp.is_new_file)
+			{
 				m_guid = Util::GloballyUniqueID();
+				bool success = Win32::WriteFile(disp.file_ptr.get(), &m_guid.m_guid, sizeof(m_guid.m_guid), &operationBytes, nullptr);
+				if (not success)
+					throw Error::Win32Error(GetLastError(), "Failed writing out new GUID.");
+			}
+			else
+			{
+				bool success = Win32::ReadFile(disp.file_ptr.get(), &m_guid.m_guid, sizeof(m_guid.m_guid), &operationBytes, nullptr);
+				if (not success)
+					throw Error::Win32Error(GetLastError(), "Failed reading existing GUID.");
+			}
 		}
+
+		private:
+		std::filesystem::path m_root;
+		std::filesystem::path m_instanceFile = std::format("{}\\objproj.guid", m_root.string());
+		Util::GloballyUniqueID m_guid{ Util::GloballyUniqueID::Null };
 	};
 }

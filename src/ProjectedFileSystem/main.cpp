@@ -3,6 +3,7 @@
 
 import std;
 import common;
+import projectedfilesystem;
 
 bool operator==(const Win32::GUID g1, const Win32::GUID g2)
 {
@@ -12,7 +13,12 @@ bool operator==(const Win32::GUID g1, const Win32::GUID g2)
 std::wstring m_RootDir = L"";
 Win32::PRJ_NAMESPACE_VIRTUALIZATION_CONTEXT m_VirtContext;
 
-int main()
+int main() try
 {
+    projected_file_system::pfs_context context(".\\test");
     return 0;
+}
+catch (const std::exception& ex)
+{
+    std::println("An exception occurred: {}", ex.what());
 }
