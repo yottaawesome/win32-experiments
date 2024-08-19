@@ -163,10 +163,10 @@ export namespace Error
         HRESULT m_errorCode = 0;
     };
 
-    void CheckHResult(Win32::HRESULT hr, std::string_view msg)
+    void CheckHResult(Win32::HRESULT hr, std::string_view msg, auto&&...args)
     {
         if (Win32::HrFailed(hr))
-            throw COMError(hr, msg);
+            throw COMError(hr, msg, std::forward<decltype(args)>(args)...);
     }
 }
 

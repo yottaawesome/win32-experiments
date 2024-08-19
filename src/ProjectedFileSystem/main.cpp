@@ -6,7 +6,6 @@ import common;
 import projectedfilesystem;
 
 std::wstring m_RootDir = L"";
-Win32::ProjectedFileSystem::PRJ_NAMESPACE_VIRTUALIZATION_CONTEXT m_VirtContext;
 
 int main() try
 {

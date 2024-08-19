@@ -69,6 +69,36 @@ export namespace projected_file_system
 			init();
 		}
 
+		Win32::HRESULT start_directory_enumeration(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, const GUID* enumerationId)
+		{
+			return Win32::HrCodes::OK;
+		}
+
+		Win32::HRESULT get_directory_enumeration(
+			const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData,
+			const Win32::GUID* enumerationId,
+			Win32::PCWSTR searchExpression,
+			Win32::ProjectedFileSystem::PRJ_DIR_ENTRY_BUFFER_HANDLE dirEntryBufferHandle
+		)
+		{
+			return Win32::HrCodes::OK;
+		}
+
+		Win32::HRESULT get_placeholder_information(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData)
+		{
+			return Win32::HrCodes::OK;
+		}
+
+		Win32::HRESULT get_file_data(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, std::uint64_t byteOffset, std::uint32_t length)
+		{
+			return Win32::HrCodes::OK;
+		}
+
+		Win32::HRESULT end_directory_enumeration(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, const GUID* enumerationId)
+		{
+			return Win32::HrCodes::OK;
+		}
+
 		private:
 		void init()
 		{
@@ -87,6 +117,23 @@ export namespace projected_file_system
 				&m_guid.m_guid
 			);
 			Error::CheckHResult(hr, "PrjMarkDirectoryAsPlaceholder() failed.");
+
+			Win32::ProjectedFileSystem::PRJ_CALLBACKS callbacks{
+				.StartDirectoryEnumerationCallback = callbacks::start_directory_enumeration<pfs_context>,
+				.EndDirectoryEnumerationCallback = callbacks::end_directory_enumeration<pfs_context>,
+				.GetDirectoryEnumerationCallback = callbacks::get_directory_enumeration<pfs_context>,
+				.GetPlaceholderInfoCallback = callbacks::get_placeholder_information<pfs_context>,
+				.GetFileDataCallback = callbacks::get_file_data<pfs_context>
+			};
+
+			hr = Win32::ProjectedFileSystem::PrjStartVirtualizing(
+				m_root.c_str(), 
+				&callbacks, 
+				this, 
+				nullptr, 
+				&m_virtualisation_context
+			);
+			Error::CheckHResult(hr, "PrjStartVirtualizing() failed.");
 		}
 
 		bool check_and_create_root()
@@ -155,39 +202,10 @@ export namespace projected_file_system
 			}
 		}
 
-		Win32::HRESULT start_directory_enumeration(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, const GUID* enumerationId)
-		{
-			return Win32::HrCodes::OK;
-		}
-
-		Win32::HRESULT get_directory_enumeration(
-			const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData,
-			const Win32::GUID* enumerationId,
-			Win32::PCWSTR searchExpression,
-			Win32::ProjectedFileSystem::PRJ_DIR_ENTRY_BUFFER_HANDLE dirEntryBufferHandle
-		)
-		{
-			return Win32::HrCodes::OK;
-		}
-
-		Win32::HRESULT get_placeholder_information(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData)
-		{
-			return Win32::HrCodes::OK;
-		}
-
-		Win32::HRESULT get_file_data(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, std::uint64_t byteOffset, std::uint32_t length)
-		{
-			return Win32::HrCodes::OK;
-		}
-
-		Win32::HRESULT end_directory_enumeration(const Win32::ProjectedFileSystem::PRJ_CALLBACK_DATA* callbackData, const GUID* enumerationId)
-		{
-			return Win32::HrCodes::OK;
-		}
-
 		private:
 		std::filesystem::path m_root;
 		std::filesystem::path m_instanceFile = std::format("{}\\objproj.guid", m_root.string());
 		Util::GloballyUniqueID m_guid{ Util::GloballyUniqueID::Null };
+		Win32::ProjectedFileSystem::PRJ_NAMESPACE_VIRTUALIZATION_CONTEXT m_virtualisation_context;
 	};
 }
