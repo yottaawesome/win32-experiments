@@ -59,7 +59,8 @@ export namespace projected_file_system
 		instance_file_disposition create_or_open_instance_file()
 		{
 			Win32::HANDLE hFile = nullptr;
-			if (std::filesystem::exists(m_instanceFile))
+			bool exists = std::filesystem::exists(m_instanceFile);
+			if (exists)
 			{
 				hFile = Win32::CreateFileW(
 					m_instanceFile.wstring().data(),
@@ -72,21 +73,23 @@ export namespace projected_file_system
 				);
 				if (hFile == Win32::InvalidHandleValue)
 					throw Error::Win32Error(Win32::GetLastError(), "Failed opening existing instance file.");
-				return { RAII::HandleDeleter{hFile}, false };
 			}
-
-			hFile = Win32::CreateFileW(
-				m_instanceFile.wstring().data(),
-				Win32::Permission::GenericWrite,
-				0,
-				nullptr,
-				Win32::CreateNew,
-				Win32::FileAttribute::Hidden,
-				nullptr
-			);
-			if (hFile == Win32::InvalidHandleValue)
-				throw Error::Win32Error(Win32::GetLastError(), "Failed creating instance file.");
-			return { RAII::HandleDeleter{hFile}, true };
+			else
+			{
+				hFile = Win32::CreateFileW(
+					m_instanceFile.wstring().data(),
+					Win32::Permission::GenericWrite,
+					0,
+					nullptr,
+					Win32::CreateNew,
+					Win32::FileAttribute::Hidden,
+					nullptr
+				);
+				if (hFile == Win32::InvalidHandleValue)
+					throw Error::Win32Error(Win32::GetLastError(), "Failed creating instance file.");
+			}
+			
+			return { RAII::HandleDeleter{hFile}, not exists };
 		}
 
 		void read_or_write_guid(instance_file_disposition& disp)
