@@ -5,6 +5,10 @@ module;
 #include <Objbase.h>
 #include <projectedfslib.h>
 #include <guiddef.h>
+#include <wuapi.h>
+#include <comutil.h>
+
+#pragma comment(lib, "comsuppw.lib")
 
 export module common.win32;
 
@@ -27,6 +31,9 @@ export namespace Win32
 		::PVOID,
 		::UINT32,
 		::UINT64,
+		::COINIT, 
+		::CLSCTX,
+		::_bstr_t,
 		::LoadLibraryA,
 		::LoadLibraryW,
 		::FreeLibrary,
@@ -41,13 +48,27 @@ export namespace Win32
 		::CoCreateGuid,
 		::WriteFile,
 		::IsEqualGUID,
-		::CreateFileW
+		::CreateFileW,
+		::CoInitializeEx,
+		::CoCreateInstance,
+		::CoCreateInstanceEx
 		;
 
 	constexpr auto UserDefault = LANG_USER_DEFAULT;
 	constexpr auto ShareRead = FILE_SHARE_READ;
 	constexpr auto OpenExisting = OPEN_EXISTING;
 	constexpr auto CreateNew = CREATE_NEW;
+
+	namespace Wuapi
+	{
+		using
+			::IUpdateSession,
+			::IUpdateSearcher,
+			::IUpdateHistoryEntryCollection,
+			::IUpdateHistoryEntry,
+			::CLSID_UpdateSession
+			;
+	}
 
 	namespace ProjectedFileSystem
 	{

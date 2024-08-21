@@ -127,14 +127,14 @@ export namespace Error
         }
 
         private:
-        template<typename...TArgs>
-        constexpr std::string Format(Win32::DWORD errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
-        {
-            return std::format("{}: {}", std::format(fmt, std::forward<TArgs>(args)...), TranslateErrorCode(errorCode));
-        }
+            template<typename...TArgs>
+            constexpr std::string Format(Win32::DWORD errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
+            {
+                return std::format("{}: {}", std::format(fmt, std::forward<TArgs>(args)...), TranslateErrorCode(errorCode));
+            }
 
         private:
-        DWORD m_errorCode = 0;
+            DWORD m_errorCode = 0;
     };
 
     struct COMError : public BasicError
@@ -152,18 +152,18 @@ export namespace Error
             return m_errorCode;
         }
 
-        private:
+    private:
         template<typename...TArgs>
         constexpr std::string Format(Win32::HRESULT errorCode, std::format_string<TArgs...> fmt, TArgs&&...args)
         {
             return std::format("{}: {}", std::format(fmt, std::forward<TArgs>(args)...), TranslateErrorCode(errorCode));
         }
 
-        private:
+    private:
         HRESULT m_errorCode = 0;
     };
 
-    void CheckHResult(Win32::HRESULT hr, std::string_view msg, auto&&...args)
+    void CheckHResult(Win32::HRESULT hr, std::string_view msg = "HRESULT failure.", auto&&...args)
     {
         if (Win32::HrFailed(hr))
             throw COMError(hr, msg, std::forward<decltype(args)>(args)...);
@@ -172,6 +172,91 @@ export namespace Error
 
 export namespace Util
 {
+    template<typename TCom>
+    struct ComPtr
+    {
+        #pragma region Constructors
+        ~ComPtr() { Release(); }
+
+        // Constructores
+        ComPtr() = default;
+        ComPtr(const ComPtr<TCom>&) = delete;
+        ComPtr(ComPtr<TCom>&& other) { Move(other); };
+
+        ComPtr(TCom* ptr) : m_ptr(ptr)
+        {
+            if (not m_ptr)
+                throw std::runtime_error("Cannot pass null.");
+        }
+        #pragma endregion
+
+        #pragma region Operators
+        ComPtr<TCom>& operator=(const ComPtr<TCom>&) = delete;
+
+        ComPtr<TCom>& operator=(ComPtr<TCom>&& other) { return Move(other); }
+
+        TCom* operator->() const noexcept
+        {
+            return m_ptr;
+        }
+
+        operator bool() const noexcept
+        {
+            return m_ptr;
+        }
+        #pragma endregion
+
+        #pragma region Public functions
+        TCom** ReleaseAndGetAddress() noexcept
+        {
+            Release();
+            return &m_ptr;
+        }
+
+        void Release()
+        {
+            if (m_ptr)
+            {
+                m_ptr->Release();
+                m_ptr = nullptr;
+            }
+        }
+
+        TCom* Get() const noexcept
+        {
+            return m_ptr;
+        }
+
+        long GetCount() const noexcept 
+            requires std::invocable<TCom::get_Count, TCom*, long*>
+        {
+            if (not m_ptr)
+                throw std::runtime_error("Cannot get_Count() on null.");
+            long count;
+            Error::CheckHResult(m_ptr->get_Count(&count), "get_Count() failed!");
+            return count;
+        }
+
+        void Do(auto&& fn, auto&&...args)
+        {
+            Win32::HRESULT hr = std::invoke(fn, m_ptr, std::forward<decltype(args)>(args)...);
+            Error::CheckHResult(hr, "Function invocation failed.");
+        }
+        #pragma endregion
+
+        private:
+        ComPtr<TCom>& Move(ComPtr<TCom>& other)
+        {
+            Release();
+            m_ptr = other->m_ptr;
+            other->m_ptr = nullptr;
+            return *this;
+        }
+
+        private:
+        TCom* m_ptr = nullptr;
+    };
+
     std::string Format(Win32::DWORD errorCode, std::wstring_view moduleName = L"")
     {
         RAII::LibraryUniquePtr moduleToSearch = moduleName.empty()
