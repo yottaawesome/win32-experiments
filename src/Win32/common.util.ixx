@@ -172,9 +172,36 @@ export namespace Error
 
 export namespace Util
 {
-    template<typename TCom>
-    struct ComPtr
+    template<typename TType, typename TCom>
+    struct Mixin
     {
+        long GetCount() const
+            requires std::invocable<decltype(&TCom::get_Count), typename TType::Underlying*, long*>
+        {
+            const TType* self = static_cast<const TType*>(this);
+            if (not self->Get())
+                throw std::runtime_error("Cannot get_Count() on null.");
+            long count;
+            Error::CheckHResult(self->Get()->get_Count(&count), "get_Count() failed!");
+            return count;
+        }
+
+        long GetTotalHistoryCount() const
+            requires std::invocable<decltype(&TCom::GetTotalHistoryCount), typename TType::Underlying*, long*>
+        {
+            const TType* self = static_cast<const TType*>(this);
+            if (not self->Get())
+                throw std::runtime_error("Cannot GetTotalHistoryCount() on null.");
+            long count;
+            Error::CheckHResult(self->Get()->GetTotalHistoryCount(&count), "GetTotalHistoryCount() failed!");
+            return count;
+        }
+    };
+
+    template<typename TCom>
+    struct ComPtr : public Mixin<ComPtr<TCom>, TCom>
+    {
+        using Underlying = TCom;
         #pragma region Constructors
         ~ComPtr() { Release(); }
 
@@ -219,16 +246,6 @@ export namespace Util
         }
 
         TCom* Get() const noexcept { return m_ptr; }
-
-        long GetCount() const noexcept 
-            requires std::invocable<TCom::get_Count, TCom*, long*>
-        {
-            if (not m_ptr)
-                throw std::runtime_error("Cannot get_Count() on null.");
-            long count;
-            Error::CheckHResult(m_ptr->get_Count(&count), "get_Count() failed!");
-            return count;
-        }
 
         void Do(auto&& fn, auto&&...args)
         {

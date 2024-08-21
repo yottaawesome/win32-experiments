@@ -22,6 +22,7 @@ auto main() -> int
 	hr = session->CreateUpdateSearcher(searcher.ReleaseAndGetAddress());
 	Error::CheckHResult(hr, "Failed creating searcher.");
 
+	//searcher.GetTotalHistoryCount();
 	long count = 0;
 	hr = searcher->GetTotalHistoryCount(&count);
 	Error::CheckHResult(hr, "GetTotalHistoryCount() failed.");
@@ -31,6 +32,8 @@ auto main() -> int
 	long recordsToRetrieve = 100;
 	hr = searcher->QueryHistory(0, recordsToRetrieve, history.ReleaseAndGetAddress());
 	Error::CheckHResult(hr, "Failed querying history.");
+
+	history.GetCount();
 
 	for (int i = 0; i < recordsToRetrieve; i++)
 	{
