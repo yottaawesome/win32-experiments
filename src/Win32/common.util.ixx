@@ -237,6 +237,7 @@ export namespace Util
         }
         #pragma endregion
 
+        #pragma region Private
         private:
         ComPtr<TCom>& Move(ComPtr<TCom>& other)
         {
@@ -259,6 +260,7 @@ export namespace Util
 
         private:
         TCom* m_ptr = nullptr;
+        #pragma endregion
     };
 
     std::string Format(Win32::DWORD errorCode, std::wstring_view moduleName = L"")
