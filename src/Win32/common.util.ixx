@@ -163,7 +163,7 @@ export namespace Error
         HRESULT m_errorCode = 0;
     };
 
-    void CheckHResult(Win32::HRESULT hr, std::string_view msg = "HRESULT failure.", auto&&...args)
+    constexpr void CheckHResult(Win32::HRESULT hr, std::string_view msg = "HRESULT failure.", auto&&...args)
     {
         if (Win32::HrFailed(hr))
             throw COMError(hr, msg, std::forward<decltype(args)>(args)...);
@@ -180,7 +180,9 @@ export namespace Util
 
         // Constructores
         ComPtr() = default;
-        ComPtr(const ComPtr<TCom>&) = delete;
+
+        ComPtr(const ComPtr<TCom>& other) { Copy(other); }
+
         ComPtr(ComPtr<TCom>&& other) { Move(other); };
 
         ComPtr(TCom* ptr) : m_ptr(ptr)
@@ -191,19 +193,13 @@ export namespace Util
         #pragma endregion
 
         #pragma region Operators
-        ComPtr<TCom>& operator=(const ComPtr<TCom>&) = delete;
+        ComPtr<TCom>& operator=(const ComPtr<TCom>& other) { return Copy(other); }
 
         ComPtr<TCom>& operator=(ComPtr<TCom>&& other) { return Move(other); }
 
-        TCom* operator->() const noexcept
-        {
-            return m_ptr;
-        }
+        TCom* operator->() const noexcept { return m_ptr; }
 
-        operator bool() const noexcept
-        {
-            return m_ptr;
-        }
+        operator bool() const noexcept { return m_ptr; }
         #pragma endregion
 
         #pragma region Public functions
@@ -222,10 +218,7 @@ export namespace Util
             }
         }
 
-        TCom* Get() const noexcept
-        {
-            return m_ptr;
-        }
+        TCom* Get() const noexcept { return m_ptr; }
 
         long GetCount() const noexcept 
             requires std::invocable<TCom::get_Count, TCom*, long*>
@@ -250,6 +243,17 @@ export namespace Util
             Release();
             m_ptr = other->m_ptr;
             other->m_ptr = nullptr;
+            return *this;
+        }
+
+        ComPtr<TCom>& Copy(ComPtr<TCom>& other)
+        {
+            Release();
+            if (other->m_ptr)
+            {
+                m_ptr = other->m_ptr;
+                m_ptr->AddRef();
+            }
             return *this;
         }
 
