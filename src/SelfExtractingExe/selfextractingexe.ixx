@@ -8,6 +8,7 @@ import std;
 import win32;
 
 using FnToImport = decltype(&GetSecretOfTheUniverse);
+using FnToImport2 = decltype(&GetTheOtherSecretOfTheUniverse);
 
 export namespace SelfExtractingExe
 {
@@ -150,8 +151,11 @@ export namespace SelfExtractingExe
 		if (not fn)
 			throw std::runtime_error("Failed to load GetSecretOfTheUniverse()");
 
-		auto otherProc = Win32::GetProcAddress(hMod, "GetTheOtherSecretOfTheUniverse");
+		FnToImport2 otherProc = reinterpret_cast<FnToImport2>(Win32::GetProcAddress(hMod, "GetTheOtherSecretOfTheUniverse"));
 		if (not otherProc)
 			throw std::runtime_error("Failed to load GetTheOtherSecretOfTheUniverse()");
+
+		std::println("{}", fn());
+		std::println("{}", otherProc());
 	}
 }

@@ -7,3 +7,5 @@
 #endif
 
 EXTERN DLLEXPORT auto GetSecretOfTheUniverse() -> int;
+
+auto GetTheOtherSecretOfTheUniverse() -> int;
