@@ -7,11 +7,11 @@ export module selfextractingexe;
 import std;
 import win32;
 
-using FnToImport = decltype(&GetSecretOfTheUniverse);
-using FnToImport2 = decltype(&GetTheOtherSecretOfTheUniverse);
-
-export namespace SelfExtractingExe
+namespace SelfExtractingExe
 {
+	using FnToImport = decltype(&GetSecretOfTheUniverse);
+	using FnToImport2 = decltype(&GetTheOtherSecretOfTheUniverse);
+
 	template<size_t N, typename TChar, typename TView, typename TString>
 	struct FixedString
 	{
@@ -27,7 +27,7 @@ export namespace SelfExtractingExe
 			return { Buffer };
 		}
 
-		constexpr operator const TChar*() const noexcept
+		constexpr operator const TChar* () const noexcept
 		{
 			return Buffer;
 		}
@@ -64,6 +64,21 @@ export namespace SelfExtractingExe
 
 	constexpr FixedStringA ExtractedName = "extracted_library.dll";
 
+	struct FmtString
+	{
+		template<typename...TArgs>
+		constexpr FmtString(std::format_string<TArgs...> fmt, TArgs&&...args)
+			: Message(std::format(fmt, std::forward<TArgs>(args)...))
+		{ }
+
+		std::string Message;
+
+		operator const std::string&() const noexcept
+		{
+			return Message;
+		}
+	};
+
 	template<int VResource>
 	struct BinaryResource
 	{
@@ -73,9 +88,9 @@ export namespace SelfExtractingExe
 		}
 
 		public:
-		const Win32::BYTE* Data() const noexcept
+		const std::byte* Data() const noexcept
 		{
-			return static_cast<const BYTE*>(m_data);
+			return static_cast<const std::byte*>(m_data);
 		}
 
 		Win32::DWORD Size() const noexcept
@@ -83,22 +98,22 @@ export namespace SelfExtractingExe
 			return m_size;
 		}
 
-		const Win32::BYTE* cbegin() const noexcept
+		const std::byte* cbegin() const noexcept
 		{
 			return Data();
 		}
 
-		const Win32::BYTE* cend() const noexcept
+		const std::byte* cend() const noexcept
 		{
 			return Data() + Size();
 		}
 
-		const Win32::BYTE* begin() const noexcept
+		const std::byte* begin() const noexcept
 		{
 			return cbegin();
 		}
 
-		const Win32::BYTE* end() const noexcept
+		const std::byte* end() const noexcept
 		{
 			return cend();
 		}
@@ -141,8 +156,8 @@ export namespace SelfExtractingExe
 		}
 
 		private:
-			Win32::DWORD m_size = 0;
-			const void* m_data = nullptr;
+		Win32::DWORD m_size = 0;
+		const void* m_data = nullptr;
 	};
 
 	template<FixedStringA VLibraryName>
@@ -172,13 +187,16 @@ export namespace SelfExtractingExe
 
 			m_library = Win32::LoadLibraryA(VLibraryName.Data());
 			if (not m_library)
-				throw std::runtime_error("Failed loading DLL");
+				throw std::runtime_error(FmtString{ "Failed loading DLL {}", VLibraryName.Data() });
 		}
 
 		private:
 		Win32::HMODULE m_library = nullptr;
 	};
+}
 
+export namespace SelfExtractingExe
+{
 	void ExtractDLL()
 	{
 		if (std::filesystem::exists(ExtractedName.Data()))
@@ -202,7 +220,7 @@ export namespace SelfExtractingExe
 		if (not otherProc)
 			throw std::runtime_error("Failed to load GetTheOtherSecretOfTheUniverse()");
 
-		std::println("{}", fn());
-		std::println("{}", otherProc());
+		std::println("Invoking fn: {}", fn());
+		std::println("Invoking otherProc: {}", otherProc());
 	}
 }
