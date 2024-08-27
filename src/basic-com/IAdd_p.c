@@ -351,6 +351,11 @@ __midl_frag8_t;
 extern const __midl_frag8_t __midl_frag8;
 
 typedef 
+NDR64_FORMAT_CHAR
+__midl_frag7_t;
+extern const __midl_frag7_t __midl_frag7;
+
+typedef 
 struct 
 {
     struct _NDR64_PROC_FORMAT frag1;
@@ -441,6 +446,9 @@ static const __midl_frag8_t __midl_frag8 =
     }
 };
 
+static const __midl_frag7_t __midl_frag7 =
+0x5    /* FC64_INT32 */;
+
 static const __midl_frag5_t __midl_frag5 =
 { 
 /* SetSecondNumber */
@@ -457,7 +465,7 @@ static const __midl_frag5_t __midl_frag5 =
     },
     { 
     /* nX2 */      /* parameter nX2 */
-        &__midl_frag11,
+        &__midl_frag7,
         { 
         /* nX2 */
             0,
@@ -481,7 +489,7 @@ static const __midl_frag5_t __midl_frag5 =
     },
     { 
     /* HRESULT */      /* parameter HRESULT */
-        &__midl_frag11,
+        &__midl_frag7,
         { 
         /* HRESULT */
             0,
