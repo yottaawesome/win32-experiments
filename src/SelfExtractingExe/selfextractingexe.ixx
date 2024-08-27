@@ -141,21 +141,6 @@ R"({} - Win32 error {} - at
 
 	constexpr FixedStringA ExtractedName = "extracted_library.dll";
 
-	struct FmtString
-	{
-		template<typename...TArgs>
-		constexpr FmtString(std::format_string<TArgs...> fmt, TArgs&&...args)
-			: Message(std::format(fmt, std::forward<TArgs>(args)...))
-		{ }
-
-		std::string Message;
-
-		operator const std::string&() const noexcept
-		{
-			return Message;
-		}
-	};
-
 	template<int VResource>
 	struct BinaryResource
 	{
@@ -213,20 +198,16 @@ R"({} - Win32 error {} - at
 				Win32::MakeIntResource(VResource), 
 				static_cast<Win32::LPWSTR>(Win32::ResourceTypes::RcData)
 			);
-			if (not rsc)
-				throw std::runtime_error("FindResourceW() failed");
+			RuntimeError::Check(rsc, "FindResourceW() failed");
 
 			Win32::HGLOBAL hgRsc = Win32::LoadResource(nullptr, rsc);
-			if (not hgRsc)
-				throw std::runtime_error("LoadResource() failed");
+			RuntimeError::Check(hgRsc, "LoadResource() failed");
 
 			const void* resourceData = Win32::LockResource(hgRsc);
-			if (not resourceData)
-				throw std::runtime_error("LockResource() failed");
+			RuntimeError::Check(hgRsc, "LockResource() failed");
 
 			Win32::DWORD size = Win32::SizeofResource(nullptr, rsc);
-			if (size == 0)
-				throw std::runtime_error("SizeofResource() failed");
+			RuntimeError::Check(size > 0, "SizeofResource() failed");
 
 			m_data = resourceData;
 			m_size = size;
@@ -251,8 +232,7 @@ R"({} - Win32 error {} - at
 		Win32::FARPROC GetAddress(std::string_view name) const
 		{
 			Win32::FARPROC proc = Win32::GetProcAddress(m_library, name.data());
-			if (not proc)
-				throw std::runtime_error("GetProcAddress() failed.");
+			RuntimeError::Check(proc, "GetProcAddress() failed/");
 			return proc;
 		}
 
@@ -260,7 +240,6 @@ R"({} - Win32 error {} - at
 		void Init()
 		{
 			RuntimeError::Check(std::filesystem::exists(VLibraryName.Data()), "DLL does not exist");
-
 			m_library = Win32::LoadLibraryA(VLibraryName.Data());
 			Win32Error::Check(m_library, "Failed loading DLL {}", VLibraryName.Data());
 		}
@@ -288,12 +267,10 @@ export namespace SelfExtractingExe
 		DLL<ExtractedName> dll;
 
 		FnToImport fn = reinterpret_cast<FnToImport>(dll.GetAddress("GetSecretOfTheUniverse"));
-		if (not fn)
-			throw std::runtime_error("Failed to load GetSecretOfTheUniverse()");
+		RuntimeError::Check(fn, "Failed to load GetSecretOfTheUniverse()");
 
 		FnToImport2 otherProc = reinterpret_cast<FnToImport2>(dll.GetAddress("GetTheOtherSecretOfTheUniverse"));
-		if (not otherProc)
-			throw std::runtime_error("Failed to load GetTheOtherSecretOfTheUniverse()");
+		RuntimeError::Check(otherProc, "Failed to load GetTheOtherSecretOfTheUniverse()");
 
 		std::println("Invoking fn: {}", fn());
 		std::println("Invoking otherProc: {}", otherProc());
