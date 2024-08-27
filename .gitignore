@@ -39,3 +39,4 @@ Debug/
 
 node_modules/
 *.pfx
+*.aps
