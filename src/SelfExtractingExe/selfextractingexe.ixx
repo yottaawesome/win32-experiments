@@ -12,8 +12,6 @@ using FnToImport2 = decltype(&GetTheOtherSecretOfTheUniverse);
 
 export namespace SelfExtractingExe
 {
-	constexpr std::wstring_view DLLName = L"DLLToExtract";
-
 	template<size_t N, typename TChar, typename TView, typename TString>
 	struct FixedString
 	{
@@ -29,9 +27,9 @@ export namespace SelfExtractingExe
 			return { Buffer };
 		}
 
-		constexpr operator TString() const noexcept
+		constexpr operator const TChar*() const noexcept
 		{
-			return { Buffer };
+			return Buffer;
 		}
 
 		constexpr TView View() const noexcept
@@ -43,6 +41,16 @@ export namespace SelfExtractingExe
 		{
 			return { Buffer };
 		}
+
+		constexpr TChar* Data() noexcept
+		{
+			return Buffer;
+		}
+
+		constexpr const TChar* Data() const noexcept
+		{
+			return Buffer;
+		}
 	};
 	template<size_t N>
 	FixedString(const char(&)[N]) -> FixedString<N, char, std::string_view, std::string>;
@@ -53,6 +61,8 @@ export namespace SelfExtractingExe
 	using FixedStringW = FixedString<N, wchar_t, std::wstring_view, std::wstring>;
 	template<size_t N>
 	using FixedStringA = FixedString<N, char, std::string_view, std::string>;
+
+	constexpr FixedStringA ExtractedName = "extracted_library.dll";
 
 	template<int VResource>
 	struct BinaryResource
@@ -93,6 +103,16 @@ export namespace SelfExtractingExe
 			return cend();
 		}
 
+		void ExtractTo(std::filesystem::path path) const
+		{
+			std::ofstream outDllFile(path.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+			outDllFile.write(reinterpret_cast<const char*>(Data()), Size());
+			outDllFile.close();
+
+			if (not std::filesystem::exists(ExtractedName.Data()))
+				throw std::runtime_error("Extraction failed.");
+		}
+
 		private:
 		void Init()
 		{
@@ -125,33 +145,60 @@ export namespace SelfExtractingExe
 			const void* m_data = nullptr;
 	};
 
-	constexpr std::string_view ExtractedName = "extracted_library.dll";
+	template<FixedStringA VLibraryName>
+	class DLL
+	{
+		public:
+		~DLL() { Win32::FreeLibrary(m_library); }
+		DLL() { Init(); }
+		
+		DLL(const DLL&) = delete;
+		DLL& operator=(const DLL&) = delete;
+
+		public:
+		Win32::FARPROC GetAddress(std::string_view name) const
+		{
+			Win32::FARPROC proc = Win32::GetProcAddress(m_library, name.data());
+			if (not proc)
+				throw std::runtime_error("GetProcAddress() failed.");
+			return proc;
+		}
+
+		private:
+		void Init()
+		{
+			if (not std::filesystem::exists(VLibraryName.Data()))
+				throw std::runtime_error("DLL does not exist");
+
+			m_library = Win32::LoadLibraryA(VLibraryName.Data());
+			if (not m_library)
+				throw std::runtime_error("Failed loading DLL");
+		}
+
+		private:
+		Win32::HMODULE m_library = nullptr;
+	};
 
 	void ExtractDLL()
 	{
-		if (std::filesystem::exists(ExtractedName))
-			std::filesystem::remove(ExtractedName);
+		if (std::filesystem::exists(ExtractedName.Data()))
+			std::filesystem::remove(ExtractedName.Data());
 
 		BinaryResource<IDR_TEST_DLL> resource;
-		std::ofstream outDllFile(std::string{ ExtractedName }, std::ios::out | std::ios::binary | std::ios::app);
-		outDllFile.write(reinterpret_cast<const char*>(resource.Data()), resource.Size());
-		outDllFile.close();
-
-		if (not std::filesystem::exists(ExtractedName))
-			throw std::runtime_error("Extraction failed.");
+		resource.ExtractTo(ExtractedName.String());
+		
 		std::println("Successfully extracted DLL.");
 	}
 
 	void LoadDLL()
 	{
-		Win32::HMODULE hMod = Win32::LoadLibraryA(ExtractedName.data());
-		if (not hMod)
-			throw std::runtime_error("Failed loading DLL");
-		FnToImport fn = reinterpret_cast<FnToImport>(Win32::GetProcAddress(hMod, "GetSecretOfTheUniverse"));
+		DLL<ExtractedName> dll;
+
+		FnToImport fn = reinterpret_cast<FnToImport>(dll.GetAddress("GetSecretOfTheUniverse"));
 		if (not fn)
 			throw std::runtime_error("Failed to load GetSecretOfTheUniverse()");
 
-		FnToImport2 otherProc = reinterpret_cast<FnToImport2>(Win32::GetProcAddress(hMod, "GetTheOtherSecretOfTheUniverse"));
+		FnToImport2 otherProc = reinterpret_cast<FnToImport2>(dll.GetAddress("GetTheOtherSecretOfTheUniverse"));
 		if (not otherProc)
 			throw std::runtime_error("Failed to load GetTheOtherSecretOfTheUniverse()");
 

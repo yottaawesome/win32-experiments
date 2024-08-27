@@ -16,13 +16,15 @@ export namespace Win32
 		::LPWSTR,
 		::HGLOBAL,
 		::BYTE,
+		::FARPROC,
 		::LoadLibraryW,
 		::LoadLibraryA,
 		::GetProcAddress,
 		::FindResourceW,
 		::LoadResource,
 		::SizeofResource,
-		::LockResource
+		::LockResource,
+		::FreeLibrary
 		;
 
 	template<auto VValue>
