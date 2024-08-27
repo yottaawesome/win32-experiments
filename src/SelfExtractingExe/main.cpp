@@ -1,5 +1,5 @@
-import selfextractingexe;
 import std;
+import selfextractingexe;
 
 // Based on
 // https://github.com/GiovanniDicanio/CppWinDllResourceExtractor

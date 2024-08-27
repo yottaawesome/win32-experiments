@@ -12,6 +12,31 @@ namespace SelfExtractingExe
 	using FnToImport = decltype(&GetSecretOfTheUniverse);
 	using FnToImport2 = decltype(&GetTheOtherSecretOfTheUniverse);
 
+	template<typename TError, typename...TArgs>
+	struct Check
+	{
+		Check(
+			bool condition,
+			std::format_string<TArgs...> fmt,
+			TArgs&&...args,
+			const std::source_location loc = std::source_location::current()
+		)
+		{
+			if (not condition)
+				throw TError(std::string{ std::format(fmt, std::forward<TArgs>(args)...) });
+		}
+	};
+	template<typename TError, typename...TArgs>
+	Check(bool, std::format_string<TArgs...>, TArgs&&...)->Check<TError, TArgs...>;
+
+	struct RuntimeError : public std::runtime_error
+	{
+		RuntimeError(std::string s) : std::runtime_error(s) {}
+
+		template<typename...TArgs>
+		using Check = Check<RuntimeError, TArgs...>;
+	};
+
 	template<size_t N, typename TChar, typename TView, typename TString>
 	struct FixedString
 	{
