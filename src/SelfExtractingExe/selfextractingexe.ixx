@@ -61,6 +61,37 @@ export namespace SelfExtractingExe
 			Init();
 		}
 
+		public:
+		const Win32::BYTE* Data() const noexcept
+		{
+			return static_cast<const BYTE*>(m_data);
+		}
+
+		Win32::DWORD Size() const noexcept
+		{
+			return m_size;
+		}
+
+		const Win32::BYTE* cbegin() const noexcept
+		{
+			return Data();
+		}
+
+		const Win32::BYTE* cend() const noexcept
+		{
+			return Data() + Size();
+		}
+
+		const Win32::BYTE* begin() const noexcept
+		{
+			return cbegin();
+		}
+
+		const Win32::BYTE* end() const noexcept
+		{
+			return cend();
+		}
+
 		private:
 		void Init()
 		{
@@ -83,17 +114,36 @@ export namespace SelfExtractingExe
 			Win32::DWORD size = Win32::SizeofResource(nullptr, rsc);
 			if (size == 0)
 				throw std::runtime_error("SizeofResource() failed");
+
+			m_data = resourceData;
+			m_size = size;
 		}
+
+		private:
+			Win32::DWORD m_size = 0;
+			const void* m_data = nullptr;
 	};
+
+	constexpr std::string_view ExtractedName = "extracted_library.dll";
 
 	void ExtractDLL()
 	{
-		BinaryResource<IDR_TEST_DLL> data;
+		if (std::filesystem::exists(ExtractedName))
+			std::filesystem::remove(ExtractedName);
+
+		BinaryResource<IDR_TEST_DLL> resource;
+		std::ofstream outDllFile(std::string{ ExtractedName }, std::ios::out | std::ios::binary | std::ios::app);
+		outDllFile.write(reinterpret_cast<const char*>(resource.Data()), resource.Size());
+		outDllFile.close();
+
+		if (not std::filesystem::exists(ExtractedName))
+			throw std::runtime_error("Extraction failed.");
+		std::println("Successfully extracted DLL.");
 	}
 
 	void LoadDLL()
 	{
-		Win32::HMODULE hMod = Win32::LoadLibraryW(DLLName.data());
+		Win32::HMODULE hMod = Win32::LoadLibraryA(ExtractedName.data());
 		if (not hMod)
 			throw std::runtime_error("Failed loading DLL");
 		FnToImport fn = reinterpret_cast<FnToImport>(Win32::GetProcAddress(hMod, "GetSecretOfTheUniverse"));

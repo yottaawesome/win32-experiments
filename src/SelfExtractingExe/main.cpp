@@ -8,6 +8,7 @@ int main()
 try
 {
 	SelfExtractingExe::ExtractDLL();
+	SelfExtractingExe::LoadDLL();
 	return 0;
 }
 catch (const std::exception& ex)
