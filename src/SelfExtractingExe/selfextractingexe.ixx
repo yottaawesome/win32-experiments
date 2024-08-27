@@ -15,6 +15,11 @@ namespace SelfExtractingExe
 	template<typename TError, typename...TArgs>
 	struct Check
 	{
+		constexpr static std::string_view Format = 
+R"({} at 
+	function: {}
+	file: {}
+	line: {})";
 		Check(
 			bool condition,
 			std::format_string<TArgs...> fmt,
@@ -22,19 +27,66 @@ namespace SelfExtractingExe
 			const std::source_location loc = std::source_location::current()
 		)
 		{
-			if (not condition)
-				throw TError(std::string{ std::format(fmt, std::forward<TArgs>(args)...) });
+			if (condition)
+				return;
+			throw TError(
+				std::format(
+					Format,
+					std::format(fmt, std::forward<TArgs>(args)...),
+					loc.function_name(),
+					loc.file_name(),
+					loc.line()
+				)
+			);
 		}
 	};
 	template<typename TError, typename...TArgs>
 	Check(bool, std::format_string<TArgs...>, TArgs&&...)->Check<TError, TArgs...>;
 
-	struct RuntimeError : public std::runtime_error
+	export struct RuntimeError : public std::runtime_error
 	{
 		RuntimeError(std::string s) : std::runtime_error(s) {}
 
 		template<typename...TArgs>
 		using Check = Check<RuntimeError, TArgs...>;
+	};
+
+	struct Win32Error : public std::runtime_error
+	{
+		Win32Error(std::string s) : std::runtime_error(s) {}
+
+		template<typename...TArgs>
+		struct Check
+		{
+			constexpr static std::string_view Format = 
+R"({} - Win32 error {} - at 
+	function: {}
+	file: {}
+	line: {})";
+			Check(
+				bool condition,
+				std::format_string<TArgs...> fmt,
+				TArgs&&...args,
+				const std::source_location loc = std::source_location::current()
+			)
+			{
+				if (condition)
+					return;
+				const auto lastError = Win32::GetLastError();
+				throw Win32Error(
+					std::format(
+						Format,
+						std::format(fmt, std::forward<TArgs>(args)...),
+						lastError,
+						loc.function_name(),
+						loc.file_name(),
+						loc.line()
+					)
+				);
+			}
+		};
+		template<typename...TArgs>
+		Check(bool, std::format_string<TArgs...>, TArgs&&...) -> Check<TArgs...>;
 	};
 
 	template<size_t N, typename TChar, typename TView, typename TString>
@@ -149,8 +201,8 @@ namespace SelfExtractingExe
 			outDllFile.write(reinterpret_cast<const char*>(Data()), Size());
 			outDllFile.close();
 
-			if (not std::filesystem::exists(ExtractedName.Data()))
-				throw std::runtime_error("Extraction failed.");
+			const bool success = std::filesystem::exists(ExtractedName.Data());
+			RuntimeError::Check(success, "Extraction failed for resource {}.", VResource);
 		}
 
 		private:
@@ -207,12 +259,10 @@ namespace SelfExtractingExe
 		private:
 		void Init()
 		{
-			if (not std::filesystem::exists(VLibraryName.Data()))
-				throw std::runtime_error("DLL does not exist");
+			RuntimeError::Check(std::filesystem::exists(VLibraryName.Data()), "DLL does not exist");
 
 			m_library = Win32::LoadLibraryA(VLibraryName.Data());
-			if (not m_library)
-				throw std::runtime_error(FmtString{ "Failed loading DLL {}", VLibraryName.Data() });
+			Win32Error::Check(m_library, "Failed loading DLL {}", VLibraryName.Data());
 		}
 
 		private:

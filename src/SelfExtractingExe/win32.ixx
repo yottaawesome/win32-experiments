@@ -24,7 +24,8 @@ export namespace Win32
 		::LoadResource,
 		::SizeofResource,
 		::LockResource,
-		::FreeLibrary
+		::FreeLibrary,
+		::GetLastError
 		;
 
 	template<auto VValue>
