@@ -6,6 +6,13 @@ import testdll;
 using FnPtr_t = decltype(&ExplicitDLL::Something);
 using FnMakePtr_t = decltype(&ExplicitDLL::Make);
 
+struct DLLDeleter
+{
+    void operator()(Win32::HMODULE handle) { Win32::FreeLibrary(handle); }
+};
+
+using LibraryUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HMODULE>, DLLDeleter>;
+
 int main()
 try
 {
@@ -28,6 +35,7 @@ try
     Win32::HMODULE dll = Win32::LoadLibraryW(L"TestExplicitDLL.dll");
     if (not dll)
         throw std::runtime_error("Failed to load DLL");
+    LibraryUniquePtr ptr{ dll };
     
     FnPtr_t something = reinterpret_cast<FnPtr_t>(Win32::GetProcAddress(dll, "Something"));
     if (not something)
@@ -37,8 +45,9 @@ try
     if (not maker)
         throw std::runtime_error("Failed to load function");
 
-    auto made = maker();
+    ExplicitDLL::ISomeObject* made = maker();
     made->DoIt();
+    delete made;
 
     std::println("Hello World!");
 }
