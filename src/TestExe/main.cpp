@@ -4,11 +4,16 @@ import common;
 import testdll;
 
 using FnPtr_t = decltype(&ExplicitDLL::Something);
+using FnMakePtr_t = decltype(&ExplicitDLL::Make);
 
 int main()
 try
 {
     TestDLL::TestClass test;
+    TestDLL::AnotherFunction();
+    TestDLL::ReturnIt(1);
+    TestDLL::ReturnIt(1.f);
+    TestDLL::YetAnotherFunction();
     try
     {
         test.BB();
@@ -17,6 +22,8 @@ try
     {
         std::println("Success! {}", test.GetAString());
     }
+    TestDLL::TestClass2 test2;
+    test2.CC();
 
     Win32::HMODULE dll = Win32::LoadLibraryW(L"TestExplicitDLL.dll");
     if (not dll)
@@ -25,6 +32,13 @@ try
     FnPtr_t something = reinterpret_cast<FnPtr_t>(Win32::GetProcAddress(dll, "Something"));
     if (not something)
         throw std::runtime_error("Failed to load function");
+
+    FnMakePtr_t maker = reinterpret_cast<FnMakePtr_t>(Win32::GetProcAddress(dll, "Make"));
+    if (not maker)
+        throw std::runtime_error("Failed to load function");
+
+    auto made = maker();
+    made->DoIt();
 
     std::println("Hello World!");
 }

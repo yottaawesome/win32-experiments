@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="testdll.cpp" />
     <ClCompile Include="testdll.ixx" />
   </ItemGroup>
   <ItemGroup>
