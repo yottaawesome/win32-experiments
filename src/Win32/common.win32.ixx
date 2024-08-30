@@ -34,6 +34,7 @@ export namespace Win32
 		::COINIT, 
 		::CLSCTX,
 		::_bstr_t,
+		::LPVOID,
 		::LoadLibraryA,
 		::LoadLibraryW,
 		::FreeLibrary,
@@ -51,7 +52,8 @@ export namespace Win32
 		::CreateFileW,
 		::CoInitializeEx,
 		::CoCreateInstance,
-		::CoCreateInstanceEx
+		::CoCreateInstanceEx,
+		::GetProcAddress
 		;
 
 	constexpr auto UserDefault = LANG_USER_DEFAULT;
@@ -207,4 +209,12 @@ export namespace Win32
 			OK = S_OK
 		};
 	}
+
+	enum class DLLAttach : unsigned long
+	{
+		ProcessAttach = DLL_PROCESS_ATTACH,
+		ProcessDetach = DLL_PROCESS_DETACH,
+		ThreadAttach = DLL_THREAD_ATTACH,
+		ThreadDetach = DLL_THREAD_DETACH
+	};
 }
