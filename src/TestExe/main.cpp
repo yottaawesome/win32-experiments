@@ -39,8 +39,8 @@ try
         throw std::runtime_error("Failed to load DLL");
     LibraryUniquePtr ptr{ dll };
 
-    //TestExeHelpers::ProcAddress < "Something", Fn_t, dll> fn;
-    //fn();
+    TestExeHelpers::ProcAddress<"Something", Fn_t> fn(ptr.get());
+    fn();
     FnPtr_t something = reinterpret_cast<FnPtr_t>(Win32::GetProcAddress(dll, "Something"));
     if (not something)
         throw std::runtime_error("Failed to load function");

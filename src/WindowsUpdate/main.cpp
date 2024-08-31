@@ -1,5 +1,45 @@
 import common;
 
+template<typename T>
+concept IsSomething = requires (T t) { { t.Something() } -> std::same_as<void>; };
+
+struct A
+{
+	void Something() {}
+};
+
+struct B
+{
+	void Something() {}
+};
+
+std::variant<A, B> Blah;
+
+template<typename...TArgs>
+struct Overload : TArgs... { using TArgs::operator()...; };
+
+template<typename T>
+struct G { auto operator()() {} };
+
+template<>
+struct G<int> { int operator()() { return 1; } };
+
+template<>
+struct G<float> { float operator()() { return 1.f; } };
+
+void Do()
+{
+	std::visit(
+		Overload{
+			[](IsSomething auto& a)
+			{
+
+			}
+		},
+		Blah
+	);
+}
+
 auto main() -> int
 {
 	Win32::HRESULT hr = Win32::CoInitializeEx(

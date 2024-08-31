@@ -51,6 +51,7 @@ export namespace TestExeHelpers
 	template<FixedStringA VProcName, typename TFn, HModuleGetter auto VModuleGetter = []() -> Win32::HMODULE {return nullptr; } >
 	struct ProcAddress
 	{
+		constexpr ProcAddress(HMODULE hModule) : Module(hModule) {}
 		constexpr ProcAddress()
 			requires std::same_as<std::invoke_result_t<decltype(VModuleGetter)>, Win32::HMODULE>
 		{ }
@@ -61,24 +62,25 @@ export namespace TestExeHelpers
 		{
 			std::call_once(
 				Flag, 
-				[](TFn** ptr)
+				[](TFn** ptr, Win32::HMODULE classModule)
 				{
-					if constexpr (std::invocable<decltype(VModuleGetter)>)
-					{
-						*ptr = reinterpret_cast<TFn*>(Win32::GetProcAddress(VModuleGetter(), VProcName.ToString().c_str()));
-					}
-					else
-					{
-						*ptr = reinterpret_cast<TFn*>(Win32::GetProcAddress(VModuleGetter, VProcName.ToString().c_str()));
-					}
+					Win32::HMODULE hModule = classModule;
+					if (not hModule)
+						if constexpr (std::invocable<decltype(VModuleGetter)>)
+							hModule = std::invoke(VModuleGetter);
+						else
+							hModule = VModuleGetter;
+					
+					*ptr = reinterpret_cast<TFn*>(Win32::GetProcAddress(hModule, VProcName.ToString().c_str()));
 				},
-				&FnPtr
+				&FnPtr,
+				Module
 			);
-
 			return std::invoke(FnPtr, std::forward<TArgs>(args)...);
 		}
 
 		mutable std::once_flag Flag;
 		mutable TFn* FnPtr = nullptr;
+		Win32::HMODULE Module = nullptr;
 	};
 }
