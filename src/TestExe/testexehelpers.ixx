@@ -83,4 +83,54 @@ export namespace TestExeHelpers
 		mutable TFn* FnPtr = nullptr;
 		Win32::HMODULE Module = nullptr;
 	};
+
+
+	template<FixedStringA VLibPath>
+	struct Library
+	{
+		constexpr operator HMODULE() const noexcept 
+		{
+			static Win32::HMODULE hModule = 
+				[]{ 
+					Win32::HMODULE hModule = Win32::LoadLibraryA(VLibPath.ToCharBuffer());
+					if (not hModule)
+						throw std::runtime_error(std::format("Failed loading library {}", VLibPath.ToView()));
+					return hModule; 
+				}();
+			return hModule;
+		}
+		//Win32::HMODULE Module = nullptr; // Can use call_once
+	};
+
+	template<typename T, typename TSignature>
+	concept Allowed = std::is_null_pointer_v<T> or std::is_convertible_v<T, TSignature>;
+
+	template<FixedStringA VProcName, typename TSignature, Library VLib, auto VDefault = nullptr>
+	requires Allowed<decltype(VDefault), TSignature> // Allowed VDefault syntax appears to be bugged
+	struct LibraryProc
+	{
+		template<typename...TArgs>
+		constexpr auto operator()(TArgs&&...args) const noexcept(std::is_nothrow_invocable_v<TSignature, TArgs...>)
+			requires std::invocable<TSignature, TArgs...>
+		{
+			static TSignature proc =
+				[]() -> TSignature
+				{
+					TSignature fn = reinterpret_cast<TSignature>(Win32::GetProcAddress(VLib, VProcName.ToCharBuffer()));
+					if (fn)
+						return fn;
+					if constexpr (std::invocable<decltype(VDefault), TArgs...>)
+						return VDefault;
+					else
+						throw std::runtime_error(std::format("Failed loading function {}", VProcName.ToView()));
+				}();
+			return std::invoke(proc, std::forward<TArgs>(args)...);
+		}
+	};
+
+	struct AnAPI
+	{
+		static constexpr Library<"Something"> ALibrary;
+		LibraryProc<"SomeProc", void(*)(), ALibrary, [](){}> Proc;
+	} constexpr API;
 }
