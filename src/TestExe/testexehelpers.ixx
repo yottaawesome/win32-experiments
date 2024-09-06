@@ -128,9 +128,26 @@ export namespace TestExeHelpers
 		}
 	};
 
+	using X = auto(*)()->int;
+	struct S
+	{
+		constexpr S(const X& x) : m_x(&x) {}
+		const X* m_x = nullptr;
+	};
+
 	struct AnAPI
 	{
 		static constexpr Library<"Something"> ALibrary;
 		LibraryProc<"SomeProc", void(*)(), ALibrary, [](){}> Proc;
+		X x = nullptr;
+		S M{ x };
 	} constexpr API;
+
+	void F()
+	{
+		std::once_flag f;
+	}
+	
+
+	constexpr S s = nullptr;
 }
