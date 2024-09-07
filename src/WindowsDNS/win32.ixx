@@ -22,13 +22,30 @@ export namespace Win32
 		::FormatMessageA,
 		::FormatMessageW,
 		::LocalFree,
+		::CreateEventW,
+		::CloseHandle,
+		::SetEvent,
+		::WaitForSingleObject,
+		::GetLastError,
+		::InetNtopW,		 // https://learn.microsoft.com/en-us/windows/win32/api/ws2tcpip/nf-ws2tcpip-inetntopw
 		::DNS_FREE_TYPE,
 		::DWORD,
 		::HANDLE,
 		::DNS_QUERY_CANCEL,
-		::DNS_QUERY_REQUEST,
-		::DNS_QUERY_RESULT
+		::DNS_QUERY_REQUEST, // https://learn.microsoft.com/en-us/windows/win32/api/windns/ns-windns-dns_query_request
+		::DNS_QUERY_RESULT,
+		::DNS_STATUS,
+		::DNS_RECORD
 		;
+
+	namespace ErrorCodes
+	{
+		enum
+		{
+			Success = ERROR_SUCCESS,
+			DnsRequestPending = DNS_REQUEST_PENDING
+		};
+	}
 
 	enum FormatMessageOptions
 	{
@@ -41,6 +58,29 @@ export namespace Win32
 	{
 		DNS = NS_DNS
 	};
+
+	enum IPAddressFamily
+	{
+		v4 = AF_INET,
+		v6 = AF_INET6
+	};
+
+	constexpr auto DnsQueryRequestVersion1 = DNS_QUERY_REQUEST_VERSION1;
+
+	// https://learn.microsoft.com/en-us/windows/win32/dns/dns-constants
+	enum DnsRecordType
+	{
+		A = DNS_TYPE_A,
+		AAAA = DNS_TYPE_AAAA
+	};
+
+	enum DnsOptions
+	{
+		DnsQueryStandard = DNS_QUERY_STANDARD,
+		DualAddress = DNS_QUERY_DUAL_ADDR
+	};
+
+	constexpr auto InfiniteWait = INFINITE;
 }
 
 export namespace Util
