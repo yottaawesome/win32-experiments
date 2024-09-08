@@ -36,16 +36,18 @@ namespace WinDnsAsync
     };
 
     template<typename...TArgs>
-    constexpr void Print(std::format_string<TArgs...> fmt, TArgs&&...args)
+    constexpr void Print(std::format_string<TArgs...> fmt, TArgs&&...args) noexcept
     {
         std::wcout << std::format(fmt, std::forward<TArgs>(args)...).data() << std::endl;
     }
 
     template<typename...TArgs>
-    constexpr void Print(std::wformat_string<TArgs...> fmt, TArgs&&...args)
+    constexpr void Print(std::wformat_string<TArgs...> fmt, TArgs&&...args) noexcept
     {
         std::wcout << std::format(fmt, std::forward<TArgs>(args)...) << std::endl;
     }
+
+    void Print() noexcept { std::wcout << L"\n"; }
 
     std::vector<Record> Resolve(std::wstring_view name)
     {
@@ -98,17 +100,25 @@ namespace WinDnsAsync
     }
 
     void Run()
+    try
     {
-        try
+        [](auto&&...args)
         {
-            auto results = Resolve(L"www.google.com");
-            for (auto&& ip : results)
-                Print(L"{}", ip.Address);
-        }
-        catch (const std::exception& ex)
-        {
-            Print("Exception: {}", ex.what());
-        }
+            ([](auto&& arg)
+            {
+                Print(L"Resolving IPs for {}:", arg);
+                auto results = Resolve(arg);
+                if (results.empty())
+                    Print(L"   -> (No results)");
+                for (auto&& ip : results)
+                    Print(L"   -> {}", ip.Address);
+                Print();
+            }(args), ...);
+        }(L"www.google.com", L"localhost", L"8.8.8.8");
+    }
+    catch (const std::exception& ex)
+    {
+        Print("Exception: {}", ex.what());
     }
 }
 
