@@ -35,7 +35,9 @@ export namespace Win32
 		::DNS_QUERY_REQUEST, // https://learn.microsoft.com/en-us/windows/win32/api/windns/ns-windns-dns_query_request
 		::DNS_QUERY_RESULT,
 		::DNS_STATUS,
-		::DNS_RECORD
+		::DNS_RECORD,
+		::ADDRINFOEXW,
+		::timeval
 		;
 
 	namespace ErrorCodes

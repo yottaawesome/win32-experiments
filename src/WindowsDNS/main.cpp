@@ -3,9 +3,25 @@ import win32;
 
 namespace WinDnsSync
 {
-    void Run()
+    void Run(std::wstring_view name)
     {
+        Win32::ADDRINFOEXW hints{
 
+        };
+        Win32::ADDRINFOEXW* result = nullptr;
+        Win32::timeval timeout{ .tv_sec = 10 };
+        Win32::GetAddrInfoExW(
+            name.data(),
+            0,   // port,
+            Win32::ServiceNamespace::DNS,
+            nullptr,
+            &hints,
+            &result,
+            &timeout,
+            nullptr,
+            nullptr,
+            nullptr
+        );
     }
 }
 
