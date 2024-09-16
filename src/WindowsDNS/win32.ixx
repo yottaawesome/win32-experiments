@@ -28,6 +28,15 @@ export namespace Win32
 		::WaitForSingleObject,
 		::GetLastError,
 		::InetNtopW,		 // https://learn.microsoft.com/en-us/windows/win32/api/ws2tcpip/nf-ws2tcpip-inetntopw
+		::WSAAddressToStringW,
+		::WideCharToMultiByte,
+		::WSAStartup,
+		::GetCurrentThread,
+		::SleepEx,
+		::QueueUserAPC,
+		::OpenThread,
+		::GetCurrentThreadId,
+		::ULONG_PTR,
 		::DNS_FREE_TYPE,
 		::DWORD,
 		::HANDLE,
@@ -37,17 +46,27 @@ export namespace Win32
 		::DNS_STATUS,
 		::DNS_RECORD,
 		::ADDRINFOEXW,
-		::timeval
+		::timeval,
+		::OVERLAPPED,
+		::WSADATA
 		;
+
+	constexpr auto ThreadSetContext = THREAD_SET_CONTEXT;
 
 	namespace ErrorCodes
 	{
 		enum
 		{
 			Success = ERROR_SUCCESS,
-			DnsRequestPending = DNS_REQUEST_PENDING
+			DnsRequestPending = DNS_REQUEST_PENDING,
+			WsaIoPending = WSA_IO_PENDING
 		};
 	}
+
+	constexpr auto CpUtf8 = CP_UTF8;
+	constexpr auto WcNoBestFitChars = WC_NO_BEST_FIT_CHARS;
+
+	constexpr auto SocketError = SOCKET_ERROR;
 
 	enum FormatMessageOptions
 	{
@@ -83,6 +102,11 @@ export namespace Win32
 	};
 
 	constexpr auto InfiniteWait = INFINITE;
+
+	constexpr auto MakeWord(int a, int b)
+	{
+		return MAKEWORD(a, b);
+	}
 }
 
 export namespace Util
