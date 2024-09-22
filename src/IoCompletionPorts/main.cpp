@@ -44,7 +44,8 @@ class CompletionPort
         Win32::OVERLAPPED* overlapped
     )
     {
-        if (not Win32::PostQueuedCompletionStatus(m_h,
+        if (not Win32::PostQueuedCompletionStatus(
+            m_h,
             bytesCopied,
             completionKey,
             overlapped)
@@ -58,7 +59,8 @@ class CompletionPort
         Win32::OVERLAPPED*& overlapped
     )
     {
-        if (not Win32::GetQueuedCompletionStatus(m_h,
+        if (not Win32::GetQueuedCompletionStatus(
+            m_h,
             &bytesCopied,
             &completionKey,
             &overlapped,
