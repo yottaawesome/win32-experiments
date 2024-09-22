@@ -1,162 +1,125 @@
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+import win32;
+
+using namespace Win32;
+
 // See https://weblogs.asp.net/kennykerr/parallel-programming-with-c-part-4-i-o-completion-ports
 class CompletionPort
 {
-public:
-
+    public:
     CompletionPort() 
     {
         Create(0);
     }
-
 
     ~CompletionPort()
     {
         CloseHandle(m_h);
     }
 
-    HRESULT Create(DWORD threadCount)
+    void Create(Win32::DWORD threadCount)
     {
-        m_h = ::CreateIoCompletionPort(
-            INVALID_HANDLE_VALUE,
+        m_h = Win32::CreateIoCompletionPort(
+            InvalidHandleValue,
             0, // no existing port
             0, // ignored
             threadCount
         );
-
-        if (0 == m_h)
-        {
-            return HRESULT_FROM_WIN32(::GetLastError());
-        }
-
-        return S_OK;
+        if (not m_h)
+            throw Win32::Error::Win32Error();
     }
 
-    HRESULT AssociateFile(
-        HANDLE file,
-        ULONG_PTR completionKey
-    )
+    void AssociateFile(Win32::HANDLE file, Win32::ULONG_PTR completionKey)
     {
-        if (0 == ::CreateIoCompletionPort(
+        if (not Win32::CreateIoCompletionPort(
             file,
             m_h,
             completionKey,
-            0)) // ignored
-        {
-            return HRESULT_FROM_WIN32(::GetLastError());
-        }
-
-        return S_OK;
+            0)
+        ) throw Win32::Error::Win32Error();
     }
 
-    HRESULT QueuePacket(
-        DWORD bytesCopied,
-        ULONG_PTR completionKey,
-        OVERLAPPED* overlapped
+    void QueuePacket(
+        Win32::DWORD bytesCopied,
+        Win32::ULONG_PTR completionKey,
+        Win32::OVERLAPPED* overlapped
     )
     {
-
-        if (!::PostQueuedCompletionStatus(m_h,
+        if (not Win32::PostQueuedCompletionStatus(m_h,
             bytesCopied,
             completionKey,
-            overlapped))
-        {
-            return HRESULT_FROM_WIN32(::GetLastError());
-        }
-
-        return S_OK;
+            overlapped)
+        ) throw Win32::Error::Win32Error();
     }
 
-    HRESULT DequeuePacket(
-        DWORD milliseconds,
-        DWORD& bytesCopied,
-        ULONG_PTR& completionKey,
-        OVERLAPPED*& overlapped
+    void DequeuePacket(
+        Win32::DWORD milliseconds,
+        Win32::DWORD& bytesCopied,
+        Win32::ULONG_PTR& completionKey,
+        Win32::OVERLAPPED*& overlapped
     )
     {
-
-        if (!::GetQueuedCompletionStatus(m_h,
+        if (not Win32::GetQueuedCompletionStatus(m_h,
             &bytesCopied,
             &completionKey,
             &overlapped,
-            milliseconds))
-        {
-            return HRESULT_FROM_WIN32(::GetLastError());
-        }
-
-        return S_OK;
+            milliseconds)
+        ) throw Win32::Error::Win32Error();
     }
 
-private:
-
+    private:
     CompletionPort(CompletionPort&) = delete;
     CompletionPort& operator=(CompletionPort&) = delete;
-    HANDLE m_h;
+    Win32::HANDLE m_h;
 };
 
-int main()
+int main() try
 {
     CompletionPort port;
+    port.Create(1);
 
-    HRESULT result = port.Create(1);
-
-    if (FAILED(result))
-    {
-        return 1;
-        // Failed to create completion port. The HRESULT provides the reason.
-    }
-
-    HANDLE file(::CreateFile(L"testfile.txt",
-        FILE_READ_DATA,
-        FILE_SHARE_READ,
+    Win32::HANDLE file = Win32::CreateFileW(
+        L"testfile.txt",
+        Win32::FileReadData,
+        Win32::FileShareRead,
         0, // default security
-        OPEN_EXISTING,
-        FILE_FLAG_OVERLAPPED,
-        0)); // no template
+        Win32::OpenExisting,
+        Win32::FileFlagOverlapped,
+        0
+    );
+    if (Win32::InvalidHandleValue == file)
+        throw Win32::Error::Win32Error();
 
-    if (INVALID_HANDLE_VALUE == file)
-    {
-        return 1;
-        // Call GetLastError for more information.
-    }
+    port.AssociateFile(file, 123); // completion key
 
-    result = port.AssociateFile(file,
-        123); // completion key
+    Win32::OVERLAPPED overlapped = { 0 };
+    Win32::BYTE buffer[256] = { 0 };
 
-    if (FAILED(result))
-    {
-        return 1;
-        // Failed to associate file. The HRESULT provides the reason.
-    }
-
-    OVERLAPPED overlapped = { 0 };
-    BYTE buffer[256] = { 0 };
-
-    if (!::ReadFile(file,
+    Win32::ReadFile(
+        file,
         buffer,
         256,
         0, // ignored
-        &overlapped))
-    {
-        // Call GetLastError for more information.
-    }
+        &overlapped
+    );
+    if (Win32::DWORD lastError = Win32::GetLastError(); 
+        lastError != Win32::Error::Codes::IoPending
+    ) throw Win32::Error::Win32Error(lastError);
 
-    DWORD bytesCopied = 0;
-    ULONG_PTR completionKey = 0;
-    OVERLAPPED* overlappedPointer = 0;
+    Win32::DWORD bytesCopied = 0;
+    Win32::ULONG_PTR completionKey = 0;
+    Win32::OVERLAPPED* overlappedPointer = 0;
 
-    result = port.DequeuePacket(INFINITE,
+    port.DequeuePacket(
+        Win32::Infinite,
         bytesCopied,
         completionKey,
-        overlappedPointer);
-
-    if (FAILED(result))
-    {
-        // Failed to dequeue a completion packet. The HRESULT provides the reason.
-        return 1;
-    }
-
+        overlappedPointer
+    );
 
     return 0;
+}
+catch (const std::exception& ex)
+{
+    std::println("main() failed: {}", ex.what());
+    return 1;
 }

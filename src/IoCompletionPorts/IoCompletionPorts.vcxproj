@@ -129,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="win32.ixx" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="testfile.txt" />
