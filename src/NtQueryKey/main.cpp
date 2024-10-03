@@ -10,6 +10,15 @@ struct HKeyDeleter
 };
 using HKeyUniquePtr = std::unique_ptr<Win32::HKEY__, HKeyDeleter>;
 
+namespace std
+{
+	template<typename...TArgs>
+	void println(std::wformat_string<TArgs...> fmt, TArgs&&...args)
+	{
+		std::wcout << std::format(fmt, std::forward<TArgs>(args)...) << std::endl;
+	}
+}
+
 // Based on https://stackoverflow.com/a/937379/7448661
 int main()
 {
@@ -53,7 +62,7 @@ int main()
 		return 1;
 	}
 
-	std::wcout << std::format(L"Key: {}\n", name);
+	std::println(L"Key: {}\n", name);
 
 	return 0;
 }
