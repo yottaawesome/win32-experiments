@@ -7,23 +7,23 @@ import std;
 
 #pragma comment(lib, "Credui.lib")
 
+// Note that the Release config has CFG enabled:
+// https://learn.microsoft.com/en-us/windows/win32/secbp/control-flow-guard
+
 void Ask()
 {
-    std::array<wchar_t, CREDUI_MAX_USERNAME_LENGTH + 1> pszName;
-    std::array<wchar_t, CREDUI_MAX_PASSWORD_LENGTH + 1> pszPwd;
-    BOOL fSave = false;
+    std::array<wchar_t, CREDUI_MAX_USERNAME_LENGTH + 1> pszName{ 0 };
+    std::array<wchar_t, CREDUI_MAX_PASSWORD_LENGTH + 1> pszPwd{ 0 };
 
     //  Ensure that MessageText and CaptionText identify what credentials
     //  to use and which application requires them.
-    CREDUI_INFO cui
-    {
+    CREDUI_INFO cui{
         .cbSize = sizeof(CREDUI_INFO),
-        .hwndParent = nullptr,
         .pszMessageText = L"Enter administrator account information",
-        .pszCaptionText = L"CredUITest",
-        .hbmBanner = nullptr
+        .pszCaptionText = L"CredUITest"
     };
 
+    BOOL fSave = false;
     // https://learn.microsoft.com/en-us/windows/win32/api/wincred/nf-wincred-creduipromptforcredentialsw
     DWORD dwErr = CredUIPromptForCredentialsW(
         &cui,                                   // CREDUI_INFO structure
