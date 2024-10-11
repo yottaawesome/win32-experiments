@@ -16,12 +16,12 @@ void MyHandleError(std::string_view s)
 
 void WithActiveDirector() 
 {
-    IAzAuthorizationStore* pStore = NULL;
+    IAzAuthorizationStore* pStore = nullptr;
     HRESULT hr;
-    BSTR storeName = NULL;
+    BSTR storeName = nullptr;
 
     //  Initialize COM.
-    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (!(SUCCEEDED(hr)))
         MyHandleError("Could not initialize COM.");
 
@@ -29,7 +29,7 @@ void WithActiveDirector()
     hr = CoCreateInstance(
         /*"b2bcff59-a757-4b0b-a1bc-ea69981da69e"*/
         __uuidof(AzAuthorizationStore),
-        NULL,
+        nullptr,
         CLSCTX_ALL,
         /*"edbd9ca9-9b82-4f6a-9e8b-98301e450f14"*/
         __uuidof(IAzAuthorizationStore),
@@ -67,12 +67,12 @@ void WithActiveDirector()
 
 void WithMSSQL() 
 {
-    IAzAuthorizationStore* pStore = NULL;
+    IAzAuthorizationStore* pStore = nullptr;
     HRESULT hr;
-    BSTR storeName = NULL;
+    BSTR storeName = nullptr;
 
     //  Initialize COM.
-    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (!(SUCCEEDED(hr)))
         MyHandleError("Could not initialize COM.");
 
@@ -80,7 +80,7 @@ void WithMSSQL()
     hr = CoCreateInstance(
         /*"b2bcff59-a757-4b0b-a1bc-ea69981da69e"*/
         __uuidof(AzAuthorizationStore),
-        NULL,
+        nullptr,
         CLSCTX_ALL,
         /*"edbd9ca9-9b82-4f6a-9e8b-98301e450f14"*/
         __uuidof(IAzAuthorizationStore),
