@@ -199,6 +199,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CreateAuthPolicyStore", "Cr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FindingOwner", "FindingOwner\FindingOwner.vcxproj", "{41CE6ECF-22D0-427B-AEBD-DBCA0A4A0F78}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TakingOwnership", "TakingOwnership\TakingOwnership.vcxproj", "{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -831,6 +833,14 @@ Global
 		{41CE6ECF-22D0-427B-AEBD-DBCA0A4A0F78}.Release|x64.Build.0 = Release|x64
 		{41CE6ECF-22D0-427B-AEBD-DBCA0A4A0F78}.Release|x86.ActiveCfg = Release|Win32
 		{41CE6ECF-22D0-427B-AEBD-DBCA0A4A0F78}.Release|x86.Build.0 = Release|Win32
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}.Debug|x64.ActiveCfg = Debug|x64
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}.Debug|x64.Build.0 = Debug|x64
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}.Debug|x86.ActiveCfg = Debug|Win32
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}.Debug|x86.Build.0 = Debug|Win32
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}.Release|x64.ActiveCfg = Release|x64
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}.Release|x64.Build.0 = Release|x64
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}.Release|x86.ActiveCfg = Release|Win32
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -917,6 +927,7 @@ Global
 		{2CBD0EB8-C02D-41F7-98E3-6D6055EE6617} = {7562C59E-925D-4A50-9239-384F3C7CFFD7}
 		{C46829F5-55EB-43B5-A70E-6F8912B4E881} = {7562C59E-925D-4A50-9239-384F3C7CFFD7}
 		{41CE6ECF-22D0-427B-AEBD-DBCA0A4A0F78} = {7562C59E-925D-4A50-9239-384F3C7CFFD7}
+		{21B2A6CE-ADBB-4059-BC44-9A21ACFD1985} = {7562C59E-925D-4A50-9239-384F3C7CFFD7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
