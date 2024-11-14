@@ -9,13 +9,12 @@ std::wstring ChangeCase(const std::wstring& source, const bool upper)
 {
     const int flag = upper ? LCMAP_UPPERCASE : LCMAP_LOWERCASE;
 
-    std::wstring destination;
     int result = LCMapStringEx(
         LOCALE_NAME_INVARIANT,
         flag,
         source.data(),
         static_cast<int>(source.size()),
-        destination.data(),
+        nullptr,
         0,
         nullptr,
         nullptr,
@@ -24,7 +23,7 @@ std::wstring ChangeCase(const std::wstring& source, const bool upper)
     if (result == 0)
         throw std::runtime_error(std::format("Failed with {}", GetLastError()));
 
-    destination.resize(result);
+    std::wstring destination(result, '\0');
     result = LCMapStringEx(
         LOCALE_NAME_INVARIANT,
         flag,

@@ -11,61 +11,53 @@ import std;
 
 int main()
 {
-    DWORD dwRtnCode = 0;
-    PSID pSidOwner = NULL;
-    BOOL bRtnBool = TRUE;
-    LPTSTR AcctName = NULL;
-    LPTSTR DomainName = NULL;
-    DWORD dwAcctName = 1, dwDomainName = 1;
-    SID_NAME_USE eUse = SidTypeUnknown;
-    HANDLE hFile;
-    PSECURITY_DESCRIPTOR pSD = NULL;
-
-
     // Get the handle of the file object.
-    hFile = CreateFile(
+    HANDLE hFile = CreateFile(
         TEXT("myfile.txt"),
         GENERIC_READ,
         FILE_SHARE_READ,
-        NULL,
+        nullptr,
         OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL,
-        NULL);
+        nullptr);
 
     // Check GetLastError for CreateFile error code.
-    if (hFile == INVALID_HANDLE_VALUE) {
-        DWORD dwErrorCode = 0;
-
-        dwErrorCode = GetLastError();
+    if (hFile == INVALID_HANDLE_VALUE) 
+    {
+        DWORD dwErrorCode = GetLastError();
         std::println("CreateFile error = {}", dwErrorCode);
         return -1;
     }
 
-
-
     // Get the owner SID of the file.
-    dwRtnCode = GetSecurityInfo(
+    PSID pSidOwner = nullptr;
+    PSECURITY_DESCRIPTOR pSD = nullptr;
+    DWORD dwRtnCode = GetSecurityInfo(
         hFile,
         SE_FILE_OBJECT,
         OWNER_SECURITY_INFORMATION,
         &pSidOwner,
-        NULL,
-        NULL,
-        NULL,
+        nullptr,
+        nullptr,
+        nullptr,
         &pSD);
 
     // Check GetLastError for GetSecurityInfo error condition.
-    if (dwRtnCode != ERROR_SUCCESS) {
-        DWORD dwErrorCode = 0;
-
-        dwErrorCode = GetLastError();
+    if (dwRtnCode != ERROR_SUCCESS) 
+    {
+        DWORD dwErrorCode = GetLastError();
         std::println("GetSecurityInfo error = {}", dwErrorCode);
         return -1;
     }
 
     // First call to LookupAccountSid to get the buffer sizes.
-    bRtnBool = LookupAccountSid(
-        NULL,           // local computer
+    LPWSTR AcctName = nullptr;
+    LPWSTR DomainName = nullptr;
+    DWORD dwAcctName = 1;
+    DWORD dwDomainName = 1;
+    SID_NAME_USE eUse = SidTypeUnknown;
+    bool bRtnBool = LookupAccountSid(
+        nullptr,           // local computer
         pSidOwner,
         AcctName,
         (LPDWORD)&dwAcctName,
@@ -74,36 +66,29 @@ int main()
         &eUse);
 
     // Reallocate memory for the buffers.
-    AcctName = (LPTSTR)GlobalAlloc(
-        GMEM_FIXED,
-        dwAcctName * sizeof(wchar_t));
+    AcctName = (LPWSTR)GlobalAlloc(GMEM_FIXED, dwAcctName * sizeof(wchar_t));
 
     // Check GetLastError for GlobalAlloc error condition.
-    if (AcctName == NULL) {
-        DWORD dwErrorCode = 0;
-
-        dwErrorCode = GetLastError();
+    if (AcctName == nullptr) 
+    {
+        DWORD dwErrorCode = GetLastError();
         std::println("GlobalAlloc error = {}", dwErrorCode);
         return -1;
     }
 
-    DomainName = (LPTSTR)GlobalAlloc(
-        GMEM_FIXED,
-        dwDomainName * sizeof(wchar_t));
+    DomainName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwDomainName * sizeof(wchar_t));
 
     // Check GetLastError for GlobalAlloc error condition.
-    if (DomainName == NULL) {
-        DWORD dwErrorCode = 0;
-
-        dwErrorCode = GetLastError();
+    if (DomainName == nullptr)
+    {
+        DWORD dwErrorCode = GetLastError();
         std::println("GlobalAlloc error = {}", dwErrorCode);
         return -1;
-
     }
 
     // Second call to LookupAccountSid to get the account name.
     bRtnBool = LookupAccountSid(
-        NULL,                   // name of local or remote computer
+        nullptr,                   // name of local or remote computer
         pSidOwner,              // security identifier
         AcctName,               // account name buffer
         (LPDWORD)&dwAcctName,   // size of account name buffer 
@@ -112,22 +97,18 @@ int main()
         &eUse);                 // SID type
 
     // Check GetLastError for LookupAccountSid error condition.
-    if (bRtnBool == FALSE) {
-        DWORD dwErrorCode = 0;
-
-        dwErrorCode = GetLastError();
-
+    if (not bRtnBool) 
+    {
+        DWORD dwErrorCode = GetLastError();
         if (dwErrorCode == ERROR_NONE_MAPPED)
             std::println("Account owner not found for specified SID.");
         else
             std::println("Error in LookupAccountSid.");
         return -1;
-
     }
-    else if (bRtnBool == TRUE)
 
-        // Print the account name.
-        std::println("Account owner = {}", AcctName);
+    // Print the account name.
+    std::wcout << std::format(L"Account owner = {}\n", AcctName);
 
     return 0;
 }
