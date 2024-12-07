@@ -94,7 +94,7 @@ namespace PipeOperations
             Win32::CreateNamedPipeW(
                 pipeName.data(),             // pipe name 
                 Win32::Pipes::OpenMode::Mode::Duplex | Win32::Pipes::OpenMode::Flags::Overlapped,       // read/write access 
-                Win32::Pipes::PipeMode::Type::Message | Win32::Pipes::PipeMode::Read::Message | Win32::Pipes::PipeMode::Wait::NoWait,      // message type pipe 
+                Win32::Pipes::PipeMode::Type::Message | Win32::Pipes::PipeMode::Read::Message,      // message type pipe 
                 Win32::Pipes::UnlimitedInstances, // max. instances  
                 BufferSize,                  // output buffer size 
                 BufferSize,                  // input buffer size 
@@ -184,16 +184,15 @@ try
 
     Overlapped serverConnected{};
     Win32::BOOL connStatus = Win32::ConnectNamedPipe(serverPipe.get(), &serverConnected);
-    if(auto lastError = GetLastError(); lastError != Win32::ErrorCodes::PipeListening)
+    if(auto lastError = GetLastError(); lastError != Win32::ErrorCodes::IoPending)
         throw Win32Error(lastError, "ConnectNamedPipe() failed");
 
     UniqueHandle clientPipe = PipeOperations::OpenClientPipe();
-    //if (serverConnected.Wait(Win32::Infinite))
-    //    std::println("Wait was successful.");
+    if (serverConnected.Wait(Win32::Infinite))
+        std::println("Wait was successful.");
 
     std::string msg = "Hello, world!";
-    std::vector<std::byte> data = 
-        msg 
+    std::vector<std::byte> data = msg 
         | std::ranges::views::transform([](char c) {return std::byte{ (std::byte)c }; })
         | std::ranges::to<std::vector<std::byte>>();
     PipeOperations::WritePipe(serverPipe.get(), data);
