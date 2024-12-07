@@ -204,9 +204,9 @@ namespace PipeOperations
 
     auto WriteWithHeader(Win32::HANDLE pipe, const std::vector<std::byte>& data)
     {
-        std::vector<std::byte> dataWithHeader(sizeof(Header));
+        std::vector<std::byte> dataWithHeader(sizeof(Header) + data.size());
         Header* header = new (dataWithHeader.data()) Header{ .Type = MessageType::TypeB, .Subtype = Subtype::TypeA };
-        dataWithHeader.insert(dataWithHeader.end(), data.begin(), data.end());
+        dataWithHeader.insert(dataWithHeader.begin() + sizeof(Header), data.begin(), data.end());
         WritePipe(pipe, dataWithHeader);
     }
 }
