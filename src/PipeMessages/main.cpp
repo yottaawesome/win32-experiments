@@ -86,21 +86,21 @@ struct Overlapped : Win32::OVERLAPPED
 namespace PipeOperations
 {
     constexpr auto BufferSize = 1024;
+    constexpr auto PipeSize = BufferSize;
     constexpr std::wstring_view pipeName = LR"(\\.\pipe\thynamedpipe)";
     
     auto OpenServerPipe() -> UniqueHandle
     {
-        Win32::HANDLE serverPipe =
-            Win32::CreateNamedPipeW(
-                pipeName.data(),             // pipe name 
-                Win32::Pipes::OpenMode::Mode::Duplex | Win32::Pipes::OpenMode::Flags::Overlapped,       // read/write access 
-                Win32::Pipes::PipeMode::Type::Message | Win32::Pipes::PipeMode::Read::Message,      // message type pipe 
-                Win32::Pipes::UnlimitedInstances, // max. instances  
-                BufferSize,                  // output buffer size 
-                BufferSize,                  // input buffer size 
-                0,                        // client time-out 
-                nullptr
-            );
+        Win32::HANDLE serverPipe = Win32::CreateNamedPipeW(
+            pipeName.data(),             // pipe name 
+            Win32::Pipes::OpenMode::Mode::Duplex | Win32::Pipes::OpenMode::Flags::Overlapped,       // read/write access 
+            Win32::Pipes::PipeMode::Type::Message | Win32::Pipes::PipeMode::Read::Message,      // message type pipe 
+            Win32::Pipes::UnlimitedInstances, // max. instances  
+            PipeSize,                  // output buffer size 
+            PipeSize,                  // input buffer size 
+            0,                        // client time-out 
+            nullptr
+        );
         if (auto lastError = Win32::GetLastError(); not serverPipe or serverPipe == Win32::InvalidHandleValue)
             throw Win32Error(lastError, "CreateNamedPipeW() failed");
         return UniqueHandle(serverPipe);
@@ -108,16 +108,15 @@ namespace PipeOperations
 
     auto OpenClientPipe() -> UniqueHandle
     {
-        Win32::HANDLE clientPipe = 
-            Win32::CreateFileW(
-                pipeName.data(),   // pipe name 
-                Win32::AccessRights::GenericRead | Win32::AccessRights::GenericWrite,
-                0,              // no sharing 
-                nullptr,           // default security attributes
-                Win32::OpenExisting,  // opens existing pipe 
-                0,              // default attributes 
-                nullptr
-            );
+        Win32::HANDLE clientPipe = Win32::CreateFileW(
+            pipeName.data(),   // pipe name 
+            Win32::AccessRights::GenericRead | Win32::AccessRights::GenericWrite,
+            0,              // no sharing 
+            nullptr,           // default security attributes
+            Win32::OpenExisting,  // opens existing pipe 
+            0,              // default attributes 
+            nullptr
+        );
         if (auto lastError = Win32::GetLastError(); not clientPipe or clientPipe == Win32::InvalidHandleValue)
             throw Win32Error(lastError, "CreateFile() failed");
 
@@ -154,29 +153,27 @@ namespace PipeOperations
 
     auto ReadPipe(Win32::HANDLE pipe) -> std::vector<std::byte>
     {
-        std::vector<std::byte> returnBuffer;
-        Win32::DWORD totalBytes = 0;
+        std::vector<std::byte> returnBuffer{ BufferSize };
+        Win32::DWORD totalBytesRead = 0;
         while (true)
         {
-            std::vector<std::byte> buffer{ BufferSize };
             Win32::DWORD bytesRead = 0;
             Win32::BOOL success = Win32::ReadFile(
                 pipe,    // pipe handle 
-                buffer.data(),    // buffer to receive reply 
-                static_cast<Win32::DWORD>(buffer.size()),  // size of buffer 
+                returnBuffer.data() + totalBytesRead,    // buffer to receive reply 
+                BufferSize,  // size of buffer 
                 &bytesRead,  // number of bytes read 
                 nullptr// not overlapped 
             );
-            if (bytesRead)
-            {
-                totalBytes += bytesRead;
-                buffer.resize(bytesRead);
-                returnBuffer.insert(returnBuffer.end(), buffer.begin(), buffer.end());
-            }
+            totalBytesRead += bytesRead;
             if (success)
+            {
+                returnBuffer.resize(totalBytesRead);
                 return returnBuffer;
+            }
             if (Win32::DWORD lastError = Win32::GetLastError(); lastError != Win32::ErrorCodes::MoreData)
                 throw Win32Error(lastError, "ReadFile() failed.");
+            returnBuffer.resize(returnBuffer.size() + BufferSize);
         }
     }
 
