@@ -134,6 +134,24 @@ namespace PipeOperations
         return UniqueHandle(clientPipe);
     }
 
+    enum class MessageType
+    {
+        Unset,
+        TypeA,
+        TypeB,
+    };
+    enum class Subtype
+    {
+        Unset,
+        TypeA,
+        TypeB,
+    };
+    struct Header
+    {
+        MessageType Type = MessageType::Unset;
+        Subtype Subtype = Subtype::Unset;
+    };
+
     auto ReadPipe(Win32::HANDLE pipe) -> std::vector<std::byte>
     {
         std::vector<std::byte> returnBuffer;
@@ -162,6 +180,14 @@ namespace PipeOperations
         }
     }
 
+    auto ReadWithHeader(Win32::HANDLE pipe) -> std::pair<Header, std::vector<std::byte>>
+    {
+        std::vector data = ReadPipe(pipe);
+        if (data.size() < sizeof(Header))
+            return {};
+        return { *reinterpret_cast<Header*>(data.data()), { data.begin() + sizeof(Header), data.end()} };
+    }
+
     auto WritePipe(Win32::HANDLE pipe, const std::vector<std::byte>& data)
     {
         Win32::DWORD bytesWritten = 0;
@@ -174,6 +200,14 @@ namespace PipeOperations
         );                  
         if (auto lastError = GetLastError(); not success)
             throw Win32Error(lastError, "WriteFile() failed.");
+    }
+
+    auto WriteWithHeader(Win32::HANDLE pipe, const std::vector<std::byte>& data)
+    {
+        std::vector<std::byte> dataWithHeader(sizeof(Header));
+        Header* header = new (dataWithHeader.data()) Header{ .Type = MessageType::TypeB, .Subtype = Subtype::TypeA };
+        dataWithHeader.insert(dataWithHeader.end(), data.begin(), data.end());
+        WritePipe(pipe, dataWithHeader);
     }
 }
 
@@ -189,18 +223,34 @@ try
 
     UniqueHandle clientPipe = PipeOperations::OpenClientPipe();
     if (serverConnected.Wait(Win32::Infinite))
-        std::println("Wait was successful.");
+        std::println("Connection wait was successful.");
 
     std::string msg = "Hello, world!";
-    std::vector<std::byte> data = msg 
-        | std::ranges::views::transform([](char c) {return std::byte{ (std::byte)c }; })
+    std::vector<std::byte> data = msg
+        | std::ranges::views::transform([](char c) { return static_cast<std::byte>(c); })
         | std::ranges::to<std::vector<std::byte>>();
-    PipeOperations::WritePipe(serverPipe.get(), data);
-
-    std::vector<std::byte> readData = PipeOperations::ReadPipe(clientPipe.get());
-    std::string readString{ reinterpret_cast<char*>(readData.data()), readData.size() };
-
-    std::println("Read back {}", readString);
+    if constexpr (false)
+    {
+        PipeOperations::WritePipe(serverPipe.get(), data);
+        std::vector<std::byte> readData = PipeOperations::ReadPipe(clientPipe.get());
+        std::string readString{ reinterpret_cast<char*>(readData.data()), readData.size() };
+        std::println("Read back {}", readString);
+    }
+    else
+    {
+        PipeOperations::WriteWithHeader(serverPipe.get(), data);
+        std::pair readOperation = PipeOperations::ReadWithHeader(clientPipe.get());
+        std::string readString{ reinterpret_cast<char*>(readOperation.second.data()), readOperation.second.size() };
+        std::println(
+R"(Read message:
+ -> Header type {}
+ -> subtype {}
+ -> data: {})", 
+            static_cast<int>(readOperation.first.Type), 
+            static_cast<int>(readOperation.first.Subtype), 
+            readString
+        );
+    }
 
     return 0;
 }
