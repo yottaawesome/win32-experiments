@@ -25,12 +25,16 @@ export namespace Win32
 		::WriteFile,
 		::OutputDebugStringA,
 		::OutputDebugStringW,
+		::CreateProcess,
 		::DWORD,
 		::OVERLAPPED,
 		::HANDLE,
 		::BOOL,
 		::LPVOID,
-		::HMODULE
+		::HMODULE,
+		::SECURITY_ATTRIBUTES,
+		::PROCESS_INFORMATION,
+		::STARTUPINFO
 		;
 
 	template<auto VValue>

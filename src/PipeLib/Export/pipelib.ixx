@@ -113,11 +113,16 @@ export namespace PipeLib
 
     EXPORT auto OpenClientPipe() -> UniqueHandle
     {
+        Win32::SECURITY_ATTRIBUTES security{
+            .nLength = sizeof(Win32::SECURITY_ATTRIBUTES),
+            .bInheritHandle = true
+        };
+
         Win32::HANDLE clientPipe = Win32::CreateFileW(
             pipeName.data(),   // pipe name 
             Win32::AccessRights::GenericRead | Win32::AccessRights::GenericWrite,
             0,              // no sharing 
-            nullptr,           // default security attributes
+            &security,           // security attributes
             Win32::OpenExisting,  // opens existing pipe 
             0,              // default attributes 
             nullptr
@@ -211,4 +216,50 @@ export namespace PipeLib
         dataWithHeader.insert(dataWithHeader.begin() + sizeof(Header), data.begin(), data.end());
         WritePipe(pipe, dataWithHeader);
     }
+
+    struct EXPORT ProcessInfo : Win32::PROCESS_INFORMATION
+    {
+        ~ProcessInfo()
+        {
+            Close();
+        }
+        constexpr ProcessInfo() : PROCESS_INFORMATION{ 0 } {}
+
+        ProcessInfo(const ProcessInfo&) = delete;
+        auto operator=(const ProcessInfo&) -> ProcessInfo& = delete;
+        ProcessInfo(ProcessInfo&&) noexcept = default;
+        auto operator=(ProcessInfo&&) noexcept -> ProcessInfo& = default;
+
+        private:
+        auto Close() -> void
+        {
+            if (hThread)
+                Win32::CloseHandle(hThread);
+            if (hProcess)
+                Win32::CloseHandle(hProcess);
+            hThread = hProcess = nullptr;
+        }
+
+        auto Move(ProcessInfo& other) -> ProcessInfo&
+        {
+            Close();
+            hThread = other.hThread;
+            hProcess = other.hProcess;
+            return *this;
+        }
+
+        auto ReleaseProcessHandle() -> Win32::HANDLE
+        {
+            Win32::HANDLE temp = hProcess;
+            hProcess = nullptr;
+            return temp;
+        }
+
+        auto ReleaseThreadHandle() -> Win32::HANDLE
+        {
+            Win32::HANDLE temp = hThread;
+            hThread = nullptr;
+            return temp;
+        }
+    };
 }
