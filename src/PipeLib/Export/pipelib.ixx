@@ -2,12 +2,11 @@ export module pipelib;
 import stdlib;
 import win32;
 
+#pragma warning(disable: 4251)
 #define EXPORT __declspec(dllexport)
 
 export namespace PipeLib
 {
-	constexpr int EXPORT Dummy = 25;
-
 	struct EXPORT HandleDeleter
 	{
 		void operator()(Win32::HANDLE h) const noexcept
