@@ -1,9 +1,17 @@
+#pragma warning(disable: 4251)
+#pragma warning(disable: 4275)
+#define EXPORT __declspec(dllexport)
+
 export module pipelib;
 import stdlib;
 import win32;
 
-#pragma warning(disable: 4251)
-#define EXPORT __declspec(dllexport)
+namespace PipeLib
+{
+    constexpr auto BufferSize = 1024;
+    constexpr auto PipeSize = BufferSize;
+    constexpr std::wstring_view pipeName = LR"(\\.\pipe\thynamedpipe)";
+}
 
 export namespace PipeLib
 {
@@ -50,7 +58,6 @@ export namespace PipeLib
         return msg;
     }
 
-#pragma warning(suppress: 4275)
     struct EXPORT Win32Error final : std::runtime_error
     {
         Win32Error(Win32::DWORD errorCode, std::string_view msg, std::source_location loc = std::source_location::current())
@@ -89,10 +96,6 @@ export namespace PipeLib
 
         UniqueHandle ServerConnected{};
     };
-
-    constexpr auto EXPORT BufferSize = 1024;
-    constexpr auto EXPORT PipeSize = BufferSize;
-    constexpr std::wstring_view EXPORT pipeName = LR"(\\.\pipe\thynamedpipe)";
 
     EXPORT auto OpenServerPipe() -> UniqueHandle
     {

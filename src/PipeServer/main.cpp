@@ -25,13 +25,7 @@ try
     PipeLib::ProcessInfo piProcInfo;
     Win32::STARTUPINFO siStartInfo{ .cb = sizeof(Win32::STARTUPINFO) };
     constexpr std::wstring_view clientExePath = 
-        []() consteval -> std::wstring_view
-        {
-            if constexpr (IsDebug())
-                return LR"(..\x64\Debug\PipeClient.exe)";
-            else
-                return LR"(..\x64\Release\PipeClient.exe)";
-        }();
+        []() consteval -> std::wstring_view { return IsDebug ? LR"(..\x64\Debug\PipeClient.exe)" : LR"(..\x64\Release\PipeClient.exe)"; }();
     bool success = Win32::CreateProcessW(
         clientExePath.data(),
         cmdLine.data(), // command line 

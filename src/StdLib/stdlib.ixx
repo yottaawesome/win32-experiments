@@ -4,17 +4,12 @@ export import win32;
 
 export
 {
-    consteval auto IsDebug() noexcept -> bool
-    {
+    constexpr bool IsDebug =
 #ifdef _DEBUG
-        return true;
+        true;
 #else
-        return false;
+        false;
 #endif // DEBUG
-    }
 
-    consteval auto IsRelease() noexcept -> bool
-    {
-        return not IsDebug();
-    }
+    constexpr bool IsRelease = not IsDebug;
 }
