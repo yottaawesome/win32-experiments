@@ -18,9 +18,9 @@ try
     std::string readString{ reinterpret_cast<char*>(readOperation.second.data()), readOperation.second.size() };
     std::println(
 R"(Read message:
- -> Header type {}
- -> subtype {}
- -> data: {})",
+ -> Header type: {}
+ -> Subtype: {}
+ -> Data: {})",
         static_cast<int>(readOperation.first.Type),
         static_cast<int>(readOperation.first.Subtype),
         readString
