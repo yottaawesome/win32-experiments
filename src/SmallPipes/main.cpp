@@ -99,8 +99,8 @@ namespace Async
 		Overlapped(const Overlapped&) = delete;
 		Overlapped& operator=(const Overlapped&) = delete;
 
-		Overlapped(Overlapped&& other) { Move(other); };
-		Overlapped& operator=(Overlapped&& other) { Move(other); };
+		Overlapped(Overlapped&& other) { std::swap(*this, other); };
+		Overlapped& operator=(Overlapped&& other) { std::swap(*this, other); };
 
 		Overlapped() : Win32::OVERLAPPED{}
 		{
@@ -140,14 +140,14 @@ namespace Async
 			return this->InternalHigh;
 		}
 
-	private:
-		void Move(Overlapped& other)
+		void swap(Overlapped& other) noexcept
 		{
-			Close();
+			Win32::HANDLE temp = hEvent;
 			hEvent = other.hEvent;
-			other.hEvent = nullptr;
+			other.hEvent = temp;
 		}
 
+	private:
 		void Close()
 		{
 			if (hEvent)
@@ -157,6 +157,9 @@ namespace Async
 			}
 		}
 	};
+	static_assert(std::movable<Overlapped>);
+	static_assert(not std::copyable<Overlapped>);
+	static_assert(std::swappable<Overlapped>);
 
 	struct Event
 	{
