@@ -34,8 +34,11 @@ namespace Error
 			0,
 			nullptr
 		);
-		if (auto lastError = Win32::GetLastError(); not messageBuffer)
+		if (not messageBuffer)
+		{
+			auto lastError = Win32::GetLastError();
 			return std::format("FormatMessageA() failed on code {} with error {}", errorCode, lastError);
+		}
 
 		std::string msg(static_cast<char*>(messageBuffer));
 		// This should never happen
@@ -105,8 +108,8 @@ namespace Async
 		Overlapped() : Win32::OVERLAPPED{}
 		{
 			hEvent = Win32::CreateEventW(nullptr, true, false, nullptr);
-			if (auto lastError = Win32::GetLastError(); not hEvent)
-				throw Error::Win32Error(lastError, "CreateEventW() failed");
+			if (not hEvent)
+				throw Error::Win32Error(Win32::GetLastError(), "CreateEventW() failed");
 		}
 
 		bool Wait(std::string_view msg)
@@ -199,8 +202,8 @@ namespace PipeOperations
 			0,
 			nullptr
 		);
-		if (auto lastError = Win32::GetLastError(); not serverPipe or serverPipe == Win32::InvalidHandleValue)
-			throw Error::Win32Error(lastError, "CreateNamedPipeW() failed");
+		if (not serverPipe or serverPipe == Win32::InvalidHandleValue)
+			throw Error::Win32Error(Win32::GetLastError(), "CreateNamedPipeW() failed");
 		return RAII::HandleUniquePtr(serverPipe);
 	}
 
@@ -215,8 +218,8 @@ namespace PipeOperations
 			0,
 			nullptr
 		);
-		if (auto lastError = Win32::GetLastError(); not clientPipe or clientPipe == Win32::InvalidHandleValue)
-			throw Error::Win32Error(lastError, "CreateFile() failed");
+		if (not clientPipe or clientPipe == Win32::InvalidHandleValue)
+			throw Error::Win32Error(Win32::GetLastError(), "CreateFile() failed");
 
 		Win32::DWORD dwMode = Win32::Pipes::PipeMode::Read::Message;
 		Win32::BOOL success = Win32::SetNamedPipeHandleState(
@@ -225,8 +228,8 @@ namespace PipeOperations
 			nullptr,
 			nullptr
 		);
-		if (auto lastError = Win32::GetLastError(); not success)
-			throw Error::Win32Error(lastError, "SetNamedPipeHandleState() failed");
+		if (not success)
+			throw Error::Win32Error(Win32::GetLastError(), "SetNamedPipeHandleState() failed");
 
 		return RAII::HandleUniquePtr(clientPipe);
 	}

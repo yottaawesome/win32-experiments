@@ -38,8 +38,8 @@ try
         &siStartInfo,
         &piProcInfo
     );
-    if (auto lastError = Win32::GetLastError(); not success)
-        throw PipeLib::Win32Error(lastError, "CreateProcessW()");
+    if (not success)
+        throw PipeLib::Win32Error(Win32::GetLastError(), "CreateProcessW()");
 
     // Write to the server pipe -- the data will be read by the child process.
     std::string msg = "Hello, world!";

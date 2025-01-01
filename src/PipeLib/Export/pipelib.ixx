@@ -83,8 +83,8 @@ export namespace PipeLib
         Overlapped()
         {
             hEvent = Win32::CreateEventW(nullptr, true, false, nullptr);
-            if (auto lastError = Win32::GetLastError(); not hEvent)
-                throw Win32Error(lastError, "CreateEventW() failed");
+            if (not hEvent)
+                throw Win32Error(Win32::GetLastError(), "CreateEventW() failed");
             ServerConnected = UniqueHandle(hEvent);
         }
 
@@ -109,8 +109,8 @@ export namespace PipeLib
             0,                        // client time-out 
             nullptr
         );
-        if (auto lastError = Win32::GetLastError(); not serverPipe or serverPipe == Win32::InvalidHandleValue)
-            throw Win32Error(lastError, "CreateNamedPipeW() failed");
+        if (not serverPipe or serverPipe == Win32::InvalidHandleValue)
+            throw Win32Error(Win32::GetLastError(), "CreateNamedPipeW() failed");
         return UniqueHandle(serverPipe);
     }
 
@@ -130,8 +130,8 @@ export namespace PipeLib
             0,              // default attributes 
             nullptr
         );
-        if (auto lastError = Win32::GetLastError(); not clientPipe or clientPipe == Win32::InvalidHandleValue)
-            throw Win32Error(lastError, "CreateFile() failed");
+        if (not clientPipe or clientPipe == Win32::InvalidHandleValue)
+            throw Win32Error(Win32::GetLastError(), "CreateFile() failed");
 
         Win32::DWORD dwMode = Win32::Pipes::PipeMode::Read::Message;
         Win32::BOOL success = Win32::SetNamedPipeHandleState(
@@ -140,8 +140,8 @@ export namespace PipeLib
             nullptr,     // don't set maximum bytes 
             nullptr
         );
-        if (auto lastError = Win32::GetLastError(); not success)
-            throw Win32Error(lastError, "SetNamedPipeHandleState() failed");
+        if (not success)
+            throw Win32Error(Win32::GetLastError(), "SetNamedPipeHandleState() failed");
 
         return UniqueHandle(clientPipe);
     }
