@@ -3,19 +3,15 @@ import win32;
 
 namespace RAII
 {
-	template<auto VFn>
+	template<auto VDeleteFn>
 	struct Deleter
 	{
-		void operator()(auto ptr)
-		{
-			VFn(ptr);
-		}
+		void operator()(auto ptr) const noexcept { VDeleteFn(ptr); }
 	};
-	template<typename T, auto VFn>
-	using UniquePtr = std::unique_ptr<T, Deleter<VFn>>;
-	template<typename T, auto VFn>
-	using IndirectUniquePtr = std::unique_ptr<std::remove_pointer_t<T>, Deleter<VFn>>;
-
+	template<typename T, auto VDeleteFn>
+	using UniquePtr = std::unique_ptr<T, Deleter<VDeleteFn>>;
+	template<typename T, auto VDeleteFn>
+	using IndirectUniquePtr = std::unique_ptr<std::remove_pointer_t<T>, Deleter<VDeleteFn>>;
 	using HandleUniquePtr = IndirectUniquePtr<Win32::HANDLE, Win32::CloseHandle>;
 }
 
@@ -38,11 +34,8 @@ namespace Error
 			0,
 			nullptr
 		);
-		if (not messageBuffer)
-		{
-			const auto lastError = Win32::GetLastError();
+		if (auto lastError = Win32::GetLastError(); not messageBuffer)
 			return std::format("FormatMessageA() failed on code {} with error {}", errorCode, lastError);
-		}
 
 		std::string msg(static_cast<char*>(messageBuffer));
 		// This should never happen
@@ -50,7 +43,7 @@ namespace Error
 		if (Win32::LocalFree(messageBuffer))
 			std::abort();
 
-		std::erase_if(msg, [](const char x) { return x == '\n' || x == '\r'; });
+		std::erase_if(msg, [](char x) noexcept { return x == '\n' or x == '\r'; });
 		return msg;
 	}
 
@@ -75,27 +68,39 @@ namespace Error
 	};
 }
 
+namespace Util
+{
+	auto StringToVector(std::string_view string) -> std::vector<std::byte>
+	{
+		if constexpr (true) return std::vector<std::byte>(
+			reinterpret_cast<const std::byte*>(string.data()), 
+			reinterpret_cast<const std::byte*>(string.data() + string.size())
+		);
+		else return string 
+			| std::ranges::views::transform([](char c) { return static_cast<std::byte>(c); }) 
+			| std::ranges::to<std::vector<std::byte>>();
+	}
+
+	auto VectorToString(const std::vector<std::byte>& vec) -> std::string
+	{
+		return std::string(
+			reinterpret_cast<const char*>(vec.data()), 
+			vec.size()
+		);
+	}
+}
+
 namespace Async
 {
-	struct Overlapped : Win32::OVERLAPPED
+	struct [[nodiscard]] Overlapped : Win32::OVERLAPPED
 	{
-		~Overlapped()
-		{
-			Close();
-		}
+		~Overlapped() { Close(); }
 
 		Overlapped(const Overlapped&) = delete;
 		Overlapped& operator=(const Overlapped&) = delete;
 
-		Overlapped(Overlapped&& other)
-		{
-			Move(other);
-		};
-
-		Overlapped& operator=(Overlapped&& other)
-		{
-			Move(other);
-		};
+		Overlapped(Overlapped&& other) { Move(other); };
+		Overlapped& operator=(Overlapped&& other) { Move(other); };
 
 		Overlapped()
 		{
@@ -150,22 +155,22 @@ namespace Async
 	};
 }
 
-namespace SmallPipes
+namespace PipeOperations
 {
-	constexpr auto BufferSize = 1024;
+	constexpr auto BufferSize = 2;
 	constexpr auto PipeSize = BufferSize;
 	constexpr std::wstring_view PipeName = LR"(\\.\pipe\thynamedpipe)";
 
 	RAII::HandleUniquePtr CreateServerPipe()
 	{
 		Win32::HANDLE serverPipe = Win32::CreateNamedPipeW(
-			PipeName.data(),             // pipe name 
-			Win32::Pipes::OpenMode::Mode::Duplex | Win32::Pipes::OpenMode::Flags::Overlapped,       // read/write access 
-			Win32::Pipes::PipeMode::Type::Message | Win32::Pipes::PipeMode::Read::Message,      // message type pipe 
-			Win32::Pipes::UnlimitedInstances, // max. instances  
-			PipeSize,                  // output buffer size 
-			PipeSize,                  // input buffer size 
-			0,                        // client time-out 
+			PipeName.data(),
+			Win32::Pipes::OpenMode::Mode::Duplex | Win32::Pipes::OpenMode::Flags::Overlapped,
+			Win32::Pipes::PipeMode::Type::Message | Win32::Pipes::PipeMode::Read::Message,
+			Win32::Pipes::UnlimitedInstances,
+			PipeSize,
+			PipeSize,
+			0,
 			nullptr
 		);
 		if (auto lastError = Win32::GetLastError(); not serverPipe or serverPipe == Win32::InvalidHandleValue)
@@ -176,12 +181,12 @@ namespace SmallPipes
 	RAII::HandleUniquePtr CreateClientPipe()
 	{
 		Win32::HANDLE clientPipe = Win32::CreateFileW(
-			PipeName.data(),   // pipe name 
+			PipeName.data(),
 			Win32::AccessRights::GenericRead | Win32::AccessRights::GenericWrite,
-			0,              // no sharing 
-			nullptr,           // default security attributes
-			Win32::OpenExisting,  // opens existing pipe 
-			0,              // default attributes 
+			0,
+			nullptr,
+			Win32::OpenExisting,  
+			0,
 			nullptr
 		);
 		if (auto lastError = Win32::GetLastError(); not clientPipe or clientPipe == Win32::InvalidHandleValue)
@@ -189,9 +194,9 @@ namespace SmallPipes
 
 		Win32::DWORD dwMode = Win32::Pipes::PipeMode::Read::Message;
 		Win32::BOOL success = Win32::SetNamedPipeHandleState(
-			clientPipe,    // pipe handle 
-			&dwMode,  // new pipe mode 
-			nullptr,     // don't set maximum bytes 
+			clientPipe,
+			&dwMode,
+			nullptr,
 			nullptr
 		);
 		if (auto lastError = Win32::GetLastError(); not success)
@@ -200,19 +205,39 @@ namespace SmallPipes
 		return RAII::HandleUniquePtr(clientPipe);
 	}
 
-	auto ReadPipe(Win32::HANDLE pipe) -> std::vector<std::byte>
+	// If more data is written than the buffer can hold,
+	// the write operation will block until the data is 
+	// read.
+	auto WritePipe(Win32::HANDLE pipe, const std::vector<std::byte>& data)
 	{
-		std::vector<std::byte> returnBuffer{ BufferSize };
+		Win32::DWORD bytesWritten = 0;
+		Win32::BOOL success = Win32::WriteFile(
+			pipe,
+			data.data(),
+			static_cast<Win32::DWORD>(data.size()),              // message length 
+			&bytesWritten,
+			nullptr
+		);
+		if (not success)
+			throw Error::Win32Error(Win32::GetLastError(), "WriteFile() failed.");
+	}
+
+	// If the buffer is too small to hold all data,
+	// the ReadFile() function will return 
+	// ERROR_MORE_DATA.
+	auto ReadPipe(Win32::HANDLE pipe, Win32::DWORD bytesToRead) -> std::vector<std::byte>
+	{
+		std::vector<std::byte> returnBuffer{ bytesToRead };
 		Win32::DWORD totalBytesRead = 0;
 		while (true)
 		{
 			Win32::DWORD bytesRead = 0;
 			Win32::BOOL success = Win32::ReadFile(
-				pipe,    // pipe handle 
-				returnBuffer.data() + totalBytesRead,    // buffer to receive reply 
-				BufferSize,  // size of buffer 
-				&bytesRead,  // number of bytes read 
-				nullptr// not overlapped 
+				pipe,
+				returnBuffer.data() + totalBytesRead,
+				bytesToRead,
+				&bytesRead,
+				nullptr
 			);
 			totalBytesRead += bytesRead;
 			if (success)
@@ -222,36 +247,42 @@ namespace SmallPipes
 			}
 			if (Win32::DWORD lastError = Win32::GetLastError(); lastError != Win32::ErrorCodes::MoreData)
 				throw Error::Win32Error(lastError, "ReadFile() failed.");
-			returnBuffer.resize(returnBuffer.size() + BufferSize);
+			returnBuffer.resize(returnBuffer.size() + bytesToRead);
 		}
 	}
+}
 
-	struct Thread
+namespace SmallPipes
+{
+	auto ServerProc(Win32::HANDLE pipe) -> int
 	{
-		Thread(Win32::HANDLE clientPipe)
-			: m_clientPipe(clientPipe)
-		{
-			m_thread = std::jthread(
-				[](Thread* t) { return t->Run(); }, 
-				this
-			);
-		}
-	private:
-		auto Run() -> int
-		{
-			return 0;
-		}
+		constexpr std::string_view string = "ABC";
+		std::println("Writing string {}", string);
+		PipeOperations::WritePipe(pipe, Util::StringToVector(string));
+		return 0;
+	};
 
-		std::jthread m_thread;
-		Win32::HANDLE m_clientPipe = nullptr;
+	auto ClientProc(Win32::HANDLE pipe) -> int
+	{
+		std::vector<std::byte> bytes = PipeOperations::ReadPipe(pipe, PipeOperations::BufferSize);
+		std::string string = Util::VectorToString(bytes);
+		std::println("Read string {}", string);
+		return 0;
 	};
 
 	auto Run() -> int
 	try
 	{
-		RAII::HandleUniquePtr server = CreateServerPipe();
-		RAII::HandleUniquePtr client = CreateClientPipe();
-		Thread t(client.get());
+		RAII::HandleUniquePtr serverEnd = PipeOperations::CreateServerPipe();
+		RAII::HandleUniquePtr clientEnd = PipeOperations::CreateClientPipe();
+
+		std::jthread serverThread([server = serverEnd.get()] { ServerProc(server); });
+		std::jthread clientThread([client = clientEnd.get()] { ClientProc(client); });
+
+		serverThread.join();
+		clientThread.join();
+
+		std::println("Successful.");
 
 		return 0;
 	}
@@ -269,5 +300,6 @@ namespace SmallPipes
 
 auto main() -> int
 {
+	SmallPipes::Run();
 	return 0;
 }
