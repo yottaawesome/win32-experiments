@@ -52,6 +52,31 @@ export namespace Win32
 	};
 	constexpr Constant<INVALID_HANDLE_VALUE> InvalidHandleValue;
 
+	bool OverlappedIoComplete(OVERLAPPED* lp)
+	{
+		// STATUS_PENDING
+		return HasOverlappedIoCompleted(lp);
+	}
+
+	struct OverlappedResult
+	{
+		bool Complete = false;
+		::DWORD BytesTransferred = 0;
+	};
+
+	OverlappedResult GetOverlappedOperationResult(
+		HANDLE hFile, 
+		OVERLAPPED* lpOverlapped, 
+		DWORD* lpNumberOfBytesTransferred, 
+		BOOL bWait
+	)
+	{
+		OverlappedResult oio;
+		DWORD bytes = 0;
+		bool complete = ::GetOverlappedResult(hFile, lpOverlapped, &bytes, bWait);
+		return { complete, bytes };
+	}
+		
 	namespace Pipes
 	{
 		// dwOpenMode

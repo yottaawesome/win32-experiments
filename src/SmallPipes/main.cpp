@@ -102,11 +102,24 @@ namespace Async
 		Overlapped(Overlapped&& other) { Move(other); };
 		Overlapped& operator=(Overlapped&& other) { Move(other); };
 
-		Overlapped()
+		Overlapped() : Win32::OVERLAPPED{}
 		{
 			hEvent = Win32::CreateEventW(nullptr, true, false, nullptr);
 			if (auto lastError = Win32::GetLastError(); not hEvent)
 				throw Error::Win32Error(lastError, "CreateEventW() failed");
+		}
+
+		bool Wait(std::string_view msg)
+		{
+			constexpr std::chrono::milliseconds wait{ 1000 };
+			while (not Wait(static_cast<Win32::DWORD>(wait.count())))
+				std::println("{}", msg);
+			return true;
+		}
+
+		bool Wait()
+		{
+			return Wait(Win32::Infinite);
 		}
 
 		bool Wait(Win32::DWORD millis)
@@ -115,6 +128,16 @@ namespace Async
 				throw std::runtime_error("No event");
 			auto waitStatus = Win32::WaitForSingleObject(hEvent, millis);
 			return waitStatus == Win32::WaitObject0;
+		}
+
+		bool IsPartial() const
+		{
+			return this->Internal == 0x80000005L;// STATUS_BUFFER_OVERFLOW;
+		}
+
+		std::uint64_t GetBytesRead() const noexcept
+		{
+			return this->InternalHigh;
 		}
 
 	private:
@@ -204,17 +227,17 @@ namespace PipeOperations
 
 		return RAII::HandleUniquePtr(clientPipe);
 	}
+}
 
-	// If more data is written than the buffer can hold,
-	// the write operation will block until the data is 
-	// read.
+namespace PipeOperations::Blocking
+{
 	auto WritePipe(Win32::HANDLE pipe, const std::vector<std::byte>& data)
 	{
 		Win32::DWORD bytesWritten = 0;
 		Win32::BOOL success = Win32::WriteFile(
 			pipe,
 			data.data(),
-			static_cast<Win32::DWORD>(data.size()),              // message length 
+			static_cast<Win32::DWORD>(data.size()),
 			&bytesWritten,
 			nullptr
 		);
@@ -222,13 +245,10 @@ namespace PipeOperations
 			throw Error::Win32Error(Win32::GetLastError(), "WriteFile() failed.");
 	}
 
-	// If the buffer is too small to hold all data,
-	// the ReadFile() function will return 
-	// ERROR_MORE_DATA.
 	auto ReadPipe(Win32::HANDLE pipe, Win32::DWORD bytesToRead) -> std::vector<std::byte>
 	{
 		std::vector<std::byte> returnBuffer{ bytesToRead };
-		Win32::DWORD totalBytesRead = 0;
+		std::uint64_t totalBytesRead = 0;
 		while (true)
 		{
 			Win32::DWORD bytesRead = 0;
@@ -252,19 +272,71 @@ namespace PipeOperations
 	}
 }
 
+namespace PipeOperations::Nonblocking
+{
+	// If more data is written than the buffer can hold,
+	// the write operation will block until the data is 
+	// read.
+	auto WritePipe(Win32::HANDLE pipe, const std::vector<std::byte>& data)
+	{
+		Win32::DWORD bytesWritten = 0;
+		Async::Overlapped overlapped;
+		Win32::BOOL success = Win32::WriteFile(
+			pipe,
+			data.data(),
+			static_cast<Win32::DWORD>(data.size()),
+			&bytesWritten,
+			&overlapped
+		);
+		if (not success and Win32::GetLastError() != Win32::ErrorCodes::IoPending)
+			throw Error::Win32Error(Win32::GetLastError(), "WriteFile() failed.");
+		overlapped.Wait("Still waiting...");
+	}
+
+	// If the buffer is too small to hold all data,
+	// multiple reads are required.
+	auto ReadPipe(Win32::HANDLE pipe, Win32::DWORD bytesToRead) -> std::vector<std::byte>
+	{
+		std::vector<std::byte> returnBuffer{ bytesToRead };
+		std::uint64_t totalBytesRead = 0;
+		while (true)
+		{
+			Win32::DWORD bytesRead = 0;
+			Async::Overlapped overlapped;
+			Win32::BOOL success = Win32::ReadFile(
+				pipe,
+				returnBuffer.data() + totalBytesRead,
+				bytesToRead,
+				&bytesRead, // not used for async IO
+				&overlapped
+			);
+			overlapped.Wait("Waiting to do read...");
+			totalBytesRead += overlapped.GetBytesRead();
+			if (success)
+			{
+				returnBuffer.resize(totalBytesRead);
+				return returnBuffer;
+			}
+			if (Win32::DWORD lastError = Win32::GetLastError(); lastError != Win32::ErrorCodes::MoreData)
+				throw Error::Win32Error(lastError, "ReadFile() failed.");
+			returnBuffer.resize(returnBuffer.size() + bytesToRead);
+		}
+	}
+}
+
 namespace SmallPipes
 {
 	auto ServerProc(Win32::HANDLE pipe) -> int
 	{
 		constexpr std::string_view string = "ABC";
 		std::println("Writing string {}", string);
-		PipeOperations::WritePipe(pipe, Util::StringToVector(string));
+		PipeOperations::Nonblocking::WritePipe(pipe, Util::StringToVector(string));
 		return 0;
 	};
 
 	auto ClientProc(Win32::HANDLE pipe) -> int
 	{
-		std::vector<std::byte> bytes = PipeOperations::ReadPipe(pipe, PipeOperations::BufferSize);
+		std::vector<std::byte> bytes = PipeOperations::Nonblocking::ReadPipe(pipe, PipeOperations::BufferSize);
 		std::string string = Util::VectorToString(bytes);
 		std::println("Read string {}", string);
 		return 0;
@@ -276,8 +348,24 @@ namespace SmallPipes
 		RAII::HandleUniquePtr serverEnd = PipeOperations::CreateServerPipe();
 		RAII::HandleUniquePtr clientEnd = PipeOperations::CreateClientPipe();
 
-		std::jthread serverThread([server = serverEnd.get()] { ServerProc(server); });
-		std::jthread clientThread([client = clientEnd.get()] { ClientProc(client); });
+		constexpr auto ComposeThread = 
+			[](Win32::HANDLE pipe, std::string_view name, auto proc) constexpr -> auto
+			{
+				return [pipe, name, proc]
+				{
+					try
+					{
+						proc(pipe);
+					}
+					catch (const std::exception& ex)
+					{
+						std::println("Error in {}: {}", name, ex.what());
+					}
+				};
+			};
+
+		std::jthread serverThread(ComposeThread(serverEnd.get(), "Server", ServerProc));
+		std::jthread clientThread(ComposeThread(clientEnd.get(), "Client", ClientProc));
 
 		serverThread.join();
 		clientThread.join();
