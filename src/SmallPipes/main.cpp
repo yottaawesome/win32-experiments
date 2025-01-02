@@ -133,14 +133,19 @@ namespace Async
 			return waitStatus == Win32::WaitObject0;
 		}
 
-		bool IsPartial() const
+		bool IsPartial() const noexcept
 		{
-			return this->Internal == 0x80000005L;// STATUS_BUFFER_OVERFLOW;
+			return Internal == 0x80000005L; // STATUS_BUFFER_OVERFLOW;
+		}
+
+		bool Pending() const noexcept
+		{
+			return Internal == 0x00000103L; // STATUS_IO_PENDING
 		}
 
 		std::uint64_t GetBytesRead() const noexcept
 		{
-			return this->InternalHigh;
+			return InternalHigh;
 		}
 
 		void swap(Overlapped& other) noexcept
@@ -165,6 +170,12 @@ namespace Async
 
 	struct AsyncRead final
 	{
+		~AsyncRead()
+		{
+			if (Operation.Pending())
+				Win32::CancelIo(Pipe);
+		}
+
 		AsyncRead(Win32::HANDLE handle, Win32::DWORD bytesToRead)
 			: Pipe(handle), BytesToRead(bytesToRead)
 		{
@@ -172,6 +183,9 @@ namespace Async
 				throw std::runtime_error("Handle cannot be nullptr");
 			Start();
 		}
+
+		AsyncRead(AsyncRead&&) noexcept = default;
+		AsyncRead& operator=(AsyncRead&&) noexcept = default;
 
 		auto Ready() -> bool
 		{
