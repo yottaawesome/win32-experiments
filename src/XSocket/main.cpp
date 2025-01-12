@@ -5,6 +5,7 @@
 #include <Assert.h>
 #include <StdIo.h>
 #include "Transport.h"
+import std;
 
 #pragma comment(lib, "websocket.lib")
 
@@ -365,6 +366,10 @@ quit:
 
 int __cdecl wmain()
 {
+    std::vector<std::byte> ss;
+    std::span<std::byte> s{ s.data(), s.size() };
+
+
     HRESULT hr = S_OK;
     WEB_SOCKET_HANDLE clientHandle = NULL;
     WEB_SOCKET_HANDLE serverHandle = NULL;

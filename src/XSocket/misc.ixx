@@ -4,38 +4,60 @@ import win32;
 
 export namespace Transport
 {
-    struct CriticalSection
+    struct CriticalSection final
     {
-        CriticalSection(Win32::CRITICAL_SECTION& cs)
-            : CS(cs)
-        {
-            Win32::EnterCriticalSection(&CS);
-        }
+        CriticalSection(const CriticalSection&) = delete;
+        CriticalSection& operator=(const CriticalSection&) = delete;
 
-        ~CriticalSection()
-        {
-            Win32::LeaveCriticalSection(&CS);
-        }
+        CriticalSection()       { Win32::InitializeCriticalSection(&CS); }
+        ~CriticalSection()      { Win32::DeleteCriticalSection(&CS); }
+        void lock() noexcept    { Win32::EnterCriticalSection(&CS); }
+        void unlock() noexcept  { Win32::LeaveCriticalSection(&CS); }
 
-        Win32::CRITICAL_SECTION& CS;
+        Win32::CRITICAL_SECTION CS{};
     };
+    using CriticalSectionScopedLock = std::scoped_lock<CriticalSection>;
 
     struct ListEntry
     {
-        void Attach(const std::vector<Win32::BYTE>& data)
+        void Attach(const std::vector<std::byte>& data)
         {
-            this->data = data;
+            Data = data;
         }
 
-        void CopyTo(std::vector<Win32::BYTE>& data, Win32::ULONG* bytesCopied)
+        void Attach(std::span<std::byte> data)
         {
-            data.insert(data.end(), this->data.begin(), this->data.end());
-            *bytesCopied = this->data.size();
+            Data = { data.begin(), data.end() };
         }
 
-        ListEntry* forward = nullptr;
-        ListEntry* backward = nullptr;
-        std::vector<Win32::BYTE> data;
+        size_t CopyTo(std::span<std::byte> out) 
+        {
+            if (Index >= Data.size())
+                return 0;
+            size_t numberToCopy = std::min(Data.size() - Index, out.size());
+            std::copy_n(Data.begin() + Index, numberToCopy, out.begin());
+            Index += numberToCopy;
+            return numberToCopy;
+        }
+
+        size_t CopyTo(std::vector<std::byte>& data)
+        {
+            if (Index >= Data.size())
+                return 0;
+            data.insert(data.end(), Data.begin() + Index, Data.end());
+            Index += std::distance(Data.begin() + Index, Data.end());
+            return Index;
+        }
+
+        bool Empty() const noexcept
+        {
+            return Index >= Data.size();
+        }
+
+        ListEntry* Forward = nullptr;
+        ListEntry* Backward = nullptr;
+        std::vector<std::byte> Data;
+        size_t Index = 0;
     };
 
     // Double-linked list.
@@ -43,43 +65,42 @@ export namespace Transport
     {
         List()
         {
-            this->head.forward = &this->head;
-            this->head.backward = &this->head;
+            this->m_head.Forward = &this->m_head;
+            this->m_head.Backward = &this->m_head;
         }
 
         ListEntry* Peek()
         {
-            return this->head.forward;
+            return this->m_head.Forward;
         }
 
         void RemoveHead()
         {
-            ListEntry* first = this->head.forward;
-            ListEntry* previous = first->backward;
-            previous->forward = first->forward;
-            first->forward->backward = first->backward;
-
+            ListEntry* first = this->m_head.Forward;
+            ListEntry* previous = first->Backward;
+            previous->Forward = first->Forward;
+            first->Forward->Backward = first->Backward;
             delete first;
         }
 
         void AppendTail(ListEntry* entry)
         {
-            ListEntry* last = this->head.backward;
-            ListEntry* next = last->forward;
+            ListEntry* last = m_head.Backward;
+            ListEntry* next = last->Forward;
 
-            last->forward = entry;
-            next->backward = entry;
-            entry->forward = next;
-            entry->backward = last;
+            last->Forward = entry;
+            next->Backward = entry;
+            entry->Forward = next;
+            entry->Backward = last;
         }
 
         bool IsEmpty()
         {
-            return (this->head.forward == &this->head && this->head.backward == &this->head);
+            return (m_head.Forward == &m_head and m_head.Forward == &m_head);
         }
 
     private:
-        ListEntry head;
+        ListEntry m_head;
     };
 
     // Abstract transport that allows writing and reading data. The goal here was to simplify sample's code,
@@ -87,49 +108,38 @@ export namespace Transport
     // However, it should be straightforward to replace this abstract transport with a concrete one list sockets/pipes/etc.
     struct Transport
     {
-        Transport()
+        void WriteData(std::span<std::byte> data)
         {
-            Win32::InitializeCriticalSection(&this->lock);
-        }
-
-        ~Transport()
-        {
-            Win32::DeleteCriticalSection(&this->lock);
-        }
-
-        void WriteData(Win32::BYTE* data, Win32::ULONG dataLength)
-        {
-            if (not data)
+            if (data.empty())
                 return;
 
-            std::vector<Win32::BYTE> buffer{ data, data+dataLength };
-
-            std::unique_ptr<ListEntry> entry = std::make_unique<ListEntry>();
-
             // Copy application buffer to the transport buffer.
-            entry->Attach(buffer);
+            std::unique_ptr<ListEntry> entry = std::make_unique<ListEntry>();
+            entry->Attach(data);
 
             // Add the entry to the list.
-            CriticalSection cs(this->lock);
-            list.AppendTail(entry.release());
+            CriticalSectionScopedLock cs(m_lock);
+            m_list.AppendTail(entry.release());
         }
 
-        void ReadData(std::vector<Win32::BYTE>& data)
+        size_t ReadData(std::span<std::byte> buffer)
         {
-            CriticalSection cs(this->lock);
+            CriticalSectionScopedLock cs(m_lock);
             // Read as much data as possible from the transport.
-            while (not list.IsEmpty())
+            size_t totalRead = 0;
+            while (totalRead < buffer.size() and not m_list.IsEmpty())
             {
-                ListEntry* first = list.Peek();
+                ListEntry* first = m_list.Peek();
                 // Copy data from the transport buffer to the application buffer.
-                Win32::ULONG copiedBytes = 0;
-                first->CopyTo(data, &copiedBytes);
-                list.RemoveHead();
+                totalRead += first->CopyTo(buffer);
+                if (first->Empty())
+                    m_list.RemoveHead();
             }
+            return totalRead;
         }
 
     private:
-        Win32::CRITICAL_SECTION lock;
-        List list;
+        CriticalSection m_lock;
+        List m_list;
     };
 }
