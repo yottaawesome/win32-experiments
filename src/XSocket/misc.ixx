@@ -20,17 +20,17 @@ export namespace Transport
 
     struct ListEntry
     {
-        void Attach(const std::vector<std::byte>& data)
+        constexpr void Attach(const std::vector<std::byte>& data)
         {
             Data = data;
         }
 
-        void Attach(std::span<std::byte> data)
+        constexpr void Attach(std::span<std::byte> data)
         {
             Data = { data.begin(), data.end() };
         }
 
-        size_t CopyTo(std::span<std::byte> out) 
+        constexpr size_t CopyTo(std::span<std::byte> out)
         {
             if (Index >= Data.size())
                 return 0;
@@ -40,7 +40,7 @@ export namespace Transport
             return numberToCopy;
         }
 
-        size_t CopyTo(std::vector<std::byte>& data)
+        constexpr size_t CopyTo(std::vector<std::byte>& data)
         {
             if (Index >= Data.size())
                 return 0;
@@ -49,9 +49,14 @@ export namespace Transport
             return Index;
         }
 
-        bool Empty() const noexcept
+        constexpr bool Empty() const noexcept
         {
             return Index >= Data.size();
+        }
+
+        constexpr size_t Remaining() const noexcept
+        {
+            return Data.size() - Index;
         }
 
         ListEntry* Forward = nullptr;
@@ -59,22 +64,50 @@ export namespace Transport
         std::vector<std::byte> Data;
         size_t Index = 0;
     };
+    static_assert(
+        []() consteval
+        {
+            ListEntry entry;
+            if (entry.Remaining() != 0)
+                throw std::runtime_error("Remaining() must be empty!");
+
+            std::vector<std::byte> dataToEnter{ 
+                std::byte{0x1}, std::byte{0x1}, std::byte{0x1}, std::byte{0x1}, std::byte{0x1},
+                std::byte{0x1}, std::byte{0x1}, std::byte{0x1}, std::byte{0x1}, std::byte{0x1}
+            };
+            entry.Attach(dataToEnter);
+            if (entry.Remaining() != dataToEnter.size())
+                throw std::runtime_error("Remaining() must be v.size()!");
+
+            std::array<std::byte, 5> arr{};
+            entry.CopyTo(std::span{ arr.data(), arr.size() });
+            if (entry.Remaining() != 5)
+                throw std::runtime_error("Remaining() is expected to be 5.");
+            if (not std::all_of(arr.begin(), arr.end(), [](auto x) {return x == std::byte{ 0x1 }; }))
+                throw std::runtime_error("arr[0] is expected to be 0x1.");
+
+            entry.CopyTo(std::span{ arr.data(), arr.size() });
+            if (not entry.Empty() or entry.Remaining() != 0)
+                throw std::runtime_error("entry is expected to be empty.");
+
+            return true;
+        }());
 
     // Double-linked list.
     struct List
     {
-        List()
+        constexpr List()
         {
             this->m_head.Forward = &this->m_head;
             this->m_head.Backward = &this->m_head;
         }
 
-        ListEntry* Peek()
+        constexpr ListEntry* Peek()
         {
             return this->m_head.Forward;
         }
 
-        void RemoveHead()
+        constexpr void RemoveHead()
         {
             ListEntry* first = this->m_head.Forward;
             ListEntry* previous = first->Backward;
@@ -83,7 +116,7 @@ export namespace Transport
             delete first;
         }
 
-        void AppendTail(ListEntry* entry)
+        constexpr void AppendTail(ListEntry* entry)
         {
             ListEntry* last = m_head.Backward;
             ListEntry* next = last->Forward;
@@ -94,7 +127,7 @@ export namespace Transport
             entry->Backward = last;
         }
 
-        bool IsEmpty()
+        constexpr bool IsEmpty()
         {
             return (m_head.Forward == &m_head and m_head.Forward == &m_head);
         }
