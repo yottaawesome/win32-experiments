@@ -83,12 +83,14 @@ export namespace Transport
             entry.CopyTo(std::span{ arr.data(), arr.size() });
             if (entry.Remaining() != 5)
                 throw std::runtime_error("Remaining() is expected to be 5.");
-            if (not std::all_of(arr.begin(), arr.end(), [](auto x) {return x == std::byte{ 0x1 }; }))
-                throw std::runtime_error("arr[0] is expected to be 0x1.");
+            if (not std::all_of(arr.begin(), arr.end(), [](auto x) { return x == std::byte{ 0x1 }; }))
+                throw std::runtime_error("arr is expected to be 0x1.");
 
             entry.CopyTo(std::span{ arr.data(), arr.size() });
             if (not entry.Empty() or entry.Remaining() != 0)
                 throw std::runtime_error("entry is expected to be empty.");
+            if (not std::all_of(arr.begin(), arr.end(), [](auto x) { return x == std::byte{ 0x1 }; }))
+                throw std::runtime_error("arr is expected to be 0x1.");
 
             return true;
         }());
