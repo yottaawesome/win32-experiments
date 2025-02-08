@@ -1,6 +1,7 @@
 module;
 
 #include <Windows.h>
+#include <psapi.h>
 
 export module win32;
 
@@ -22,6 +23,13 @@ export namespace Win32
 		::SetNamedPipeHandleState,
 		::ReadFile,
 		::WriteFile,
+		::GetNamedPipeClientProcessId,
+		::GetNamedPipeServerProcessId,
+		::OpenProcess,
+		::K32GetProcessImageFileNameW,
+		::K32GetProcessImageFileNameA,
+		::QueryFullProcessImageNameA,
+		::GetCurrentProcess,
 		::DWORD,
 		::OVERLAPPED,
 		::HANDLE,
@@ -139,4 +147,5 @@ export namespace Win32
 	constexpr auto WaitObject0 = WAIT_OBJECT_0;
 	constexpr auto Infinite = INFINITE;
 	constexpr auto OpenExisting = OPEN_EXISTING;
+	constexpr auto ProcessQueryLimitedInformation = PROCESS_QUERY_LIMITED_INFORMATION;
 }

@@ -206,6 +206,70 @@ namespace PipeOperations
         dataWithHeader.insert(dataWithHeader.begin() + sizeof(Header), data.begin(), data.end());
         WritePipe(pipe, dataWithHeader);
     }
+
+    void PrintClientId(Win32::HANDLE serverPipe)
+    {
+        unsigned long clientProcessId;
+        if (not Win32::GetNamedPipeClientProcessId(serverPipe, &clientProcessId))
+        {
+            std::println("GetNamedPipeClientProcessId() failed: {}", Win32::GetLastError());
+            return;
+        }
+        std::println("Connecting client process ID is {}", clientProcessId);
+
+        Win32::HANDLE hProcess = Win32::OpenProcess(Win32::ProcessQueryLimitedInformation, false, clientProcessId);
+        if (not hProcess)
+        {
+            std::println("OpenProcess() failed: {}", Win32::GetLastError());
+            return;
+        }
+        std::string stringBuffer(2048, '\0');
+        Win32::DWORD result = Win32::K32GetProcessImageFileNameA(hProcess, stringBuffer.data(), static_cast<Win32::DWORD>(stringBuffer.size()));
+        if (result)
+        {
+            stringBuffer = stringBuffer.c_str();
+            std::println("Client path is {}", stringBuffer);
+            std::filesystem::path p(stringBuffer);
+            std::println("Does this path exist: {}", std::filesystem::exists(p));
+        }
+        else
+        {
+            std::println("GetProcessImageFileNameA() failed {}", Win32::GetLastError());
+        }
+
+        stringBuffer.resize(2048);
+        std::fill(stringBuffer.begin(), stringBuffer.end(), '\0');
+        Win32::DWORD size = static_cast<Win32::DWORD>(stringBuffer.size());
+        result = Win32::QueryFullProcessImageNameA(hProcess, 0, stringBuffer.data(), &size);
+        Win32::CloseHandle(hProcess);
+        if (result)
+        {
+            stringBuffer.resize(size);
+            std::println("Client path is {}", stringBuffer);
+            std::filesystem::path p(stringBuffer);
+            std::println("Does this path exist: {}", std::filesystem::exists(p));
+        }
+        else
+        {
+            std::println("QueryFullProcessImageNameA() failed {}", Win32::GetLastError());
+        }
+
+        stringBuffer.resize(2048);
+        std::fill(stringBuffer.begin(), stringBuffer.end(), '\0');
+        size = static_cast<Win32::DWORD>(stringBuffer.size());
+        result = Win32::QueryFullProcessImageNameA(Win32::GetCurrentProcess(), 0, stringBuffer.data(), &size);
+        if (result)
+        {
+            stringBuffer.resize(size);
+            std::println("My path is {}", stringBuffer);
+            std::filesystem::path p(stringBuffer);
+            std::println("Does this path exist: {}", std::filesystem::exists(p));
+        }
+        else
+        {
+            std::println("QueryFullProcessImageNameA() failed {}", Win32::GetLastError());
+        }
+    }
 }
 
 auto main() -> int
@@ -221,6 +285,8 @@ try
     UniqueHandle clientPipe = PipeOperations::OpenClientPipe();
     if (serverConnected.Wait(Win32::Infinite))
         std::println("Connection wait was successful.");
+
+    PipeOperations::PrintClientId(serverPipe.get());
 
     std::string msg = "Hello, world!";
     std::vector<std::byte> data = msg
