@@ -213,35 +213,26 @@ namespace PipeOperations
         std::string stringBuffer(2048, '\0');
         if constexpr (VUseK32)
         {
-            Win32::DWORD result = Win32::K32GetProcessImageFileNameA(hProcess, stringBuffer.data(), static_cast<Win32::DWORD>(stringBuffer.size()));
-            if (result)
-            {
-                stringBuffer = stringBuffer.c_str();
-                std::println("Client path is {}", stringBuffer);
-                std::filesystem::path p(stringBuffer);
-                std::println("Does this path exist: {}", std::filesystem::exists(p));
-            }
-            else
+            if (not Win32::K32GetProcessImageFileNameA(hProcess, stringBuffer.data(), static_cast<Win32::DWORD>(stringBuffer.size())))
             {
                 std::println("K32GetProcessImageFileNameA() failed {}", Win32::GetLastError());
+                return;
             }
+            stringBuffer = stringBuffer.c_str();
         }
         else
         {
             Win32::DWORD size = static_cast<Win32::DWORD>(stringBuffer.size());
-            Win32::DWORD result = Win32::QueryFullProcessImageNameA(hProcess, 0, stringBuffer.data(), &size);
-            if (result)
-            {
-                stringBuffer.resize(size);
-                std::println("Client path is {}", stringBuffer);
-                std::filesystem::path p(stringBuffer);
-                std::println("Does this path exist: {}", std::filesystem::exists(p));
-            }
-            else
+            if (not Win32::QueryFullProcessImageNameA(hProcess, 0, stringBuffer.data(), &size))
             {
                 std::println("QueryFullProcessImageNameA() failed {}", Win32::GetLastError());
+                return;
             }
+            stringBuffer.resize(size);
         }
+        std::println("Client path is {}", stringBuffer);
+        std::filesystem::path p(stringBuffer);
+        std::println("Does this path exist: {}", std::filesystem::exists(p));
     }
 
     void PrintClientId(Win32::HANDLE serverPipe)
