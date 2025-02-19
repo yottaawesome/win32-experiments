@@ -28,6 +28,14 @@ namespace Error
 			: runtime_error(std::format("{} -> {} ({})", msg, TranslateError(code), code))
 		{ }
 	};
+
+	struct RuntimeError : std::runtime_error
+	{
+		template<typename...TArgs>
+		RuntimeError(std::format_string<TArgs...> fmt, TArgs&&...args)
+			: runtime_error(std::format(fmt, std::forward<TArgs>(args)...))
+		{ }
+	};
 }
 
 namespace RAII
@@ -98,10 +106,185 @@ namespace BasicExample
 }
 #pragma endregion BasicExample
 
+namespace TimerHelpers
+{
+	[[nodiscard]]
+	auto MillisToHundredNanoIntervals(std::chrono::milliseconds ms) -> std::int64_t
+	{
+		return ms.count() * 10000;
+	}
+
+	auto SetTimer(Win32::HANDLE timer, std::chrono::milliseconds start, std::chrono::milliseconds period)
+	{
+		Win32::LARGE_INTEGER time{ .QuadPart = -MillisToHundredNanoIntervals(start) };
+		Win32::BOOL success = Win32::SetWaitableTimer(
+			timer,
+			&time,
+			static_cast<Win32::DWORD>(period.count()),
+			nullptr,
+			nullptr,
+			false
+		);
+		if (not success)
+			throw Error::Win32Error(Win32::GetLastError(), "Failed setting timer.");
+	}
+
+	[[nodiscard]]
+	auto CreateTimer(bool manualReset) -> RAII::HandleUniquePtr
+	{
+		// https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createwaitabletimerw
+		Win32::HANDLE hTimer = Win32::CreateWaitableTimerW(
+			nullptr,
+			manualReset,		// Not a manual-reset timer.
+			nullptr
+		);
+		if (not hTimer)
+			throw Error::Win32Error(Win32::GetLastError(), "Failed creating timer.");
+
+		return RAII::HandleUniquePtr(hTimer);
+	}
+
+	[[nodiscard]]
+	auto CreateEvent(bool manualReset, bool initialState) -> RAII::HandleUniquePtr
+	{
+		Win32::HANDLE exit = Win32::CreateEventW(nullptr, manualReset, initialState, nullptr);
+		if (not exit)
+			throw Error::Win32Error(Win32::GetLastError(), "CreateEventW() failed");
+		return RAII::HandleUniquePtr(exit);
+	}
+}
+
+namespace ThreadApc
+{
+	std::atomic<bool> KeepRunning = true;
+
+	void PrintA(std::uint64_t)
+	{
+		std::println("A");
+	}
+
+	void PrintB(std::uint64_t)
+	{
+		std::println("B");
+	}
+
+	void PrintC(std::uint64_t)
+	{
+		std::println("C");
+	}
+
+	struct WorkerThread
+	{
+		~WorkerThread()
+		{
+			Win32::SetEvent(m_exit.get());
+			Join();
+		}
+
+		void Start()
+		{
+			m_thread = std::jthread(&WorkerThread::Run, this);
+		}
+
+		void SignalToExit()
+		{
+			Win32::SetEvent(m_exit.get());
+		}
+
+		auto Join() -> bool
+		{
+			Win32::HANDLE hThread = m_thread.native_handle();
+			if (not hThread)
+				return true;
+
+			Win32::DWORD result = Win32::WaitForSingleObject(hThread, Win32::Infinite);
+			if (result == Win32::WaitConstants::Object0)
+				return true;
+			if (result == Win32::WaitConstants::Timeout)
+				return false;
+			throw Error::RuntimeError("WaitForSingleObject() returned {}", result);
+		}
+
+		auto Handle() -> Win32::HANDLE
+		{
+			return m_thread.native_handle();
+		}
+
+	private:
+		void Run()
+		{
+			while (true)
+			{
+				Win32::DWORD result = Win32::WaitForSingleObjectEx(m_exit.get(), Win32::Infinite, true);
+
+				if (result == Win32::WaitConstants::IoCompletion)
+					;
+				else if (result == Win32::WaitConstants::Object0)
+				{
+					std::println("Worker finished");
+					return;
+				}
+				else
+				{
+					std::println("Unexpected wait result {}", result);
+					return;
+				}
+			}
+		}
+
+		std::jthread m_thread;
+		RAII::HandleUniquePtr m_exit = TimerHelpers::CreateEvent(false, false);
+	};
+
+	template<std::invocable T>
+	struct Scope
+	{
+		~Scope() { m_t(); }
+		Scope(T&& invocable) : m_t(invocable) {}
+		T m_t;
+	};
+
+	void Run()
+	try
+	{
+		auto timer = TimerHelpers::CreateTimer(false);
+
+		WorkerThread worker;
+		worker.Start();
+
+		constexpr std::array Functions{ PrintA, PrintB, PrintC };
+		TimerHelpers::SetTimer(timer.get(), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000));
+
+		for (size_t i = 0; i < Functions.size(); i++)
+		{
+			Win32::DWORD wait = Win32::WaitForSingleObjectEx(timer.get(), Win32::Infinite, true);
+			if (wait != Win32::WaitConstants::Object0)
+				throw Error::RuntimeError("Unexpected {}", wait);
+			Win32::DWORD result = Win32::QueueUserAPC(
+				Functions.at(i),
+				worker.Handle(),
+				0
+			);
+			if (not result)
+				throw Error::Win32Error(Win32::GetLastError(), "QueueUserAPC() failed");
+		}
+
+		worker.SignalToExit();
+		worker.Join();
+
+		std::println("APC test all done.");
+	}
+	catch (const std::exception& ex)
+	{
+		std::println("Failed: {}", ex.what());
+	}
+}
+
 auto main() -> int
 try
 {
 	BasicExample::Run();
+	ThreadApc::Run();
 
 	return 0;
 }

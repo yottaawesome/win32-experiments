@@ -12,6 +12,7 @@ export namespace Win32
 		::HANDLE,
 		::LARGE_INTEGER,
 		::BOOL,
+		::ULONG_PTR,
 		::CloseHandle,
 		::CreateWaitableTimerW,
 		::CreateWaitableTimerExW,
@@ -25,7 +26,10 @@ export namespace Win32
 		::FormatMessageW,
 		::LocalFree,
 		::QueueUserAPC,
-		::QueueUserAPC2
+		::QueueUserAPC2,
+		::CreateEventW,
+		::SetEvent,
+		::ResetEvent
 		;
 
 	constexpr auto Infinite = INFINITE;
