@@ -225,6 +225,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Networking", "Networking", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XSocket", "XSocket\XSocket.vcxproj", "{284000EC-89F1-4FB9-BC13-ADB8C67B1D6D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WaitableTimers", "WaitableTimers\WaitableTimers.vcxproj", "{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -945,6 +947,14 @@ Global
 		{284000EC-89F1-4FB9-BC13-ADB8C67B1D6D}.Release|x64.Build.0 = Release|x64
 		{284000EC-89F1-4FB9-BC13-ADB8C67B1D6D}.Release|x86.ActiveCfg = Release|Win32
 		{284000EC-89F1-4FB9-BC13-ADB8C67B1D6D}.Release|x86.Build.0 = Release|Win32
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}.Debug|x64.ActiveCfg = Debug|x64
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}.Debug|x64.Build.0 = Debug|x64
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}.Debug|x86.ActiveCfg = Debug|Win32
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}.Debug|x86.Build.0 = Debug|Win32
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}.Release|x64.ActiveCfg = Release|x64
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}.Release|x64.Build.0 = Release|x64
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}.Release|x86.ActiveCfg = Release|Win32
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1042,6 +1052,7 @@ Global
 		{D0FBEF82-9301-43A9-A381-A4F70B28B1FA} = {866D0BA4-7F3E-481C-A8D1-E3D36840D1AF}
 		{A75D5695-A796-4056-A7E8-7268DBC7B445} = {1794881F-BC72-4AF9-8923-8CD754E66A2A}
 		{284000EC-89F1-4FB9-BC13-ADB8C67B1D6D} = {0798EB25-EAD9-4775-A1CC-7C72B0D7F9AC}
+		{9503E0FE-376D-4E8E-8FFA-A9B34669CF6A} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
