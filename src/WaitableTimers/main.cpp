@@ -210,7 +210,20 @@ namespace ThreadApc
 			return m_thread.native_handle();
 		}
 
+		void Schedule(auto context)
+		{
+			Win32::QueueUserAPC(ExecuteAPC2<decltype(context)>, m_thread.native_handle(), reinterpret_cast<Win32::ULONG_PTR>(context));
+		}
+
 	private:
+		template<typename T>
+		static void ExecuteAPC2(Win32::ULONG_PTR ptr)
+		{
+			T fn = reinterpret_cast<T>(ptr);
+			std::invoke(*fn);
+			delete fn;
+		}
+
 		void Run()
 		{
 			while (true)
@@ -260,13 +273,15 @@ namespace ThreadApc
 			Win32::DWORD wait = Win32::WaitForSingleObjectEx(timer.get(), Win32::Infinite, true);
 			if (wait != Win32::WaitConstants::Object0)
 				throw Error::RuntimeError("Unexpected {}", wait);
-			Win32::DWORD result = Win32::QueueUserAPC(
+			/*Win32::DWORD result = Win32::QueueUserAPC(
 				Functions.at(i),
 				worker.Handle(),
 				0
 			);
 			if (not result)
 				throw Error::Win32Error(Win32::GetLastError(), "QueueUserAPC() failed");
+			*/
+			worker.Schedule(new auto([msg = std::string("Hello world!")]() { std::println("{}", msg); }));
 		}
 
 		worker.SignalToExit();
