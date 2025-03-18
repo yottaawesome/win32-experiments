@@ -35,6 +35,8 @@ struct _SecHandle  hcText;
 #define ServerName  "Server_Computer_Name"
 #define TargetName  "Server_User_Logon_Name"
 
+BOOL DoAuthentication(SOCKET s);
+
 int main()
 {
 
@@ -43,14 +45,12 @@ int main()
     PCHAR             pMessage;
     WSADATA           wsaData;
     CredHandle        hCred;
-    struct _SecHandle hCtxt;
     SECURITY_STATUS   ss;
     DWORD             cbRead;
     ULONG             cbMaxSignature;
     ULONG             cbSecurityTrailer;
     SecPkgContext_Sizes            SecPkgContextSizes;
     SecPkgContext_NegotiationInfo  SecPkgNegInfo;
-    BOOL DoAuthentication(SOCKET s);
 
     //-------------------------------------------------------------------
     //  Initialize the socket and the SSP security package.
