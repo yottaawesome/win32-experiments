@@ -22,10 +22,7 @@ namespace Utl
 			nullptr
 		);
 		if (not messageBuffer)
-		{
-			const auto lastError = Win32::GetLastError();
-			return std::format("FormatMessageA() failed on code {} with error {}", errorCode, lastError);
-		}
+			return std::format("FormatMessageA() failed on code {} with error {}", errorCode, Win32::GetLastError());
 
 		std::string msg(static_cast<char*>(messageBuffer));
 		// This should never happen
@@ -338,7 +335,8 @@ namespace Service
 			nullptr,    // default security attributes
 			true,    // manual reset event
 			false,   // not signaled
-			nullptr);   // no name
+			nullptr // no name
+		);
 
 		if (not ghSvcStopEvent)
 		{
@@ -370,7 +368,6 @@ namespace Service
 			SvcCtrlHandler,
 			0
 		);
-
 		if (!gSvcStatusHandle)
 		{
 			Log::Info("RegisterServiceCtrlHandler");
@@ -378,7 +375,6 @@ namespace Service
 		}
 
 		// These SERVICE_STATUS members remain as set here
-
 		gSvcStatus.dwServiceType = Win32::ServiceWin32OwnProcess;
 		gSvcStatus.dwServiceSpecificExitCode = 0;
 
