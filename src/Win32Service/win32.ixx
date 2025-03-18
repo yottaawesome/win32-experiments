@@ -2,8 +2,22 @@ module;
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <wtsapi32.h>
+#include <userenv.h>
 
 export module win32;
+
+namespace Win32
+{
+	template<auto VValue>
+	struct Constant
+	{
+		operator decltype(VValue)() const noexcept
+		{
+			return VValue;
+		}
+	};
+}
 
 export namespace Win32
 {
@@ -20,6 +34,13 @@ export namespace Win32
 		::WTSSESSION_NOTIFICATION,
 		::LPVOID,
 		::USHORT,
+		::PROCESS_INFORMATION,
+		::STARTUPINFO,
+		::HKEY,
+		::LONG,
+		::LPPROFILEINFOW,
+		::PROFILEINFOW,
+		::BOOL,
 		::SetEvent,
 		::CreateEventW,
 		::GetModuleFileNameW,
@@ -39,7 +60,17 @@ export namespace Win32
 		::SetServiceStatus,
 		::RegisterServiceCtrlHandlerW,
 		::RegisterServiceCtrlHandlerExW,
-		::WaitForSingleObject
+		::WaitForSingleObject,
+		::WTSGetActiveConsoleSessionId,
+		::CloseHandle,
+		::WTSQueryUserToken,
+		::DuplicateTokenEx,
+		::CreateEnvironmentBlock,
+		::DestroyEnvironmentBlock,
+		::CreateProcessAsUserW,
+		::RegGetValueW,
+		::LoadUserProfileW,
+		::GetCurrentProcessToken
 		;
 
 	namespace FormatMessageFlags
@@ -78,4 +109,19 @@ export namespace Win32
 	constexpr auto ServiceControlSessionChange = SERVICE_CONTROL_SESSIONCHANGE;
 
 	constexpr auto Infinite = INFINITE;
+	constexpr auto CreateNewConsole = CREATE_NEW_CONSOLE;
+	constexpr auto CreateBreakawayJob = CREATE_BREAKAWAY_FROM_JOB;
+	constexpr auto CreateUnicodeEnvironment = CREATE_UNICODE_ENVIRONMENT;
+
+	namespace Token
+	{
+		constexpr auto Read = TOKEN_READ;
+		constexpr auto Duplicate = TOKEN_DUPLICATE;
+		constexpr auto Query = TOKEN_QUERY;
+		constexpr auto AssignPrimary = TOKEN_ASSIGN_PRIMARY;
+	}
+
+	constexpr auto RrfRtRegSz = RRF_RT_REG_SZ;
+
+	Constant<HKEY_CURRENT_USER> HKCU;
 }

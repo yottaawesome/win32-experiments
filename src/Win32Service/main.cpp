@@ -1,147 +1,10 @@
 // https://learn.microsoft.com/en-us/windows/win32/services/the-complete-service-sample
 import std;
 import win32;
+import common;
 
-namespace Utl
-{
-	auto TranslateErrorCode(Win32::DWORD errorCode) -> std::string
-	{
-		constexpr Win32::DWORD flags =
-			Win32::FormatMessageFlags::AllocateBuffer
-			| Win32::FormatMessageFlags::FromSystem
-			| Win32::FormatMessageFlags::IgnoreInserts;
-
-		void* messageBuffer = nullptr;
-		Win32::FormatMessageA(
-			flags,
-			nullptr,
-			errorCode,
-			0,
-			reinterpret_cast<char*>(&messageBuffer),
-			0,
-			nullptr
-		);
-		if (not messageBuffer)
-			return std::format("FormatMessageA() failed on code {} with error {}", errorCode, Win32::GetLastError());
-
-		std::string msg(static_cast<char*>(messageBuffer));
-		// This should never happen
-		// See also https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-raisefailfastexception
-		if (Win32::LocalFree(messageBuffer))
-			std::abort();
-
-		std::erase_if(msg, [](const char x) { return x == '\n' || x == '\r'; });
-		return msg;
-	}
-}
-
-namespace Error
-{
-	struct Win32Error : std::runtime_error
-	{
-		Win32Error(
-			Win32::DWORD code,
-			std::string_view msg,
-			const std::source_location& loc = std::source_location::current(),
-			const std::stacktrace& trace = std::stacktrace::current()
-		) : runtime_error(Utl::TranslateErrorCode(code))
-		{
-
-		}
-	};
-}
-
-namespace Utl
-{
-	std::string ConvertString(std::wstring_view wstr)
-	{
-		if (wstr.empty())
-			return {};
-
-		// https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte
-		// Returns the size in bytes, this differs from MultiByteToWideChar, which returns the size in characters
-		const int sizeInBytes = Win32::WideCharToMultiByte(
-			Win32::CpUtf8,										// CodePage
-			Win32::WcNoBestFitChars,							// dwFlags 
-			&wstr[0],										// lpWideCharStr
-			static_cast<int>(wstr.size()),					// cchWideChar 
-			nullptr,										// lpMultiByteStr
-			0,												// cbMultiByte
-			nullptr,										// lpDefaultChar
-			nullptr											// lpUsedDefaultChar
-		);
-		if (sizeInBytes == 0)
-			throw Error::Win32Error(Win32::GetLastError(), "WideCharToMultiByte() [1] failed");
-
-		std::string strTo(sizeInBytes / sizeof(char), '\0');
-		const int status = WideCharToMultiByte(
-			Win32::CpUtf8,										// CodePage
-			Win32::WcNoBestFitChars,							// dwFlags 
-			&wstr[0],										// lpWideCharStr
-			static_cast<int>(wstr.size()),					// cchWideChar 
-			&strTo[0],										// lpMultiByteStr
-			static_cast<int>(strTo.size() * sizeof(char)),	// cbMultiByte
-			nullptr,										// lpDefaultChar
-			nullptr											// lpUsedDefaultChar
-		);
-		if (status == 0)
-			throw Error::Win32Error(Win32::GetLastError(), "WideCharToMultiByte() [2] failed");
-
-		return strTo;
-	}
-
-	std::wstring ConvertString(std::string_view str)
-	{
-		if (str.empty())
-			return {};
-
-		// https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-multibytetowidechar
-		// Returns the size in characters, this differs from WideCharToMultiByte, which returns the size in bytes
-		int sizeInCharacters = Win32::MultiByteToWideChar(
-			Win32::CpUtf8,									// CodePage
-			0,											// dwFlags
-			&str[0],									// lpMultiByteStr
-			static_cast<int>(str.size() * sizeof(char)),// cbMultiByte
-			nullptr,									// lpWideCharStr
-			0											// cchWideChar
-		);
-		if (sizeInCharacters == 0)
-			throw Error::Win32Error(Win32::GetLastError(), "MultiByteToWideChar() [1] failed");
-
-		std::wstring wstrTo(sizeInCharacters, '\0');
-		int status = Win32::MultiByteToWideChar(
-			Win32::CpUtf8,									// CodePage
-			0,											// dwFlags
-			&str[0],									// lpMultiByteStr
-			static_cast<int>(str.size() * sizeof(char)),	// cbMultiByte
-			&wstrTo[0],									// lpWideCharStr
-			static_cast<int>(wstrTo.size())				// cchWideChar
-		);
-		if (status == 0)
-			throw Error::Win32Error(Win32::GetLastError(), "MultiByteToWideChar() [2] failed");
-
-		return wstrTo;
-	}
-}
-
-namespace RAII
-{
-	template<auto VDeleteFn>
-	struct Deleter
-	{
-		void operator()(auto handle) const noexcept
-		{
-			VDeleteFn(handle);
-		}
-	};
-
-	template<typename T, auto VDeleter>
-	using UniquePtr = std::unique_ptr<T, Deleter<VDeleter>>;
-	template<typename T, auto VDeleter>
-	using IndirectUniquePtr = std::unique_ptr<std::remove_pointer_t<T>, Deleter<VDeleter>>;
-
-	using ServiceUniquePtr = IndirectUniquePtr<Win32::SC_HANDLE, Win32::CloseServiceHandle>;
-}
+#pragma comment(lib, "Wtsapi32.lib")
+#pragma comment(lib, "Userenv")
 
 namespace Log
 {
@@ -161,7 +24,7 @@ namespace Log
 
 		LogToFile(
 			std::format(
-				"{} {}",
+				"[{}] {}\n",
 				std::format("{:%Y-%m-%d %X}", time),
 				std::format(fmt, std::forward<TArgs>(args)...)));
 	}
@@ -175,7 +38,7 @@ namespace Log
 		LogToFile(
 			Utl::ConvertString(
 				std::format(
-					L"{} {}",
+					L"[{}] {}\n",
 					std::format(L"{:%Y-%m-%d %X}", time),
 					std::format(fmt, std::forward<TArgs>(args)...))));
 	}
@@ -321,23 +184,90 @@ namespace Service
 		return 0;
 	}
 
+	void CreateUserProcess()
+	try
+	{
+		// https://stackoverflow.com/questions/19796409/how-to-impersonate-a-user-from-a-service-correctly
+		// https://stackoverflow.com/questions/26913172/create-process-in-user-session-from-service
+		// https://web.archive.org/web/20101009012531/http://blogs.msdn.com/b/winsdk/archive/2009/07/14/launching-an-interactive-process-from-windows-service-in-windows-vista-and-later.aspx
+		Win32::DWORD dwSessionID = Win32::WTSGetActiveConsoleSessionId();
+		if (dwSessionID == 0xFFFFFFFF)
+			throw Error::Win32Error(Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed");
+
+		Win32::HANDLE hToken = nullptr;
+		if (not Win32::WTSQueryUserToken(dwSessionID, &hToken))
+			throw Error::Win32Error(Win32::GetLastError(), "WTSQueryUserToken failed.");
+
+		RAII::HandleUniquePtr userPrimaryToken(hToken);
+		Win32::HANDLE hDuplicated = nullptr;
+		bool success = Win32::DuplicateTokenEx(
+			userPrimaryToken.get(),
+			Win32::Token::Read | Win32::Token::AssignPrimary | Win32::Token::Duplicate | Win32::Token::Query,
+			nullptr,
+			SecurityIdentification,
+			TokenPrimary,
+			&hDuplicated
+		);
+		if (not success)
+			throw Error::Win32Error(Win32::GetLastError(), "DuplicateToken failed.");
+		RAII::HandleUniquePtr duplicatedToken(hDuplicated);
+
+		void* environment = nullptr;
+		if (not Win32::CreateEnvironmentBlock(&environment, duplicatedToken.get(), false))
+			throw Error::Win32Error(Win32::GetLastError(), "CreateEnvironmentBlock failed.");
+
+		RAII::EnvironmentUniquePtr environmentBlock(environment);
+
+		Win32::PROCESS_INFORMATION info{ 0 };
+		Win32::STARTUPINFO startup{ .cb = sizeof(startup) };
+		std::wstring commandLine = L"command line";
+		success = Win32::CreateProcessAsUserW(
+			duplicatedToken.get(),
+			LR"(A:\Code\cpp\win32-experiments\src\x64\Debug\UserProcess.exe)",
+			commandLine.data(),
+			nullptr,
+			nullptr,
+			false,
+			Win32::CreateNewConsole | Win32::CreateUnicodeEnvironment | Win32::CreateBreakawayJob,
+			environmentBlock.get(),
+			L"C:\\temp",
+			&startup,
+			&info
+		);
+		if (not success)
+			throw Error::Win32Error(Win32::GetLastError(), "CreateProcessAsUserW failed.");
+
+		RAII::HandleUniquePtr hProc(info.hProcess);
+		RAII::HandleUniquePtr hProcThread(info.hThread);
+	}
+	catch (const std::exception& ex)
+	{
+		Log::Info("Failed creating user process: {}", ex.what());
+	}
+
+	void ImpersonateUser()
+	{
+		// TODO
+		// GetProfileType();
+		// Need to extract token and load their profile, since
+		// impersonating does not load it.
+	}
+
 	void SvcInit(Win32::DWORD dwArgc, wchar_t* lpszArgv[])
 	{
-		// TO_DO: Declare and set any required variables.
+		Log::Info("SvcInit()");
 		//   Be sure to periodically call ReportSvcStatus() with 
 		//   SERVICE_START_PENDING. If initialization fails, call
 		//   ReportSvcStatus with SERVICE_STOPPED.
 
 		// Create an event. The control handler function, SvcCtrlHandler,
 		// signals this event when it receives the stop control code.
-
 		ghSvcStopEvent = Win32::CreateEventW(
 			nullptr,    // default security attributes
 			true,    // manual reset event
 			false,   // not signaled
 			nullptr // no name
 		);
-
 		if (not ghSvcStopEvent)
 		{
 			ReportSvcStatus(Win32::ServiceStopped, Win32::GetLastError(), 0);
@@ -345,11 +275,11 @@ namespace Service
 		}
 
 		// Report running status when initialization is complete.
-
 		ReportSvcStatus(Win32::ServiceRunning, Win32::NoError, 0);
 
-		// TO_DO: Perform work until service stops.
-
+		CreateUserProcess();
+		ImpersonateUser();
+		
 		while (true)
 		{
 			// Check whether to stop the service.
@@ -370,7 +300,7 @@ namespace Service
 		);
 		if (!gSvcStatusHandle)
 		{
-			Log::Info("RegisterServiceCtrlHandler");
+			Log::Info("RegisterServiceCtrlHandler() failed.");
 			return;
 		}
 
@@ -388,6 +318,7 @@ namespace Service
     }
 	catch (const std::exception& ex)
 	{
+		Log::Info("Service failed: {}\n", ex.what());
 		std::wcerr << std::format("Service failed: {}\n", ex.what()).c_str();
 	}
 }
@@ -395,17 +326,22 @@ namespace Service
 int __cdecl wmain(int argc, wchar_t* argv[])
 try
 {
-    if (std::wstring str(argv[1]); str == L"install")
-    {
-        Service::Install();
-        return 0;
-    }
-	else if (str == L"uninstall")
+	if (argc == 2)
 	{
-		Service::Uninstall();
-		return 0;
+		std::wstring str(argv[1]);
+		if (str == L"install")
+		{
+			Service::Install();
+			return 0;
+		}
+		else if (str == L"uninstall")
+		{
+			Service::Uninstall();
+			return 0;
+		}
 	}
-
+    
+	Log::Info("Running...");
     Win32::SERVICE_TABLE_ENTRY DispatchTable[] =
     {
         { const_cast<Win32::LPWSTR>(Service::ServiceName.data()), static_cast<Win32::LPSERVICE_MAIN_FUNCTIONW>(Service::SvcMain)},
@@ -419,5 +355,7 @@ try
 }
 catch (const std::exception& ex)
 {
+	Log::Info("Service failed : {}\n", ex.what());
 	std::wcerr << std::format("Service failed: {}\n", ex.what()).c_str();
+	return 1;
 }
