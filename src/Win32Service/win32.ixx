@@ -4,6 +4,7 @@ module;
 #include <Windows.h>
 #include <wtsapi32.h>
 #include <userenv.h>
+#include <Lmcons.h>
 
 export module win32;
 
@@ -70,9 +71,13 @@ export namespace Win32
 		::CreateProcessAsUserW,
 		::RegGetValueW,
 		::LoadUserProfileW,
-		::GetCurrentProcessToken
+		::GetCurrentProcessToken,
+		::ImpersonateLoggedOnUser,
+		::RevertToSelf,
+		::GetUserNameW,
+		::UnloadUserProfile
 		;
-
+	
 	namespace FormatMessageFlags
 	{
 		enum
@@ -119,6 +124,7 @@ export namespace Win32
 		constexpr auto Duplicate = TOKEN_DUPLICATE;
 		constexpr auto Query = TOKEN_QUERY;
 		constexpr auto AssignPrimary = TOKEN_ASSIGN_PRIMARY;
+		constexpr auto Impersonate = TOKEN_IMPERSONATE;
 	}
 
 	constexpr auto RrfRtRegSz = RRF_RT_REG_SZ;

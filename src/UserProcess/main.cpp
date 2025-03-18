@@ -43,52 +43,6 @@ namespace Log
 	}
 }
 
-namespace Registry
-{
-	std::wstring GetString(
-		Win32::HKEY hKey,
-		const std::wstring& subKey,
-		const std::wstring& value
-	)
-	{
-		Win32::DWORD dataSize{};
-		Win32::LONG retCode = Win32::RegGetValueW(
-			hKey,
-			subKey.c_str(),
-			value.c_str(),
-			Win32::RrfRtRegSz,
-			nullptr,
-			nullptr,
-			&dataSize
-		);
-		if (retCode != 0)
-			throw Error::Win32Error{ static_cast<Win32::DWORD>(retCode), "Cannot read string from registry" };
-
-		std::wstring data;
-		data.resize(dataSize / sizeof(wchar_t));
-
-		retCode = Win32::RegGetValueW(
-			hKey,
-			subKey.c_str(),
-			value.c_str(),
-			Win32::RrfRtRegSz,
-			nullptr,
-			&data[0],
-			&dataSize
-		);
-
-		if (retCode != 0)
-			throw Error::Win32Error{ static_cast<Win32::DWORD>(retCode), "Cannot read string from registry" };
-
-		Win32::DWORD stringLengthInWchars = dataSize / sizeof(wchar_t);
-
-		stringLengthInWchars--; // Exclude the NUL written by the Win32 API
-		data.resize(stringLengthInWchars);
-
-		return data;
-	}
-}
-
 int main()
 {
 	Log::Info("Hello, world!");

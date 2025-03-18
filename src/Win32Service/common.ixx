@@ -44,7 +44,7 @@ export namespace Error
 			std::string_view msg,
 			const std::source_location& loc = std::source_location::current(),
 			const std::stacktrace& trace = std::stacktrace::current()
-		) : runtime_error(Utl::TranslateErrorCode(code))
+		) : runtime_error(std::format("{}: {}", msg, Utl::TranslateErrorCode(code)))
 		{
 		}
 	};
@@ -142,4 +142,50 @@ export namespace RAII
 	using ServiceUniquePtr = IndirectUniquePtr<Win32::SC_HANDLE, Win32::CloseServiceHandle>;
 	using HandleUniquePtr = IndirectUniquePtr<Win32::HANDLE, Win32::CloseHandle>;
 	using EnvironmentUniquePtr = UniquePtr<void, Win32::CloseHandle>;
+}
+
+export namespace Registry
+{
+	std::wstring GetString(
+		Win32::HKEY hKey,
+		const std::wstring& subKey,
+		const std::wstring& value
+	)
+	{
+		Win32::DWORD dataSize{};
+		Win32::LONG retCode = Win32::RegGetValueW(
+			hKey,
+			subKey.c_str(),
+			value.c_str(),
+			Win32::RrfRtRegSz,
+			nullptr,
+			nullptr,
+			&dataSize
+		);
+		if (retCode != 0)
+			throw Error::Win32Error{ static_cast<Win32::DWORD>(retCode), "Cannot read string from registry" };
+
+		std::wstring data;
+		data.resize(dataSize / sizeof(wchar_t));
+
+		retCode = Win32::RegGetValueW(
+			hKey,
+			subKey.c_str(),
+			value.c_str(),
+			Win32::RrfRtRegSz,
+			nullptr,
+			&data[0],
+			&dataSize
+		);
+
+		if (retCode != 0)
+			throw Error::Win32Error{ static_cast<Win32::DWORD>(retCode), "Cannot read string from registry" };
+
+		Win32::DWORD stringLengthInWchars = dataSize / sizeof(wchar_t);
+
+		stringLengthInWchars--; // Exclude the NUL written by the Win32 API
+		data.resize(stringLengthInWchars);
+
+		return data;
+	}
 }

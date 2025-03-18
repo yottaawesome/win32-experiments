@@ -246,11 +246,59 @@ namespace Service
 	}
 
 	void ImpersonateUser()
+	try
 	{
 		// TODO
 		// GetProfileType();
 		// Need to extract token and load their profile, since
 		// impersonating does not load it.
+
+		Win32::DWORD dwSessionID = Win32::WTSGetActiveConsoleSessionId();
+		if (dwSessionID == 0xFFFFFFFF)
+			throw Error::Win32Error(Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed");
+
+		Win32::HANDLE hToken = nullptr;
+		if (not Win32::WTSQueryUserToken(dwSessionID, &hToken))
+			throw Error::Win32Error(Win32::GetLastError(), "WTSQueryUserToken failed.");
+
+		RAII::HandleUniquePtr userPrimaryToken(hToken);
+		Win32::HANDLE hDuplicated = nullptr;
+		bool success = Win32::DuplicateTokenEx(
+			userPrimaryToken.get(),
+			Win32::Token::Impersonate | Win32::Token::Query,
+			nullptr,
+			SecurityImpersonation,
+			TokenImpersonation,
+			&hDuplicated
+		);
+		if (not success)
+			throw Error::Win32Error(Win32::GetLastError(), "DuplicateToken failed.");
+		RAII::HandleUniquePtr duplicatedToken(hDuplicated);
+
+		if (not Win32::ImpersonateLoggedOnUser(duplicatedToken.get()))
+			throw Error::Win32Error(Win32::GetLastError(), "ImpersonateLoggedOnUser failed.");
+
+		std::wstring username(256 + 1, '\0');
+		Win32::DWORD size = static_cast<Win32::DWORD>(username.size());
+		if (not Win32::GetUserNameW(username.data(), &size))
+			throw Error::Win32Error(Win32::GetLastError(), "GetUserNameW failed");
+		username.resize(size - 1);
+
+		Win32::PROFILEINFOW profile{ .dwSize = sizeof(Win32::PROFILEINFOW), .lpUserName = username.data() };
+		// Fails probably because "The calling process must have the SE_RESTORE_NAME and SE_BACKUP_NAME privileges.
+		// See https://learn.microsoft.com/en-us/windows/win32/secauthz/enabling-and-disabling-privileges-in-c--
+		if (not Win32::LoadUserProfileW(duplicatedToken.get(), &profile))
+			throw Error::Win32Error(Win32::GetLastError(), "Failed to load profile");
+
+		Win32::LoadUserProfileW(duplicatedToken.get(), &profile);
+
+		Win32::RevertToSelf();
+		Log::Info("Successful impersonation.");
+	}
+	catch (const std::exception& ex)
+	{
+		Win32::RevertToSelf();
+		Log::Info("ImpersonateUser: {}\n", ex.what());
 	}
 
 	void SvcInit(Win32::DWORD dwArgc, wchar_t* lpszArgv[])
@@ -277,7 +325,7 @@ namespace Service
 		// Report running status when initialization is complete.
 		ReportSvcStatus(Win32::ServiceRunning, Win32::NoError, 0);
 
-		CreateUserProcess();
+		//CreateUserProcess();
 		ImpersonateUser();
 		
 		while (true)
