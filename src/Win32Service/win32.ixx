@@ -25,6 +25,8 @@ export namespace Win32
 	using 
 		::HANDLE,
 		::DWORD,
+		::PDWORD,
+		::PTOKEN_PRIVILEGES,
 		::LPWSTR,
 		::SERVICE_TABLE_ENTRY,
 		::LPSERVICE_MAIN_FUNCTIONW,
@@ -42,6 +44,11 @@ export namespace Win32
 		::LPPROFILEINFOW,
 		::PROFILEINFOW,
 		::BOOL,
+		::LUID,
+		::TOKEN_PRIVILEGES,
+		::LPCTSTR,
+		::LPCWSTR,
+		::HKEY,
 		::SetEvent,
 		::CreateEventW,
 		::GetModuleFileNameW,
@@ -75,7 +82,13 @@ export namespace Win32
 		::ImpersonateLoggedOnUser,
 		::RevertToSelf,
 		::GetUserNameW,
-		::UnloadUserProfile
+		::UnloadUserProfile,
+		::LookupPrivilegeValueW,
+		::AdjustTokenPrivileges,
+		::GetCurrentProcess,
+		::OpenProcessToken,
+		::RegOpenCurrentUser,
+		::RegCloseKey
 		;
 	
 	namespace FormatMessageFlags
@@ -130,4 +143,10 @@ export namespace Win32
 	constexpr auto RrfRtRegSz = RRF_RT_REG_SZ;
 
 	Constant<HKEY_CURRENT_USER> HKCU;
+
+	constexpr auto SePrivilegeEnabled = SE_PRIVILEGE_ENABLED;
+	constexpr auto ErrorNotAllAssigned = ERROR_NOT_ALL_ASSIGNED;
+
+	constexpr auto TokenAllAccess = TOKEN_ALL_ACCESS;
+	constexpr auto HkeyAllAccess = KEY_ALL_ACCESS;
 }

@@ -142,6 +142,7 @@ export namespace RAII
 	using ServiceUniquePtr = IndirectUniquePtr<Win32::SC_HANDLE, Win32::CloseServiceHandle>;
 	using HandleUniquePtr = IndirectUniquePtr<Win32::HANDLE, Win32::CloseHandle>;
 	using EnvironmentUniquePtr = UniquePtr<void, Win32::CloseHandle>;
+	using HkeyUniquePtr = IndirectUniquePtr<Win32::HKEY, Win32::RegCloseKey>;
 }
 
 export namespace Registry
@@ -187,5 +188,51 @@ export namespace Registry
 		data.resize(stringLengthInWchars);
 
 		return data;
+	}
+}
+
+export namespace Security
+{
+	// https://learn.microsoft.com/en-us/windows/win32/secauthz/enabling-and-disabling-privileges-in-c--
+	Win32::BOOL SetPrivilege(
+		Win32::HANDLE hToken,          // access token handle
+		Win32::LPCWSTR lpszPrivilege,  // name of privilege to enable/disable
+		Win32::BOOL bEnablePrivilege   // to enable or disable privilege
+	)
+	{
+		Win32::TOKEN_PRIVILEGES tp;
+		Win32::LUID luid;
+
+		bool success = Win32::LookupPrivilegeValueW(
+			nullptr,            // lookup privilege on local system
+			lpszPrivilege,   // privilege to lookup 
+			&luid // receives LUID of privilege
+		);        
+		if (not success)
+			throw Error::Win32Error(Win32::GetLastError(), "LookupPrivilegeValue error");
+
+		tp.PrivilegeCount = 1;
+		tp.Privileges[0].Luid = luid;
+		if (bEnablePrivilege)
+			tp.Privileges[0].Attributes = Win32::SePrivilegeEnabled;
+		else
+			tp.Privileges[0].Attributes = 0;
+
+		// Enable the privilege or disable all privileges.
+		success = Win32::AdjustTokenPrivileges(
+			hToken,
+			false,
+			&tp,
+			sizeof(Win32::TOKEN_PRIVILEGES),
+			(Win32::PTOKEN_PRIVILEGES)nullptr,
+			(Win32::PDWORD)nullptr
+		);
+		if (!success)
+			throw Error::Win32Error(Win32::GetLastError(), "AdjustTokenPrivileges error");
+
+		if (Win32::GetLastError() == Win32::ErrorNotAllAssigned)
+			return false;
+
+		return true;
 	}
 }

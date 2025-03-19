@@ -245,14 +245,65 @@ namespace Service
 		Log::Info("Failed creating user process: {}", ex.what());
 	}
 
+	void LoadUserProfile()
+	try
+	{
+		Win32::HANDLE hCurrent = nullptr;
+		if (not Win32::OpenProcessToken(Win32::GetCurrentProcess(), Win32::TokenAllAccess, &hCurrent))
+			throw Error::Win32Error(Win32::GetLastError(), "OpenProcessToken failed");
+		auto serviceToken = RAII::HandleUniquePtr(hCurrent);
+
+		// https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
+		if (not Security::SetPrivilege(serviceToken.get(), L"SeRestorePrivilege", true))
+			throw Error::Win32Error(Win32::GetLastError(), "SetPrivilege (restore) failed");
+		if (not Security::SetPrivilege(serviceToken.get(), L"SeBackupPrivilege", true))
+			throw Error::Win32Error(Win32::GetLastError(), "SetPrivilege (backup) failed");
+
+		Win32::DWORD dwSessionID = Win32::WTSGetActiveConsoleSessionId();
+		if (dwSessionID == 0xFFFFFFFF)
+			throw Error::Win32Error(Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed");
+
+		Win32::HANDLE hToken = nullptr;
+		if (not Win32::WTSQueryUserToken(dwSessionID, &hToken))
+			throw Error::Win32Error(Win32::GetLastError(), "WTSQueryUserToken failed.");
+
+		RAII::HandleUniquePtr userPrimaryToken(hToken);
+		Win32::HANDLE hDuplicated = nullptr;
+		bool success = Win32::DuplicateTokenEx(
+			userPrimaryToken.get(),
+			Win32::Token::Impersonate | Win32::Token::Query,
+			nullptr,
+			SecurityImpersonation,
+			TokenImpersonation,
+			&hDuplicated
+		);
+		if (not success)
+			throw Error::Win32Error(Win32::GetLastError(), "DuplicateToken failed.");
+		RAII::HandleUniquePtr duplicatedToken(hDuplicated);
+
+		std::wstring username(256 + 1, '\0');
+		Win32::DWORD size = static_cast<Win32::DWORD>(username.size());
+		if (not Win32::GetUserNameW(username.data(), &size))
+			throw Error::Win32Error(Win32::GetLastError(), "GetUserNameW failed");
+		username.resize(size - 1);
+
+		Win32::PROFILEINFOW profile{ .dwSize = sizeof(Win32::PROFILEINFOW), .lpUserName = username.data() };
+		// Fails probably because "The calling process must have the SE_RESTORE_NAME and SE_BACKUP_NAME privileges.
+		// See https://learn.microsoft.com/en-us/windows/win32/secauthz/enabling-and-disabling-privileges-in-c--
+		if (not Win32::LoadUserProfileW(duplicatedToken.get(), &profile))
+			throw Error::Win32Error(Win32::GetLastError(), "Failed to load profile");
+		Win32::UnloadUserProfile(duplicatedToken.get(), &profile);
+	}
+	catch (const std::exception& ex)
+	{
+		Log::Info("LoadUserProfile: {}\n", ex.what());
+	}
+
 	void ImpersonateUser()
 	try
 	{
-		// TODO
-		// GetProfileType();
-		// Need to extract token and load their profile, since
-		// impersonating does not load it.
-
+		// https://stackoverflow.com/questions/38634070/why-loaduserprofile-fails-with-error-5-denied-access-in-this-code-running-in
+		// https://stackoverflow.com/questions/19796409/how-to-impersonate-a-user-from-a-service-correctly
 		Win32::DWORD dwSessionID = Win32::WTSGetActiveConsoleSessionId();
 		if (dwSessionID == 0xFFFFFFFF)
 			throw Error::Win32Error(Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed");
@@ -278,19 +329,10 @@ namespace Service
 		if (not Win32::ImpersonateLoggedOnUser(duplicatedToken.get()))
 			throw Error::Win32Error(Win32::GetLastError(), "ImpersonateLoggedOnUser failed.");
 
-		std::wstring username(256 + 1, '\0');
-		Win32::DWORD size = static_cast<Win32::DWORD>(username.size());
-		if (not Win32::GetUserNameW(username.data(), &size))
-			throw Error::Win32Error(Win32::GetLastError(), "GetUserNameW failed");
-		username.resize(size - 1);
-
-		Win32::PROFILEINFOW profile{ .dwSize = sizeof(Win32::PROFILEINFOW), .lpUserName = username.data() };
-		// Fails probably because "The calling process must have the SE_RESTORE_NAME and SE_BACKUP_NAME privileges.
-		// See https://learn.microsoft.com/en-us/windows/win32/secauthz/enabling-and-disabling-privileges-in-c--
-		if (not Win32::LoadUserProfileW(duplicatedToken.get(), &profile))
-			throw Error::Win32Error(Win32::GetLastError(), "Failed to load profile");
-
-		Win32::LoadUserProfileW(duplicatedToken.get(), &profile);
+		Win32::HKEY hkeyCurrentUser = nullptr;
+		if (auto result = Win32::RegOpenCurrentUser(Win32::HkeyAllAccess, &hkeyCurrentUser); result)
+			throw Error::Win32Error(result, "RegOpenCurrentUser failed");
+		RAII::HkeyUniquePtr registryCurrentUser(hkeyCurrentUser);
 
 		Win32::RevertToSelf();
 		Log::Info("Successful impersonation.");
@@ -374,6 +416,8 @@ namespace Service
 int __cdecl wmain(int argc, wchar_t* argv[])
 try
 {
+
+	Service::ImpersonateUser();
 	if (argc == 2)
 	{
 		std::wstring str(argv[1]);
