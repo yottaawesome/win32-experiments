@@ -416,8 +416,6 @@ namespace Service
 int __cdecl wmain(int argc, wchar_t* argv[])
 try
 {
-
-	Service::ImpersonateUser();
 	if (argc == 2)
 	{
 		std::wstring str(argv[1]);
