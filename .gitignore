@@ -40,3 +40,4 @@ Debug/
 node_modules/
 *.pfx
 *.aps
+/src/SecureSocket/response.txt

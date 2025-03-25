@@ -343,43 +343,6 @@ namespace Service
 		Log::Info("ImpersonateUser: {}\n", ex.what());
 	}
 
-	void SvcInit(Win32::DWORD dwArgc, wchar_t* lpszArgv[])
-	{
-		Log::Info("SvcInit()");
-		//   Be sure to periodically call ReportSvcStatus() with 
-		//   SERVICE_START_PENDING. If initialization fails, call
-		//   ReportSvcStatus with SERVICE_STOPPED.
-
-		// Create an event. The control handler function, SvcCtrlHandler,
-		// signals this event when it receives the stop control code.
-		ghSvcStopEvent = Win32::CreateEventW(
-			nullptr,    // default security attributes
-			true,    // manual reset event
-			false,   // not signaled
-			nullptr // no name
-		);
-		if (not ghSvcStopEvent)
-		{
-			ReportSvcStatus(Win32::ServiceStopped, Win32::GetLastError(), 0);
-			return;
-		}
-
-		// Report running status when initialization is complete.
-		ReportSvcStatus(Win32::ServiceRunning, Win32::NoError, 0);
-
-		//CreateUserProcess();
-		ImpersonateUser();
-		
-		while (true)
-		{
-			// Check whether to stop the service.
-			Win32::WaitForSingleObject(ghSvcStopEvent, Win32::Infinite);
-
-			ReportSvcStatus(Win32::ServiceStopped, Win32::NoError, 0);
-			return;
-		}
-	}
-
     void __stdcall SvcMain(Win32::DWORD dwArgc, Win32::LPWSTR lpszArgv[])
 	try
     {
@@ -404,7 +367,39 @@ namespace Service
 
 		// Perform service-specific initialization and work.
 
-		SvcInit(dwArgc, lpszArgv);
+		Log::Info("SvcInit()");
+		//   Be sure to periodically call ReportSvcStatus() with 
+		//   SERVICE_START_PENDING. If initialization fails, call
+		//   ReportSvcStatus with SERVICE_STOPPED.
+
+		// Create an event. The control handler function, SvcCtrlHandler,
+		// signals this event when it receives the stop control code.
+		ghSvcStopEvent = Win32::CreateEventW(
+			nullptr,    // default security attributes
+			true,    // manual reset event
+			false,   // not signaled
+			nullptr // no name
+		);
+		if (not ghSvcStopEvent)
+		{
+			ReportSvcStatus(Win32::ServiceStopped, Win32::GetLastError(), 0);
+			return;
+		}
+
+		// Report running status when initialization is complete.
+		ReportSvcStatus(Win32::ServiceRunning, Win32::NoError, 0);
+
+		//CreateUserProcess();
+		ImpersonateUser();
+
+		while (true)
+		{
+			// Check whether to stop the service.
+			Win32::WaitForSingleObject(ghSvcStopEvent, Win32::Infinite);
+
+			ReportSvcStatus(Win32::ServiceStopped, Win32::NoError, 0);
+			return;
+		}
     }
 	catch (const std::exception& ex)
 	{
