@@ -41,7 +41,7 @@ export namespace Client
 
 		HttpResponse Get(const std::wstring& path)
 		{
-			return {};
+			return DoRequest(L"GET", true, 443, path, {}, L"", "");
 		}
 
 		void Post(const std::wstring& path, const std::string& body)
@@ -52,7 +52,7 @@ export namespace Client
 		}
 
 	private:
-		void DoRequest(
+		HttpResponse DoRequest(
 			const std::wstring& method,
 			bool secure,
 			std::uint32_t port,
@@ -76,7 +76,7 @@ export namespace Client
 			if (not m_hSession)
 				throw HttpError(GetLastError(), "Failed to create handle");
 
-			WinHttpUniquePtr hConnect = WinHttpUniquePtr(
+			WinHttpUniquePtr hConnect(
 				WinHttpConnect(
 					m_hSession.get(),
 					m_server.c_str(),
@@ -91,7 +91,7 @@ export namespace Client
 			acceptTypes.push_back(nullptr);
 
 			// https://docs.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpopenrequest
-			WinHttpUniquePtr hRequest = WinHttpUniquePtr(
+			WinHttpUniquePtr hRequest(
 				WinHttpOpenRequest(
 					hConnect.get(),
 					method.c_str(),
@@ -123,33 +123,44 @@ export namespace Client
 			if (not WinHttpReceiveResponse(hRequest.get(), nullptr))
 				throw HttpError(GetLastError(), "WinHttpReceiveResponse() failed");
 
-			std::string response = "";
+			DWORD statusCode = 0;
+			DWORD size = sizeof(statusCode);
+			bResults = WinHttpQueryHeaders(
+				hRequest.get(),
+				WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+				WINHTTP_HEADER_NAME_BY_INDEX,
+				&statusCode,
+				&size, 
+				WINHTTP_NO_HEADER_INDEX
+			);
+			if (not bResults)
+				throw HttpError(GetLastError(), "WinHttpQueryHeaders() failed");
+
+			std::string response;
 			DWORD dwSize = 0;
-			do
+			while (true)
 			{
 				// Check for available data.
 				if (not WinHttpQueryDataAvailable(hRequest.get(), &dwSize))
 					throw HttpError(GetLastError(), "WinHttpQueryDataAvailable() failed");
 				if (dwSize == 0)
-					continue;
+					break;
 
 				// Allocate space for the buffer.
-				std::string pszOutBuffer(dwSize, '\0');
-
+				size_t offset = response.size();
+				response.resize(response.size() + dwSize);
 				DWORD dwDownloaded = 0;
 				bool succeeded = WinHttpReadData(
 					hRequest.get(),
-					pszOutBuffer.data(),
+					response.data() + offset,
 					dwSize,
 					&dwDownloaded
 				);
 				if (not succeeded)
 					throw HttpError(GetLastError(), "WinHttpReadData() failed");
-				std::println("{}", pszOutBuffer);
-				response += pszOutBuffer;
-			} while (dwSize > 0);
+			}
 
-			std::println("response:\n{}", response);
+			return { statusCode, response };
 		}
 
 		std::wstring m_server;

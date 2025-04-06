@@ -5,6 +5,8 @@ import winhttpclient;
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    Client::WinHttpClient client(L"google.com");
+    std::println("{}", client.Get(L"").ResponseBody);
+    return 0;
 }
 
