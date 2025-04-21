@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="samples-more.ixx" />
     <ClCompile Include="samples.ixx" />
     <ClCompile Include="shared.ixx" />
     <ClCompile Include="util.ixx" />

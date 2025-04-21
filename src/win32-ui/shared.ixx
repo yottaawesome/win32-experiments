@@ -6,7 +6,7 @@ module;
 #include <CommCtrl.h>
 
 export module shared;
-export import std;
+import std;
 
 export namespace Win32
 {
@@ -62,6 +62,8 @@ export namespace Win32
 		::HMODULE,
 		::PEXCEPTION_POINTERS,
 		::EXCEPTION_POINTERS,
+		::WNDPROC,
+		::UnregisterClassW,
 		::AddVectoredExceptionHandler,
 		::__fastfail,
 		::FormatMessageA,
@@ -113,17 +115,25 @@ export namespace Win32
 		::GetParent,
 		::SetWindowPlacement,
 		::SetWindowPos,
-		::SetFocus
+		::SetFocus,
+		::WideCharToMultiByte,
+		::MultiByteToWideChar
 		;
 
 	constexpr auto CdisSelected = CDIS_SELECTED;
 	constexpr auto CdisHot = CDIS_HOT;
 	constexpr auto PsInsideFrame = PS_INSIDEFRAME;
 
-	constexpr auto FormatMessageAllocateBuffer = FORMAT_MESSAGE_ALLOCATE_BUFFER;
-	constexpr auto FormatMessageFromSystem = FORMAT_MESSAGE_FROM_SYSTEM;
-	constexpr auto FormatMessageIgnoreInserts = FORMAT_MESSAGE_IGNORE_INSERTS;
-	constexpr auto FormatMessageFromHModule = FORMAT_MESSAGE_FROM_HMODULE;
+	constexpr auto CpUtf8 = CP_UTF8;
+	constexpr auto WcNoBestFitChars = WC_NO_BEST_FIT_CHARS;
+
+	namespace FormatMessageFlags
+	{
+		constexpr auto AllocateBuffer = FORMAT_MESSAGE_ALLOCATE_BUFFER;
+		constexpr auto FromSystem = FORMAT_MESSAGE_FROM_SYSTEM;
+		constexpr auto IgnoreInserts = FORMAT_MESSAGE_IGNORE_INSERTS;
+		constexpr auto FromHModule = FORMAT_MESSAGE_FROM_HMODULE;
+	}
 
 	namespace FailFast
 	{
