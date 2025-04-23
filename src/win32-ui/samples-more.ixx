@@ -30,11 +30,18 @@ export namespace ChildControls
 
 			m_registration = Win32::RegisterClassExW(&wc);
 			if (not m_registration)
-				throw Error::Win32Error("Failed registering class", Util::ConvertString(VRegistrationName.Data()));
+				throw Error::Win32Error(Win32::GetLastError(), "Failed registering class {}", Util::ConvertString(VRegistrationName.Data()));
 		}
 
 		Win32::ATOM m_registration = 0;
 		Win32::HMODULE m_instance = Win32::GetModuleHandleW(nullptr);
+	};
+
+	struct SimpleWindow
+	{
+		using HwndSharedPtr = std::shared_ptr<std::remove_pointer_t<Win32::HWND>>;
+		SimpleWindow(Win32::HWND hwnd) : Handle(hwnd) {}
+		HwndSharedPtr Handle;
 	};
 
 	struct Control
