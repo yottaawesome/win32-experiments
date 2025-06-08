@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{ee19c2e1-c4a0-4885-a01c-70eae3e7db80}</ProjectGuid>
-    <RootNamespace>win32ui</RootNamespace>
+    <ProjectGuid>{59eef108-f827-4766-90b7-b00a3cf34161}</ProjectGuid>
+    <RootNamespace>progressbar</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -132,19 +132,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="samples-more.ixx" />
-    <ClCompile Include="samples.ixx" />
-    <ClCompile Include="shared.ixx" />
-    <ClCompile Include="util.ixx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Manifest Include="win32-ui.exe.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="win32-ui.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

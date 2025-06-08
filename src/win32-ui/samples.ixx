@@ -1,6 +1,7 @@
 export module samples;
 import shared;
 import util;
+export import :more;
 
 #pragma comment(lib, "Comctl32.lib")
 // See https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
@@ -367,14 +368,12 @@ export namespace SubclassControl
 
 export namespace ObjectOrientedWindow // Approach 1
 {
-    class BaseWindow
+    struct BaseWindow
     {
-        public:
         virtual ~BaseWindow() = default;
         virtual std::wstring_view GetClassName() = 0;
         virtual std::wstring_view GetWindowName() = 0;
 
-        protected:
         static Win32::LRESULT __stdcall MainWndProc(HWND hwnd, UINT type, WPARAM wParam, LPARAM lParam)
         {
             BaseWindow* pThis = nullptr;
@@ -455,9 +454,8 @@ export namespace ObjectOrientedWindow // Approach 1
         Win32::HWND m_window = nullptr;
     };
 
-    class MainWindow : public BaseWindow
+    struct MainWindow : BaseWindow
     {
-        public:
         MainWindow() 
         { 
             Init(); 
@@ -473,7 +471,7 @@ export namespace ObjectOrientedWindow // Approach 1
             return L"SubclassTestWindow";
         }
 
-        protected:
+    protected:
         Win32::LRESULT HandleMessage(UINT type, WPARAM wParam, LPARAM lParam) override
         {
             switch (type)
@@ -514,12 +512,10 @@ export namespace ObjectOrientedWindow // Approach 1
 export namespace ObjectOrientedWindowTemplate // Approach 2
 {
     export template <typename TDerived>
-    class BaseWindow
+    struct BaseWindow
     {
         // MSVC has a bug
         //static constexpr std::wstring_view x = TDerived::ClassName;
-
-        public:
         virtual void Create(
             std::wstring_view lpWindowName,
             Win32::DWORD dwStyle,
@@ -570,7 +566,7 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
 
         virtual Win32::HWND Window() const noexcept final { return m_hwnd; }
 
-        protected:
+    protected:
         virtual Win32::LRESULT HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) = 0;
 
         static Win32::LRESULT __stdcall WindowProc(Win32::HWND hwnd, Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam)
@@ -597,11 +593,10 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
             return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
         }
 
-        protected:
         Win32::HWND m_hwnd = nullptr;
     };
 
-    struct MainWindow final : public BaseWindow<MainWindow>
+    struct MainWindow final : BaseWindow<MainWindow>
     {
         static constexpr std::wstring_view ClassName = L"Sample Window Class";
 
@@ -658,9 +653,8 @@ export namespace ObjectOrientedControl
     };
 
     template<ControlLike TType>
-    class Control
+    struct Control
     {
-        public:
         Control(Win32::HWND parent, const Win32::DWORD x, const Win32::DWORD y, const Win32::DWORD width, const Win32::DWORD height)
         {
             Init(parent, x, y, width, height);
@@ -671,7 +665,7 @@ export namespace ObjectOrientedControl
             Init(parent, m_control.X, m_control.Y, m_control.Width, m_control.Height);
         }
 
-        protected:
+    protected:
         void Init(Win32::HWND parent, const Win32::DWORD x, const Win32::DWORD y, const Win32::DWORD width, const Win32::DWORD height)
         {
             m_control.Handle = CreateWindowExW(
@@ -720,9 +714,9 @@ export namespace ObjectOrientedControl
     concept S = requires(T t) { t.Blah(); };
 
     template<
-        Util::WideFixedString VClassName,
+        Util::FixedString VClassName,
         Win32::DWORD VStyles,
-        Util::WideFixedString VText = L"",
+        Util::FixedString VText = L"",
         Win32::DWORD VControlId = 0,
         Win32::DWORD VX = 100,
         Win32::DWORD VY = 100,
@@ -732,9 +726,9 @@ export namespace ObjectOrientedControl
     struct ControlTraits
     {
         virtual ~ControlTraits() = default;
-        static constexpr std::wstring_view Class = VClassName;
+        static constexpr std::wstring_view Class = VClassName.View();
         Win32::DWORD Styles = VStyles;
-        std::wstring_view Text = VText.ToView();
+        std::wstring_view Text = VText.View();
         Win32::DWORD Id = VControlId;
         Win32::DWORD X = VX;
         Win32::DWORD Y = VY;
@@ -768,7 +762,7 @@ export namespace ObjectOrientedControl
     };
 
     template<
-        Util::WideFixedString VText,
+        Util::FixedString VText,
         Win32::DWORD VId,
         Win32::DWORD VX,
         Win32::DWORD VY,

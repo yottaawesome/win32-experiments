@@ -7,74 +7,123 @@ export namespace Util
 	template<typename T>
 	concept ValidCharType = std::same_as<T, char> or std::same_as<T, wchar_t>;
 
-	template<typename T>
-	concept ValidViewType = std::same_as<T, std::string_view> or std::same_as<T, std::wstring_view>;
-
-	template<typename T>
-	concept ValidStringType = std::same_as<T, std::string> or std::same_as<T, std::wstring>;
-
-	template <ValidCharType TChar, ValidViewType TView, ValidStringType TString, size_t N>
+	template<size_t N, ValidCharType TChar>
 	struct FixedString
 	{
-		using CharType = TChar;
-		using ViewType = TView;
-		using StringType = TString;
+		TChar Buffer[N];
 
-		TChar buf[N]{};
-
-		consteval FixedString(const TChar(&arg)[N]) noexcept
+		constexpr FixedString(const TChar(&args)[N]) noexcept
 		{
-			std::copy_n(arg, N, buf);
+			std::copy_n(args, N, Buffer);
 		}
 
-		constexpr operator const TChar* () const noexcept
+		constexpr auto View() const noexcept
 		{
-			return buf;
+			return std::basic_string_view<TChar, std::char_traits<TChar>>(Buffer);
 		}
 
-		consteval TView ToView() const noexcept
+		constexpr auto String() const noexcept
 		{
-			return { buf };
+			return std::basic_string<TChar, std::char_traits<TChar>>(Buffer);
 		}
 
-		consteval operator TView() const noexcept
+		constexpr auto Data() const noexcept
 		{
-			return { buf };
-		}
-
-		constexpr operator TString() const noexcept
-		{
-			return { buf };
-		}
-
-		constexpr TString ToString() const noexcept
-		{
-			return { buf };
+			return Buffer;
 		}
 	};
+	template<size_t N>
+	FixedString(char buffer[N]) -> FixedString<N, char>;
+	template<size_t N>
+	FixedString(wchar_t buffer[N]) -> FixedString<N, wchar_t>;
 
-	template<size_t N>
-	using WideFixedString = FixedString<wchar_t, std::wstring_view, std::wstring, N>;
-	template<size_t N>
-	using NarrowFixedString = FixedString<char, std::string_view, std::string, N>;
+	std::string ConvertString(std::wstring_view wstr)
+	{
+		if (wstr.empty())
+			return {};
+
+		// https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte
+		// Returns the size in bytes, this differs from MultiByteToWideChar, which returns the size in characters
+		const int sizeInBytes = Win32::WideCharToMultiByte(
+			Win32::CpUtf8,										// CodePage
+			Win32::WcNoBestFitChars,							// dwFlags 
+			&wstr[0],										// lpWideCharStr
+			static_cast<int>(wstr.size()),					// cchWideChar 
+			nullptr,										// lpMultiByteStr
+			0,												// cbMultiByte
+			nullptr,										// lpDefaultChar
+			nullptr											// lpUsedDefaultChar
+		);
+		if (sizeInBytes == 0)
+			throw std::runtime_error(std::format("WideCharToMultiByte() [1] failed", Win32::GetLastError()));
+
+		std::string strTo(sizeInBytes / sizeof(char), '\0');
+		const int status = WideCharToMultiByte(
+			Win32::CpUtf8,										// CodePage
+			Win32::WcNoBestFitChars,							// dwFlags 
+			&wstr[0],										// lpWideCharStr
+			static_cast<int>(wstr.size()),					// cchWideChar 
+			&strTo[0],										// lpMultiByteStr
+			static_cast<int>(strTo.size() * sizeof(char)),	// cbMultiByte
+			nullptr,										// lpDefaultChar
+			nullptr											// lpUsedDefaultChar
+		);
+		if (status == 0)
+			throw std::runtime_error(std::format("WideCharToMultiByte() [2] failed", Win32::GetLastError()));
+
+		return strTo;
+	}
+
+	std::wstring ConvertString(std::string_view str)
+	{
+		if (str.empty())
+			return {};
+
+		// https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-multibytetowidechar
+		// Returns the size in characters, this differs from WideCharToMultiByte, which returns the size in bytes
+		int sizeInCharacters = Win32::MultiByteToWideChar(
+			Win32::CpUtf8,									// CodePage
+			0,											// dwFlags
+			&str[0],									// lpMultiByteStr
+			static_cast<int>(str.size() * sizeof(char)),// cbMultiByte
+			nullptr,									// lpWideCharStr
+			0											// cchWideChar
+		);
+		if (sizeInCharacters == 0)
+			throw std::runtime_error(std::format("MultiByteToWideChar() [1] failed", Win32::GetLastError()));
+
+		std::wstring wstrTo(sizeInCharacters, '\0');
+		int status = Win32::MultiByteToWideChar(
+			Win32::CpUtf8,									// CodePage
+			0,											// dwFlags
+			&str[0],									// lpMultiByteStr
+			static_cast<int>(str.size() * sizeof(char)),	// cbMultiByte
+			&wstrTo[0],									// lpWideCharStr
+			static_cast<int>(wstrTo.size())				// cchWideChar
+		);
+		if (status == 0)
+			throw std::runtime_error(std::format("MultiByteToWideChar() [2] failed", Win32::GetLastError()));
+
+		return wstrTo;
+	}
 }
 
 export namespace Error
 {
-	template<Util::WideFixedString VModule = L"">
+	template<Util::FixedString VModule = L"">
 	std::string TranslateErrorCode(Win32::DWORD errorCode)
 	{
-		std::wstring_view moduleName = VModule;
+		std::wstring_view moduleName = VModule.View();
 		Win32::HMODULE moduleToSearch =
 			moduleName.empty()
 			? nullptr
 			: Win32::GetModuleHandleW(moduleName.data());
 
 		const Win32::DWORD flags =
-			Win32::FormatMessageAllocateBuffer
-			| Win32::FormatMessageFromSystem
-			| Win32::FormatMessageIgnoreInserts
-			| (moduleToSearch ? Win32::FormatMessageFromHModule : 0);
+			Win32::FormatMessageFlags::AllocateBuffer
+			| Win32::FormatMessageFlags::FromSystem
+			| Win32::FormatMessageFlags::IgnoreInserts
+			| (moduleToSearch ? Win32::FormatMessageFlags::FromHModule : 0);
 
 		void* messageBuffer = nullptr;
 		Win32::FormatMessageA(
