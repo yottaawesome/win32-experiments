@@ -29,6 +29,7 @@ namespace A
 
     auto WaitOn(Awaitable auto&&...awaitables)
     {
+        static_assert(sizeof...(awaitables) > 0, "Must be greater than 0.");
         std::array handles{ awaitables.GetHandle()... };
         Win32::DWORD result = Win32::WaitForMultipleObjects(sizeof...(awaitables), handles.data(), false, Win32::Infinite);
 
@@ -95,6 +96,7 @@ namespace B
 
     auto WaitOn(std::chrono::milliseconds wait, bool waitAll, bool alertable, auto...awaitables)
     {
+        static_assert(sizeof...(awaitables) > 0, "Must be greater than 0.");
         std::array handles{awaitables.GetHandle()...};
         Win32::DWORD result = Win32::WaitForMultipleObjectsEx(
             sizeof...(awaitables), 
@@ -172,18 +174,32 @@ namespace C
         auto GetHandle(this auto&& self) { return self.Handle; }
     };
 
-    auto WaitOn(auto&&...awaitables)
+    auto WaitOn(std::chrono::milliseconds wait, bool waitAll, bool alertable, auto&&...awaitables)
     {
-        using Variant = std::variant<typename std::remove_cvref_t<decltype(awaitables)>::Type...>;
+        static_assert(sizeof...(awaitables) > 0, "Must be greater than 0.");
+
+        using VariantT = std::variant<typename std::remove_cvref_t<decltype(awaitables)>::Type...>;
 
         std::array handles{ awaitables.GetHandle()... };
-        Win32::DWORD result = Win32::WaitForMultipleObjects(sizeof...(awaitables), handles.data(), false, Win32::Infinite);
+        Win32::DWORD result = Win32::WaitForMultipleObjectsEx(
+            sizeof...(awaitables), 
+            handles.data(), 
+            waitAll, 
+            static_cast<Win32::DWORD>(wait.count()), 
+            alertable
+        );
+        if (result == Win32::WaitFailed)
+            throw std::runtime_error("The wait failed.");
+        if (result >= Win32::WaitAbandoned0 and result <= (Win32::WaitAbandoned0 + sizeof...(awaitables)))
+            throw std::runtime_error("The wait was abandoned.");
 
-        Variant returnValue;
+        VariantT returnValue;
         Win32::DWORD index = 0;
         ([&returnValue, result, index = index++, awaitable = awaitables] -> auto
         {
-            return index == result ? (returnValue = typename std::remove_cvref_t<decltype(awaitable)>::Type{}, true) : false;
+            return index == result 
+                ? (returnValue = typename std::remove_cvref_t<decltype(awaitable)>::Type{}, true) 
+                : false;
         }() or ...);
         return returnValue;
     }
@@ -194,7 +210,8 @@ namespace C
     struct Variant
     {
         TVariant Value;
-        Variant(TVariant&& variant) : Value(std::forward<TVariant>(variant)) {}
+        Variant(TVariant&& variant) : Value(std::move(variant)) {}
+        Variant(const TVariant& variant) : Value(variant) {}
 
         auto Visit(this auto&& self, auto&&...fn)
         {
@@ -208,10 +225,14 @@ namespace C
         Win32::HANDLE eventB = Win32::CreateEventA(nullptr, false, false, nullptr);
         Win32::SetEvent(eventB);
 
-        Variant{ WaitOn(
-            Awaitable<struct A>{eventA}, 
-            Awaitable<struct B>{eventB} 
-        )}.Visit(
+        std::variant result = WaitOn(
+            std::chrono::milliseconds{ Win32::Infinite },
+            false,
+            false,
+            Awaitable<struct A>{eventA},
+            Awaitable<struct B>{eventB}
+        );
+        Variant(result).Visit(
             [](Awaitable<struct A>)
             {
                 std::println("A");
