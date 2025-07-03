@@ -94,10 +94,19 @@ namespace B
         auto GetHandle(this auto&& self) -> Win32::HANDLE { return self.Handle; }
     };
 
+    using HandleUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HANDLE>, decltype([](Win32::HANDLE h) { Win32::CloseHandle(h); })>;
+
     auto WaitOn(std::chrono::milliseconds wait, bool waitAll, bool alertable, auto...awaitables)
     {
+        HandleUniquePtr dummy;
+        ((awaitables.GetHandle() 
+            ? false 
+            : (dummy = HandleUniquePtr(Win32::CreateEventA(nullptr, false, false, nullptr)), true)
+        ) or ...);
+
         static_assert(sizeof...(awaitables) > 0, "Must be greater than 0.");
-        std::array handles{awaitables.GetHandle()...};
+        //((awaitables.GetHandle() == nullptr ? (throw std::runtime_error("Must not be null")) : false), ...);
+        std::array handles{(awaitables.GetHandle() ? awaitables.GetHandle() : dummy.get())...};
         Win32::DWORD result = Win32::WaitForMultipleObjectsEx(
             sizeof...(awaitables), 
             handles.data(), 
@@ -107,7 +116,7 @@ namespace B
         );
         if (result == Win32::WaitFailed)
             throw std::runtime_error("The wait failed.");
-        if (result >= Win32::WaitAbandoned0 and result <= (Win32::WaitAbandoned0+sizeof...(awaitables)))
+        if (result >= Win32::WaitAbandoned0 and result < (Win32::WaitAbandoned0+sizeof...(awaitables)))
             throw std::runtime_error("The wait was abandoned.");
 
         //using VariantT = std::variant<std::invoke_result_t<decltype(awaitables)>...>;
@@ -194,7 +203,7 @@ namespace C
         );
         if (result == Win32::WaitFailed)
             throw std::runtime_error("The wait failed.");
-        if (result >= Win32::WaitAbandoned0 and result <= (Win32::WaitAbandoned0 + sizeof...(awaitables)))
+        if (result >= Win32::WaitAbandoned0 and result < (Win32::WaitAbandoned0 + sizeof...(awaitables)))
             throw std::runtime_error("The wait was abandoned.");
 
         VariantT returnValue;
