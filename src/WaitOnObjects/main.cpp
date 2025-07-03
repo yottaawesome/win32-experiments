@@ -167,6 +167,9 @@ namespace C
     };
 
     template<typename T>
+    struct Fired {};
+
+    template<typename T>
     struct Awaitable
     {
         using Type = Awaitable<T>;
@@ -178,7 +181,8 @@ namespace C
     {
         static_assert(sizeof...(awaitables) > 0, "Must be greater than 0.");
 
-        using VariantT = std::variant<typename std::remove_cvref_t<decltype(awaitables)>::Type...>;
+        //using VariantT = std::variant<typename std::remove_cvref_t<decltype(awaitables)>::Type...>; // 1, use with 2
+        using VariantT = std::variant<typename std::remove_cvref_t<decltype(awaitables)>...>;
 
         std::array handles{ awaitables.GetHandle()... };
         Win32::DWORD result = Win32::WaitForMultipleObjectsEx(
@@ -198,7 +202,8 @@ namespace C
         ([&returnValue, result, index = index++, awaitable = awaitables] -> auto
         {
             return index == result 
-                ? (returnValue = typename std::remove_cvref_t<decltype(awaitable)>::Type{}, true) 
+                //? (returnValue = typename std::remove_cvref_t<decltype(awaitable)>::Type{}, true) // 2, use with 1
+                ? (returnValue = awaitable, true)
                 : false;
         }() or ...);
         return returnValue;
@@ -233,7 +238,7 @@ namespace C
             Awaitable<struct B>{eventB}
         );
         Variant(result).Visit(
-            [](Awaitable<struct A>)
+            [](Awaitable<struct A>) // Can also pass in the original Struct
             {
                 std::println("A");
             },
