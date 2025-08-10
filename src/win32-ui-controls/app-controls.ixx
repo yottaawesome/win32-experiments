@@ -1,6 +1,7 @@
 export module app:controls;
 import :common;
 import :win32;
+import :painting;
 
 export namespace UI
 {
@@ -151,7 +152,7 @@ export namespace UI
 			return {
 				.Id = 100,
 				.Class = L"Button",
-				.Text = L"Button", // window text
+				.Text = L"", // window text
 				.Styles = Win32::Styles::ButtonOwnerDrawn | Win32::Styles::Child | Win32::Styles::Visible,
 				.X = 10,
 				.Y = 10,
@@ -162,24 +163,30 @@ export namespace UI
 
 		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
 		{
-			Win32::PAINTSTRUCT ps;
-			Win32::HDC hdc = Win32::BeginPaint(msg.Hwnd, &ps);
+			PaintingContext(
+				msg.Hwnd,
+				[](Win32::HWND window, Win32::HDC hdc, Win32::PAINTSTRUCT& ps, auto&& self) static
+				{
+					auto oldBrush = Win32::SelectObject(hdc, Win32::GetStockObject(Win32::Brushes::Black));
+					Win32::RoundRect(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, 5, 5);
 
-			auto oldBrush = Win32::SelectObject(hdc, Win32::GetStockObject(Win32::Brushes::Black));
-			Win32::RoundRect(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, 5, 5);
+					std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
+
+					Win32::SetBkMode(hdc, Win32::BackgroundMode::Transparent);
+					Win32::SetTextColor(hdc, Win32::RGB(255, 255, 255));
+					Win32::DrawTextW(
+						hdc,
+						message.data(),
+						static_cast<Win32::DWORD>(message.size()),
+						&ps.rcPaint,
+						Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
+					);
+
+					Win32::SelectObject(hdc, oldBrush);
+				}, self);
+
+			
 			//Win32::FillRect(hdc, &ps.rcPaint, (Win32::HBRUSH)(Win32::Color::Window + 1));
-
-			std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
-
-			Win32::SetBkMode(hdc, Win32::BackgroundMode::Transparent);
-			Win32::SetTextColor(hdc, Win32::RGB(255,255,255));
-			Win32::DrawTextW(
-				hdc,
-				message.data(),
-				static_cast<Win32::DWORD>(message.size()),
-				&ps.rcPaint,
-				Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
-			);
 			/*Win32::TextOutW(
 				hdc, 
 				rc.right/2, 
@@ -188,8 +195,6 @@ export namespace UI
 				static_cast<Win32::DWORD>(message.size())
 			);*/
 
-			Win32::SelectObject(hdc, oldBrush);
-			Win32::EndPaint(msg.Hwnd, &ps);
 			return 0;
 		}
 

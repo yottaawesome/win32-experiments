@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="app-controls.ixx" />
     <ClCompile Include="app-mainwindow.ixx" />
+    <ClCompile Include="app-painting.ixx" />
     <ClCompile Include="app-toplevelwindow.ixx" />
     <ClCompile Include="app-common.ixx" />
     <ClCompile Include="app-win32.ixx" />

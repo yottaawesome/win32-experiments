@@ -239,7 +239,7 @@ export namespace UI
 				.cbSize = sizeof(tme),
 				.dwFlags = Win32::TrackMouseEvents::Hover | Win32::TrackMouseEvents::Leave,
 				.hwndTrack = self.GetHandle(),
-				.dwHoverTime = 50 //0.1s
+				.dwHoverTime = 25 //0.1s
 			};
 			Win32::TrackMouseEvent(&tme);
 			return 0;
