@@ -203,4 +203,56 @@ export namespace UI
 			self.SetText(L"");
 		}
 	};
+
+	template<bool VRedraw>
+	struct MouseTracking
+	{
+		bool MouseHovering = false;
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseHover> msg) -> Win32::LRESULT
+		{
+			self.MouseHovering = true;
+			if constexpr (VRedraw)
+			{
+				Win32::RECT rc;
+				Win32::GetClientRect(self.GetHandle(), &rc);
+				Win32::InvalidateRect(self.GetHandle(), nullptr, false);
+			}
+			return 0;
+		}
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseLeave> msg) -> Win32::LRESULT
+		{
+			self.MouseHovering = false;
+			if constexpr (VRedraw)
+			{
+				Win32::RECT rc;
+				Win32::GetClientRect(self.GetHandle(), &rc);
+				Win32::InvalidateRect(self.GetHandle(), nullptr, false);
+			}
+			return 0;
+		}
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseMove> msg) -> Win32::LRESULT
+		{
+			Win32::TRACKMOUSEEVENT tme{
+				.cbSize = sizeof(tme),
+				.dwFlags = Win32::TrackMouseEvents::Hover | Win32::TrackMouseEvents::Leave,
+				.hwndTrack = self.GetHandle(),
+				.dwHoverTime = 50 //0.1s
+			};
+			Win32::TrackMouseEvent(&tme);
+			return 0;
+		}
+
+		auto IsMouseInWindow(this auto&& self) -> bool
+		{
+			Win32::DWORD msgpos = Win32::GetMessagePos();
+			Win32::POINT pt = { Win32::GetXParam(msgpos), Win32::GetYParam(msgpos) };
+			Win32::ScreenToClient(self.GetHandle(), &pt);
+			Win32::RECT cr;
+			Win32::GetClientRect(self.GetHandle(), &cr);
+			return Win32::PtInRect(&cr, pt);
+		}
+	};
 }

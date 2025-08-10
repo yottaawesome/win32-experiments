@@ -140,10 +140,11 @@ export namespace UI
 		}
 	};
 
-	struct OwnerDrawnButton : Button
+	struct OwnerDrawnButton : Button, MouseTracking<true>
 	{
 		using Button::ClassName;
 		using Control::OnMessage;
+		using MouseTracking::OnMessage;
 
 		auto GetDefaultProperties(this auto&& self) -> ControlProperties
 		{
@@ -158,49 +159,6 @@ export namespace UI
 				.Height = 50
 			};
 		};
-
-		bool MouseHovering = false;
-
-		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseHover> msg) -> Win32::LRESULT
-		{
-			self.MouseHovering = true;
-			Win32::RECT rc;
-			Win32::GetClientRect(self.m_window.get(), &rc);
-			Win32::InvalidateRect(self.m_window.get(), nullptr, false);
-			return 0;
-		}
-
-		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseLeave> msg) -> Win32::LRESULT
-		{
-			self.MouseHovering = false;
-			Win32::RECT rc;
-			Win32::GetClientRect(self.m_window.get(), &rc);
-			Win32::InvalidateRect(self.m_window.get(), nullptr, false);
-			return 0;
-		}
-
-		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseMove> msg) -> Win32::LRESULT
-		{
-			Win32::TRACKMOUSEEVENT tme{
-				.cbSize = sizeof(tme),
-				.dwFlags = Win32::TrackMouseEvents::Hover | Win32::TrackMouseEvents::Leave,
-				.hwndTrack = self.m_window.get(),
-				.dwHoverTime = 50 //0.1s
-			};
-			Win32::TrackMouseEvent(&tme);
-
-			return 0;
-		}
-
-		auto IsMouseInWindow(this auto&& self) -> bool
-		{
-			Win32::DWORD msgpos = Win32::GetMessagePos();
-			Win32::POINT pt = { Win32::GetXParam(msgpos), Win32::GetYParam(msgpos) };
-			Win32::ScreenToClient(self.m_window.get(), &pt);
-			Win32::RECT cr;
-			Win32::GetClientRect(self.m_window.get(), &cr);
-			return Win32::PtInRect(&cr, pt);
-		}
 
 		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
 		{
