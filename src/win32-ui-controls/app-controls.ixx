@@ -19,7 +19,13 @@ export namespace UI
 
 	constexpr std::array HandledControlMessages{
 		Win32::Messages::LeftButtonUp,
-		Win32::Messages::Paint
+		Win32::Messages::Paint,
+		Win32::Messages::Notify,
+		Win32::Messages::DrawItem,
+		Win32::Messages::MouseHover,
+		Win32::Messages::MouseLeave,
+		Win32::Messages::MouseMove,
+		Win32::Messages::EraseBackground
 	};
 
 	struct Control : Window
@@ -120,7 +126,6 @@ export namespace UI
 				.Class = L"Button",
 				.Text = L"", // window text
 				.Styles = Win32::Styles::PushButton | Win32::Styles::Child | Win32::Styles::Visible,
-				.ExtendedStyles = Win32::WindowStyles::WindowEdge,
 				.X = 10,
 				.Y = 10,
 				.Width = 100,
@@ -147,7 +152,6 @@ export namespace UI
 				.Class = L"Button",
 				.Text = L"Button", // window text
 				.Styles = Win32::Styles::ButtonOwnerDrawn | Win32::Styles::Child | Win32::Styles::Visible,
-				.ExtendedStyles = Win32::WindowStyles::WindowEdge,
 				.X = 10,
 				.Y = 10,
 				.Width = 300,
@@ -155,21 +159,80 @@ export namespace UI
 			};
 		};
 
+		bool MouseHovering = false;
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseHover> msg) -> Win32::LRESULT
+		{
+			self.MouseHovering = true;
+			Win32::RECT rc;
+			Win32::GetClientRect(self.m_window.get(), &rc);
+			Win32::InvalidateRect(self.m_window.get(), nullptr, false);
+			return 0;
+		}
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseLeave> msg) -> Win32::LRESULT
+		{
+			self.MouseHovering = false;
+			Win32::RECT rc;
+			Win32::GetClientRect(self.m_window.get(), &rc);
+			Win32::InvalidateRect(self.m_window.get(), nullptr, false);
+			return 0;
+		}
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::MouseMove> msg) -> Win32::LRESULT
+		{
+			Win32::TRACKMOUSEEVENT tme{
+				.cbSize = sizeof(tme),
+				.dwFlags = Win32::TrackMouseEvents::Hover | Win32::TrackMouseEvents::Leave,
+				.hwndTrack = self.m_window.get(),
+				.dwHoverTime = 50 //0.1s
+			};
+			Win32::TrackMouseEvent(&tme);
+
+			return 0;
+		}
+
+		auto IsMouseInWindow(this auto&& self) -> bool
+		{
+			Win32::DWORD msgpos = Win32::GetMessagePos();
+			Win32::POINT pt = { Win32::GetXParam(msgpos), Win32::GetYParam(msgpos) };
+			Win32::ScreenToClient(self.m_window.get(), &pt);
+			Win32::RECT cr;
+			Win32::GetClientRect(self.m_window.get(), &cr);
+			return Win32::PtInRect(&cr, pt);
+		}
+
 		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
 		{
 			Win32::PAINTSTRUCT ps;
 			Win32::HDC hdc = Win32::BeginPaint(msg.Hwnd, &ps);
 
-			Win32::FillRect(hdc, &ps.rcPaint, (Win32::HBRUSH)(Win32::Color::Window + 1));
-			Win32::RECT rc;
-			Win32::GetClientRect(msg.Hwnd, &rc);
-			Win32::RoundRect(hdc, rc.left, rc.top, rc.right, rc.bottom, 5, 5);
-			Win32::TextOutW(hdc, rc.right/2, rc.bottom/2-7, L"Hello, Windows!", 15);
+			auto oldBrush = Win32::SelectObject(hdc, Win32::GetStockObject(Win32::Brushes::Black));
+			Win32::RoundRect(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, 5, 5);
+			//Win32::FillRect(hdc, &ps.rcPaint, (Win32::HBRUSH)(Win32::Color::Window + 1));
 
+			std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
+
+			Win32::SetBkMode(hdc, Win32::BackgroundMode::Transparent);
+			Win32::SetTextColor(hdc, Win32::RGB(255,255,255));
+			Win32::DrawTextW(
+				hdc,
+				message.data(),
+				static_cast<Win32::DWORD>(message.size()),
+				&ps.rcPaint,
+				Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
+			);
+			/*Win32::TextOutW(
+				hdc, 
+				rc.right/2, 
+				rc.bottom/2-7, 
+				message.data(),
+				static_cast<Win32::DWORD>(message.size())
+			);*/
+
+			Win32::SelectObject(hdc, oldBrush);
 			Win32::EndPaint(msg.Hwnd, &ps);
-
 			return 0;
-			//return Win32::DefSubclassProc(msg.Hwnd, msg.uMsg, msg.wParam, msg.lParam);
 		}
 
 		auto GetSubclassId(this auto&& self) noexcept { return 1; }

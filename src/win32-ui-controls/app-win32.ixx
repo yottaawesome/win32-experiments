@@ -2,6 +2,7 @@ module;
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <Windowsx.h>
 #include <CommCtrl.h>
 #include <wingdi.h>
 
@@ -63,6 +64,15 @@ export namespace Win32
 		::PAINTSTRUCT,
 		::HDC,
 		::RECT,
+		::POINT,
+		::TRACKMOUSEEVENT,
+		::COLORREF,
+		::DrawTextW,
+		::InvalidateRect,
+		::TrackMouseEvent,
+		::PtInRect,
+		::ScreenToClient,
+		::GetMessagePos,
 		::TextOutW,
 		::SelectObject,
 		::GetClientRect,
@@ -139,13 +149,73 @@ export namespace Win32
 		::GetWindowTextLengthW,
 		::GetClassInfoExA,
 		::GetClassInfoExW,
-		::UnregisterClassW
+		::UnregisterClassW,
+		::GetStockObject,
+		::SetBkMode,
+		::SetTextColor
 		;
+
+	constexpr auto (RGB)(BYTE r, BYTE g, BYTE b) noexcept -> COLORREF
+	{
+		return RGB(r, g, b);
+	}
+
+	namespace BackgroundMode
+	{
+		enum
+		{
+			Opaque = OPAQUE,
+			Transparent = TRANSPARENT
+		};
+	}
+
+	namespace Pens
+	{
+		enum
+		{
+			White = WHITE_PEN
+		};
+	}
+
+	namespace Brushes
+	{
+		enum
+		{
+			Black = BLACK_BRUSH
+		};
+	}
+
+	auto (SelectBrush)(HDC hdc, HGDIOBJ gdi)
+	{
+		return SelectBrush(hdc, gdi);
+	}
+
+	constexpr auto GetXParam(auto x) { return GET_X_LPARAM(x); }
+	constexpr auto GetYParam(auto x) { return GET_Y_LPARAM(x); }
 
 	constexpr auto Gwlp_UserData = GWLP_USERDATA;
 	constexpr auto CwUseDefault = CW_USEDEFAULT;
 	constexpr auto SpiGetNonClientMetrics = SPI_GETNONCLIENTMETRICS;
 	constexpr auto DefaultCharset = DEFAULT_CHARSET;
+
+	namespace DrawTextOptions
+	{
+		enum
+		{
+			Center = DT_CENTER,
+			VerticalCenter = DT_VCENTER,
+			SingleLine = DT_SINGLELINE
+		};
+	}
+
+	namespace TrackMouseEvents
+	{
+		enum
+		{
+			Hover = TME_HOVER,
+			Leave = TME_LEAVE
+		};
+	}
 
 	namespace OutPrecision
 	{
@@ -262,7 +332,12 @@ export namespace Win32
 			CustomDraw = NM_CUSTOMDRAW,
 			SetFont = WM_SETFONT,
 			ButtonClick = BM_CLICK,
-			ButtonClicked = BN_CLICKED
+			ButtonClicked = BN_CLICKED,
+			DrawItem = WM_DRAWITEM,
+			MouseHover = WM_MOUSEHOVER,
+			MouseLeave = WM_MOUSELEAVE,
+			MouseMove = WM_MOUSEMOVE,
+			EraseBackground = WM_ERASEBKGND
 		};
 	}
 
