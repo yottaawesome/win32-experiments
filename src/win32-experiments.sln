@@ -249,6 +249,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoadingDLLs", "LoadingDLLs\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WaitOnObjects", "WaitOnObjects\WaitOnObjects.vcxproj", "{5EAA7383-6772-479F-812B-CDEB4ED23F97}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win32-ui-controls", "win32-ui-controls\win32-ui-controls.vcxproj", "{CA023F49-A910-4690-A09F-F941F787CCAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -1057,6 +1059,14 @@ Global
 		{5EAA7383-6772-479F-812B-CDEB4ED23F97}.Release|x64.Build.0 = Release|x64
 		{5EAA7383-6772-479F-812B-CDEB4ED23F97}.Release|x86.ActiveCfg = Release|Win32
 		{5EAA7383-6772-479F-812B-CDEB4ED23F97}.Release|x86.Build.0 = Release|Win32
+		{CA023F49-A910-4690-A09F-F941F787CCAC}.Debug|x64.ActiveCfg = Debug|x64
+		{CA023F49-A910-4690-A09F-F941F787CCAC}.Debug|x64.Build.0 = Debug|x64
+		{CA023F49-A910-4690-A09F-F941F787CCAC}.Debug|x86.ActiveCfg = Debug|Win32
+		{CA023F49-A910-4690-A09F-F941F787CCAC}.Debug|x86.Build.0 = Debug|Win32
+		{CA023F49-A910-4690-A09F-F941F787CCAC}.Release|x64.ActiveCfg = Release|x64
+		{CA023F49-A910-4690-A09F-F941F787CCAC}.Release|x64.Build.0 = Release|x64
+		{CA023F49-A910-4690-A09F-F941F787CCAC}.Release|x86.ActiveCfg = Release|Win32
+		{CA023F49-A910-4690-A09F-F941F787CCAC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1165,6 +1175,7 @@ Global
 		{59EEF108-F827-4766-90B7-B00A3CF34161} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
 		{DD696729-0DC1-4565-A97D-92FBE311245A} = {866D0BA4-7F3E-481C-A8D1-E3D36840D1AF}
 		{5EAA7383-6772-479F-812B-CDEB4ED23F97} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
+		{CA023F49-A910-4690-A09F-F941F787CCAC} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}

@@ -42,8 +42,8 @@ void TestException()
 int main()
 {
     //return BasicWindow::Run();
-    //return Gradient::Run();
+    return Gradient::Run();
     //return ObjectOrientedControl::Run();
-    ChildControls::Run();
+    //ChildControls::Run();
     return 0;
 }
