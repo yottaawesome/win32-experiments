@@ -167,7 +167,8 @@ export namespace UI
 				msg.Hwnd,
 				[](Win32::HWND window, Win32::HDC hdc, Win32::PAINTSTRUCT& ps, auto&& self) static
 				{
-					auto oldBrush = Win32::SelectObject(hdc, Win32::GetStockObject(Win32::Brushes::Black));
+					auto oldBrush = Win32::SelectObject(hdc, UI::StockObjects::BlackBrush);
+					auto oldPen = Win32::SelectObject(hdc, UI::RedPen);
 					Win32::RoundRect(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, 5, 5);
 
 					std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
@@ -182,9 +183,9 @@ export namespace UI
 						Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
 					);
 
+					Win32::SelectObject(hdc, oldPen);
 					Win32::SelectObject(hdc, oldBrush);
 				}, self);
-
 			
 			//Win32::FillRect(hdc, &ps.rcPaint, (Win32::HBRUSH)(Win32::Color::Window + 1));
 			/*Win32::TextOutW(

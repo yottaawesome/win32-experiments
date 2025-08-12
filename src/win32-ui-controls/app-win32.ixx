@@ -67,6 +67,8 @@ export namespace Win32
 		::POINT,
 		::TRACKMOUSEEVENT,
 		::COLORREF,
+		::HPEN,
+		::CreatePen,
 		::DrawTextW,
 		::InvalidateRect,
 		::TrackMouseEvent,
@@ -152,12 +154,19 @@ export namespace Win32
 		::UnregisterClassW,
 		::GetStockObject,
 		::SetBkMode,
-		::SetTextColor
+		::SetTextColor,
+		::CreateSolidBrush
 		;
+
+	constexpr auto PsInsideFrame = PS_INSIDEFRAME;
 
 	constexpr auto (RGB)(BYTE r, BYTE g, BYTE b) noexcept -> COLORREF
 	{
 		return RGB(r, g, b);
+	}
+	constexpr auto (RGB)(std::byte r, std::byte g, std::byte b) noexcept -> COLORREF
+	{
+		return (RGB)(static_cast<BYTE>(r), static_cast<BYTE>(g), static_cast<BYTE>(b));
 	}
 
 	namespace BackgroundMode
@@ -173,7 +182,8 @@ export namespace Win32
 	{
 		enum
 		{
-			White = WHITE_PEN
+			White = WHITE_PEN,
+			Black = BLACK_PEN
 		};
 	}
 
@@ -181,7 +191,8 @@ export namespace Win32
 	{
 		enum
 		{
-			Black = BLACK_BRUSH
+			Black = BLACK_BRUSH,
+			White = WHITE_BRUSH
 		};
 	}
 
@@ -371,14 +382,6 @@ export namespace Win32
 			Divide = VK_DIVIDE,
 			NumpadEnter = VK_RETURN,
 			Delete = VK_DELETE
-		};
-	}
-
-	namespace Brushes
-	{
-		enum
-		{
-			White = WHITE_BRUSH
 		};
 	}
 
