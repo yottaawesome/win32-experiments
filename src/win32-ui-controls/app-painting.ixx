@@ -5,15 +5,16 @@ import :common;
 
 export namespace UI
 {
-	struct PaintingContext
+	struct SelectedObject
 	{
-		PaintingContext(Win32::HWND window, auto&& fn, auto&&...args)
+		SelectedObject(Win32::HDC hdc, auto&& toSelect)
+			: HDC(hdc)
 		{
-			Win32::PAINTSTRUCT ps;
-			Win32::HDC dc = Win32::BeginPaint(window, &ps);
-			std::invoke(fn, window, dc, ps, std::forward<decltype(args)>(args)...);
-			Win32::EndPaint(window, &ps);
+			if (HDC)
+				Previous = Win32::SelectObject(HDC, toSelect.Get());
 		}
+		Win32::HDC HDC = nullptr;
+		Win32::HGDIOBJ Previous = nullptr;
 	};
 
 	using BrushDeleter = Raii::IndirectUniquePtr<Win32::HBRUSH, Win32::DeleteObject>;
@@ -21,25 +22,34 @@ export namespace UI
 	template<std::uint16_t R, std::uint16_t G, std::uint16_t B>
 	struct ColoredBrush
 	{
-		constexpr auto Red() const noexcept -> std::uint16_t { return R; }
-		constexpr auto Green() const noexcept -> std::uint16_t { return G; }
-		constexpr auto Blue() const noexcept -> std::uint16_t { return B; }
-
-		auto Get() const noexcept -> Win32::HBRUSH
+		constexpr ColoredBrush()
 		{
-			static BrushDeleter Brush =
-				[]
-				{
-					Win32::COLORREF color = Win32::RGB(R, G, B);
-					return BrushDeleter{ Win32::CreateSolidBrush(color) };
-				}();
-			return Brush.get();
+			if not consteval { Create(); }
 		}
 
-		operator Win32::HBRUSH() const noexcept
+		constexpr auto Red() noexcept -> std::uint16_t { return R; }
+		constexpr auto Green() noexcept -> std::uint16_t { return G; }
+		constexpr auto Blue() noexcept -> std::uint16_t { return B; }
+
+		void Create(this auto&& self)
 		{
-			return Get();
+			Win32::COLORREF color = Win32::RGB(R, G, B);
+			self.Brush = BrushDeleter{ Win32::CreateSolidBrush(color) };
 		}
+
+		auto Get(this auto&& self) noexcept -> Win32::HBRUSH
+		{
+			if (not self.Brush) 
+				self.Create();
+			return self.Brush.get();
+		}
+
+		operator Win32::HBRUSH(this auto&& self) noexcept
+		{
+			return self.Get();
+		}
+
+		mutable BrushDeleter Brush;
 	};
 
 	constexpr ColoredBrush<255, 0, 0> RedBrush;
@@ -47,52 +57,133 @@ export namespace UI
 	constexpr ColoredBrush<0, 0, 255> BlueBrush;
 
 	using PenDeleter = Raii::IndirectUniquePtr<Win32::HPEN, Win32::DeleteObject>;
+
 	template<std::uint16_t R, std::uint16_t G, std::uint16_t B>
 	struct ColoredPen
 	{
-		constexpr auto Red() const noexcept -> std::uint16_t { return R; }
-		constexpr auto Green() const noexcept -> std::uint16_t { return G; }
-		constexpr auto Blue() const noexcept -> std::uint16_t { return B; }
-
-		auto Get() const noexcept -> Win32::HPEN
+		constexpr ColoredPen()
 		{
-			static PenDeleter Brush =
-				[]
-				{
-					Win32::COLORREF color = Win32::RGB(R, G, B);
-					return PenDeleter{ Win32::CreatePen(Win32::PsInsideFrame, 0, color)};
-				}();
-			return Brush.get();
+			if not consteval { Create(); }
 		}
 
-		operator Win32::HPEN() const noexcept
+		constexpr auto Red(this auto&&) noexcept -> std::uint16_t { return R; }
+		constexpr auto Green(this auto&&) noexcept -> std::uint16_t { return G; }
+		constexpr auto Blue(this auto&&) noexcept -> std::uint16_t { return B; }
+
+		void Create(this auto&& self) 
 		{
-			return Get();
+			Win32::COLORREF color = Win32::RGB(R, G, B);
+			self.Pen = PenDeleter{ Win32::CreatePen(Win32::PsInsideFrame, 0, color) };
 		}
 
-		operator Win32::HGDIOBJ() const noexcept
+		auto Get(this auto&& self) noexcept -> Win32::HPEN
 		{
-			return Get();
+			if (not self.Pen)
+				self.Create();
+			return self.Pen.get();
 		}
+
+		operator Win32::HPEN(this auto&& self) noexcept
+		{
+			return self.Get();
+		}
+
+		operator Win32::HGDIOBJ(this auto&& self) noexcept
+		{
+			return self.Get();
+		}
+
+		mutable PenDeleter Pen;
 	};
 
 	constexpr ColoredPen<255, 0, 0> RedPen;
 	constexpr ColoredPen<0, 255, 0> GreenPen;
 	constexpr ColoredPen<0, 0, 255> BluePen;
-}
 
-namespace UI::StockObjects
-{
-	template<int VStockObject>
+	template<int VStockObject, typename TDummy>
 	struct StockObject
 	{
-		operator Win32::HGDIOBJ() const
-		{
-			return Win32::GetStockObject(VStockObject);
-		}
+		operator Win32::HGDIOBJ(this auto&& self) { return self.Get(); }
+		auto Get(this auto&&) noexcept -> Win32::HGDIOBJ { return Win32::GetStockObject(VStockObject); }
 	};
 
-	constexpr StockObject<Win32::Brushes::Black> BlackBrush;
-	constexpr StockObject<Win32::Pens::Black> WhitePen;
-	constexpr StockObject<Win32::Pens::Black> BlackPen;
+	template<int VStockObject>
+	using StockBrush = StockObject<VStockObject, struct DummyBrush>;
+	template<int VStockObject>
+	using StockPen = StockObject<VStockObject, struct DummyPen>;
+
+	constexpr StockBrush<Win32::Brushes::Black> BlackBrush;
+	constexpr StockPen<Win32::Pens::White> WhitePen;
+	constexpr StockPen<Win32::Pens::Black> BlackPen;
+}
+
+namespace UI
+{
+	template<typename T>
+	struct AnyBrushT : std::false_type {};
+	template<std::uint16_t R, std::uint16_t G, std::uint16_t B>
+	struct AnyBrushT<ColoredBrush<R, G, B>> : std::true_type {};
+	template<int VStockObject>
+	struct AnyBrushT<StockBrush<VStockObject>> : std::true_type {};
+	template<typename T>
+	constexpr bool AnyBrushV = AnyBrushT<T>::value;
+	template<typename T>
+	concept AnyBrush = AnyBrushV<std::remove_cvref_t<T>>;
+
+	template<typename T>
+	struct AnyPenT : std::false_type {};
+	template<std::uint16_t R, std::uint16_t G, std::uint16_t B>
+	struct AnyPenT<ColoredPen<R, G, B>> : std::true_type {};
+	template<int VStockObject>
+	struct AnyPenT<StockPen<VStockObject>> : std::true_type {};
+	template<typename T>
+	constexpr bool AnyPenV = AnyPenT<T>::value;
+	template<typename T>
+	concept AnyPen = AnyPenV<std::remove_cvref_t<T>>;
+
+	struct PaintContext
+	{
+		~PaintContext()
+		{
+			if (not Window or not HDC)
+				return;
+			// Restore defaults
+			if (DefaultBrush)
+				Win32::SelectObject(HDC, DefaultBrush);
+			if (DefaultPen)
+				Win32::SelectObject(HDC, DefaultPen);
+			Win32::EndPaint(Window, &PS);
+		}
+
+		PaintContext(Win32::HWND window)
+			: Window(window)
+		{
+			HDC = Win32::BeginPaint(Window, &PS);
+			if (not HDC)
+				throw Error::Win32Error(Win32::GetLastError());
+		}
+
+		auto Select(this auto&& self, AnyBrush auto&& obj) -> decltype(auto)
+		{
+			auto gdi = Win32::SelectObject(self.HDC, obj.Get());
+			if (not self.DefaultBrush)
+				self.DefaultBrush = gdi;
+			return std::forward_like<decltype(self)>(self);
+		}
+
+		auto Select(this auto&& self, AnyPen auto&& obj) -> decltype(auto)
+		{
+			auto gdi = Win32::SelectObject(self.HDC, obj.Get());
+			if (not self.DefaultPen)
+				self.DefaultPen = gdi;
+			return std::forward_like<decltype(self)>(self);
+		}
+
+		Win32::PAINTSTRUCT PS{};
+		Win32::HDC HDC = nullptr;
+
+		Win32::HGDIOBJ DefaultBrush = nullptr;
+		Win32::HGDIOBJ DefaultPen = nullptr;
+		Win32::HWND Window = nullptr;
+	};
 }

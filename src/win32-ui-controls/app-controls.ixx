@@ -160,45 +160,55 @@ export namespace UI
 				.Height = 50
 			};
 		};
+		
+		/*auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
+		{
+			Win32::PAINTSTRUCT ps;
+			Win32::HDC hdc = Win32::BeginPaint(self.GetHandle(), &ps);
+			auto oldBrush = Win32::SelectObject(hdc, UI::StockObjects::BlackBrush);
+			auto oldPen = Win32::SelectObject(hdc, UI::RedPen);
+			Win32::RoundRect(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, 5, 5);
 
+			std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
+
+			Win32::SetBkMode(hdc, Win32::BackgroundMode::Transparent);
+			Win32::SetTextColor(hdc, Win32::RGB(255, 255, 255));
+			Win32::DrawTextW(
+				hdc,
+				message.data(),
+				static_cast<Win32::DWORD>(message.size()),
+				&ps.rcPaint,
+				Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
+			);
+
+			Win32::SelectObject(hdc, oldPen);
+			Win32::SelectObject(hdc, oldBrush);
+			Win32::EndPaint(self.GetHandle(), &ps);
+
+			return 0;
+		}*/
+		
 		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
 		{
-			PaintingContext(
-				msg.Hwnd,
-				[](Win32::HWND window, Win32::HDC hdc, Win32::PAINTSTRUCT& ps, auto&& self) static
-				{
-					auto oldBrush = Win32::SelectObject(hdc, UI::StockObjects::BlackBrush);
-					auto oldPen = Win32::SelectObject(hdc, UI::RedPen);
-					Win32::RoundRect(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, 5, 5);
+			PaintContext pc(msg.Hwnd);
 
-					std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
-
-					Win32::SetBkMode(hdc, Win32::BackgroundMode::Transparent);
-					Win32::SetTextColor(hdc, Win32::RGB(255, 255, 255));
-					Win32::DrawTextW(
-						hdc,
-						message.data(),
-						static_cast<Win32::DWORD>(message.size()),
-						&ps.rcPaint,
-						Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
-					);
-
-					Win32::SelectObject(hdc, oldPen);
-					Win32::SelectObject(hdc, oldBrush);
-				}, self);
+			pc.Select(UI::BlackBrush).Select(UI::RedPen);
+			Win32::RoundRect(pc.HDC, pc.PS.rcPaint.left, pc.PS.rcPaint.top, pc.PS.rcPaint.right, pc.PS.rcPaint.bottom, 5, 5);
 			
-			//Win32::FillRect(hdc, &ps.rcPaint, (Win32::HBRUSH)(Win32::Color::Window + 1));
-			/*Win32::TextOutW(
-				hdc, 
-				rc.right/2, 
-				rc.bottom/2-7, 
+			Win32::SetBkMode(pc.HDC, Win32::BackgroundMode::Transparent);
+			Win32::SetTextColor(pc.HDC, Win32::RGB(255, 255, 255));
+			std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
+			Win32::DrawTextW(
+				pc.HDC,
 				message.data(),
-				static_cast<Win32::DWORD>(message.size())
-			);*/
+				static_cast<Win32::DWORD>(message.size()),
+				&pc.PS.rcPaint,
+				Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
+			);
 
 			return 0;
 		}
-
+	
 		auto GetSubclassId(this auto&& self) noexcept { return 1; }
 	};
 }
