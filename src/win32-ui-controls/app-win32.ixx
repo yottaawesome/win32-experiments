@@ -68,6 +68,7 @@ export namespace Win32
 		::TRACKMOUSEEVENT,
 		::COLORREF,
 		::HPEN,
+		::BYTE,
 		::CreatePen,
 		::DrawTextW,
 		::InvalidateRect,

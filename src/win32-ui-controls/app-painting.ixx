@@ -141,6 +141,9 @@ namespace UI
 	template<typename T>
 	concept AnyPen = AnyPenV<std::remove_cvref_t<T>>;
 
+	template<typename T>
+	concept PenOrBrush = AnyPen<T> or AnyBrush<T>;
+
 	struct PaintContext
 	{
 		~PaintContext()
@@ -163,19 +166,51 @@ namespace UI
 				throw Error::Win32Error(Win32::GetLastError());
 		}
 
-		auto Select(this auto&& self, AnyBrush auto&& obj) -> decltype(auto)
+		auto Select(this auto&& self, PenOrBrush auto&& obj) -> decltype(auto)
 		{
 			auto gdi = Win32::SelectObject(self.HDC, obj.Get());
-			if (not self.DefaultBrush)
+			if constexpr (AnyBrush<decltype(obj)>)
 				self.DefaultBrush = gdi;
+			else if constexpr (AnyPen<decltype(obj)>)
+				self.DefaultPen = gdi;
 			return std::forward_like<decltype(self)>(self);
 		}
 
-		auto Select(this auto&& self, AnyPen auto&& obj) -> decltype(auto)
+		auto DrawTextInClientRect(this auto&& self, std::wstring_view text, auto...flags) -> decltype(auto)
 		{
-			auto gdi = Win32::SelectObject(self.HDC, obj.Get());
-			if (not self.DefaultPen)
-				self.DefaultPen = gdi;
+			Win32::DrawTextW(
+				self.HDC, 
+				text.data(), 
+				static_cast<Win32::DWORD>(text.size()), 
+				&self.PS.rcPaint, 
+				(flags | ...)
+			);
+			return std::forward_like<decltype(self)>(self);
+		}
+
+		auto RoundBorder(this auto&& self, int width, int height) -> decltype(auto)
+		{
+			Win32::RoundRect(
+				self.HDC,
+				self.PS.rcPaint.left,
+				self.PS.rcPaint.top,
+				self.PS.rcPaint.right,
+				self.PS.rcPaint.bottom,
+				width,
+				height
+			);
+			return std::forward_like<decltype(self)>(self);
+		}
+
+		auto SetBackgroundMode(this auto&& self, Win32::DWORD mode) -> decltype(auto)
+		{
+			Win32::SetBkMode(self.HDC, mode);
+			return std::forward_like<decltype(self)>(self);
+		}
+
+		auto SetTextColor(this auto&& self, std::uint8_t r, std::uint8_t g, std::uint8_t b) -> decltype(auto)
+		{
+			Win32::SetTextColor(self.HDC, Win32::RGB(r, g, b));
 			return std::forward_like<decltype(self)>(self);
 		}
 

@@ -190,20 +190,18 @@ export namespace UI
 		
 		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
 		{
-			PaintContext pc(msg.Hwnd);
-			pc.Select(UI::BlackBrush).Select(UI::RedPen);
-			Win32::RoundRect(pc.HDC, pc.PS.rcPaint.left, pc.PS.rcPaint.top, pc.PS.rcPaint.right, pc.PS.rcPaint.bottom, 5, 5);
-			
-			Win32::SetBkMode(pc.HDC, Win32::BackgroundMode::Transparent);
-			Win32::SetTextColor(pc.HDC, Win32::RGB(255, 255, 255));
-			std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
-			Win32::DrawTextW(
-				pc.HDC,
-				message.data(),
-				static_cast<Win32::DWORD>(message.size()),
-				&pc.PS.rcPaint,
-				Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
-			);
+			PaintContext{ msg.Hwnd }
+				.Select(UI::BlackBrush)
+				.Select(UI::RedPen)
+				.RoundBorder(5, 5)
+				.SetBackgroundMode(Win32::BackgroundMode::Transparent)
+				.SetTextColor(255, 255, 255)
+				.DrawTextInClientRect(
+					self.MouseHovering ? L"Hover!" : L"No hover!",
+					Win32::DrawTextOptions::Center, 
+					Win32::DrawTextOptions::VerticalCenter, 
+					Win32::DrawTextOptions::SingleLine
+				);
 
 			return 0;
 		}
