@@ -191,7 +191,6 @@ export namespace UI
 		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
 		{
 			PaintContext pc(msg.Hwnd);
-
 			pc.Select(UI::BlackBrush).Select(UI::RedPen);
 			Win32::RoundRect(pc.HDC, pc.PS.rcPaint.left, pc.PS.rcPaint.top, pc.PS.rcPaint.right, pc.PS.rcPaint.bottom, 5, 5);
 			
