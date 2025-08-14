@@ -161,18 +161,19 @@ namespace UI
 		PaintContext(Win32::HWND window)
 			: Window(window)
 		{
-			HDC = Win32::BeginPaint(Window, &PS);
-			if (not HDC)
+			if (HDC = Win32::BeginPaint(Window, &PS); not HDC)
 				throw Error::Win32Error(Win32::GetLastError());
 		}
 
 		auto Select(this auto&& self, PenOrBrush auto&& obj) -> decltype(auto)
 		{
-			auto gdi = Win32::SelectObject(self.HDC, obj.Get());
+			Win32::HGDIOBJ previous = Win32::SelectObject(self.HDC, obj.Get());
 			if constexpr (AnyBrush<decltype(obj)>)
-				self.DefaultBrush = gdi;
+				if (not self.DefaultBrush)
+					self.DefaultBrush = previous;
 			else if constexpr (AnyPen<decltype(obj)>)
-				self.DefaultPen = gdi;
+				if (not self.DefaultPen)
+					self.DefaultPen = previous;
 			return std::forward_like<decltype(self)>(self);
 		}
 
