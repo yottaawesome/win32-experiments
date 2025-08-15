@@ -1,8 +1,10 @@
+// Adapted from https://learn.microsoft.com/en-us/windows/win32/gdi/capturing-an-image
 module;
+
 #include <windows.h>
+
 export module bitblt;
 import std;
-import :win32;
 
 constexpr auto MAX_LOADSTRING = 100;
 
