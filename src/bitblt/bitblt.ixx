@@ -6,13 +6,7 @@ module;
 export module bitblt;
 import std;
 
-constexpr auto MAX_LOADSTRING = 100;
-
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-std::wstring szTitle = L"someapp";                  // The title bar text
-std::wstring szWindowClass = L"somewindow";            // the main window class name
-
+// RAII helpers
 template<auto VDeleter>
 struct Deleter
 {
@@ -27,8 +21,14 @@ using DcUniquePtr = IndirectUniquePtr<HDC, ReleaseDC>;
 template<typename T>
 using ObjectUniquePtr = IndirectUniquePtr<T, DeleteObject>;
 using HandleUniquePtr = IndirectUniquePtr<HANDLE, CloseHandle>;
+using CompatibleDcUniquePtr = IndirectUniquePtr<HDC, DeleteDC>;
 template<typename T>
 using LocalHeapUniquePtr = IndirectUniquePtr<T, LocalFree>;
+
+// Global Variables:
+HINSTANCE hInst;
+constexpr std::wstring_view WindowTitle = L"someapp";
+constexpr std::wstring_view WindowClass = L"somewindow";
 
 auto CaptureAnImage(HWND hWnd) -> int 
 {
@@ -38,7 +38,7 @@ auto CaptureAnImage(HWND hWnd) -> int
     DcUniquePtr hdcWindow{ GetDC(hWnd) };
 
     // Create a compatible DC, which is used in a BitBlt from the window DC.
-    ObjectUniquePtr<HDC> hdcMemDC{ CreateCompatibleDC(hdcWindow.get()) };
+    CompatibleDcUniquePtr hdcMemDC{ CreateCompatibleDC(hdcWindow.get()) };
     if (!hdcMemDC)
     {
         MessageBox(hWnd, L"CreateCompatibleDC has failed", L"Failed", MB_OK);
@@ -70,7 +70,6 @@ auto CaptureAnImage(HWND hWnd) -> int
     ObjectUniquePtr<HBITMAP> hbmScreen{
         CreateCompatibleBitmap(hdcWindow.get(), rcClient.right - rcClient.left, rcClient.bottom - rcClient.top)
     };
-
     if (!hbmScreen)
     {
         MessageBox(hWnd, L"CreateCompatibleBitmap Failed", L"Failed", MB_OK);
@@ -79,7 +78,6 @@ auto CaptureAnImage(HWND hWnd) -> int
 
     // Select the compatible bitmap into the compatible memory DC.
     SelectObject(hdcMemDC.get(), hbmScreen.get());
-
     // Bit block transfer into our compatible memory DC.
     if (!BitBlt(hdcMemDC.get(),
         0, 0,
@@ -119,7 +117,6 @@ auto CaptureAnImage(HWND hWnd) -> int
     // have greater overhead than HeapAlloc.
     // /SAMPLE NOTE
     // Converted to HeapAlloc, which has lower overhead and is already fixed with no locking required.
-
     LocalHeapUniquePtr<char*> lpbitmap{ (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwBmpSize) };
 
     // Gets the "bits" from the bitmap, and copies them into a buffer 
@@ -144,13 +141,10 @@ auto CaptureAnImage(HWND hWnd) -> int
 
     // Add the size of the headers to the size of the bitmap to get the total file size.
     DWORD dwSizeofDIB = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-
     // Offset to where the actual bitmap bits start.
     bmfHeader.bfOffBits = (DWORD)sizeof(BITMAPFILEHEADER) + (DWORD)sizeof(BITMAPINFOHEADER);
-
     // Size of the file.
     bmfHeader.bfSize = dwSizeofDIB;
-
     // bfType must always be BM for Bitmaps.
     bmfHeader.bfType = 0x4D42; // BM.
 
@@ -196,7 +190,7 @@ auto MyRegisterClass(HINSTANCE hInstance) -> ATOM
         .hCursor = LoadCursor(nullptr, IDC_ARROW),
         .hbrBackground = (HBRUSH)(COLOR_WINDOW + 1),
         .lpszMenuName = nullptr,
-        .lpszClassName = szWindowClass.data(),
+        .lpszClassName = WindowClass.data(),
         .hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_APPLICATION))
     };
     return RegisterClassExW(&wcex);
@@ -205,7 +199,7 @@ auto MyRegisterClass(HINSTANCE hInstance) -> ATOM
 void InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance; // Store instance handle in our global variable
-    HWND hWnd = CreateWindowW(szWindowClass.data(), szTitle.data(), WS_OVERLAPPEDWINDOW,
+    HWND hWnd = CreateWindowW(WindowClass.data(), WindowTitle.data(), WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
     if (!hWnd)
         throw std::runtime_error("CreateWindowW() failed.");
