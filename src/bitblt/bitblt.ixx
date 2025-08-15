@@ -39,7 +39,7 @@ auto CaptureAnImage(HWND hWnd) -> int
 
     // Create a compatible DC, which is used in a BitBlt from the window DC.
     CompatibleDcUniquePtr hdcMemDC{ CreateCompatibleDC(hdcWindow.get()) };
-    if (!hdcMemDC)
+    if (not hdcMemDC)
     {
         MessageBox(hWnd, L"CreateCompatibleDC has failed", L"Failed", MB_OK);
         std::abort();
@@ -53,14 +53,18 @@ auto CaptureAnImage(HWND hWnd) -> int
     SetStretchBltMode(hdcWindow.get(), HALFTONE);
 
     // The source DC is the entire screen, and the destination DC is the current window (HWND).
-    if (!StretchBlt(hdcWindow.get(),
+    BOOL success = StretchBlt(
+        hdcWindow.get(),
         0, 0,
-        rcClient.right, rcClient.bottom,
+        rcClient.right,
+        rcClient.bottom,
         hdcScreen.get(),
         0, 0,
         GetSystemMetrics(SM_CXSCREEN),
         GetSystemMetrics(SM_CYSCREEN),
-        SRCCOPY))
+        SRCCOPY
+    );
+    if (not success)
     {
         MessageBox(hWnd, L"StretchBlt has failed", L"Failed", MB_OK);
         std::abort();
@@ -70,7 +74,7 @@ auto CaptureAnImage(HWND hWnd) -> int
     ObjectUniquePtr<HBITMAP> hbmScreen{
         CreateCompatibleBitmap(hdcWindow.get(), rcClient.right - rcClient.left, rcClient.bottom - rcClient.top)
     };
-    if (!hbmScreen)
+    if (not hbmScreen)
     {
         MessageBox(hWnd, L"CreateCompatibleBitmap Failed", L"Failed", MB_OK);
         std::abort();
@@ -79,12 +83,15 @@ auto CaptureAnImage(HWND hWnd) -> int
     // Select the compatible bitmap into the compatible memory DC.
     SelectObject(hdcMemDC.get(), hbmScreen.get());
     // Bit block transfer into our compatible memory DC.
-    if (!BitBlt(hdcMemDC.get(),
+    success = BitBlt(
+        hdcMemDC.get(),
         0, 0,
         rcClient.right - rcClient.left, rcClient.bottom - rcClient.top,
         hdcWindow.get(),
         0, 0,
-        SRCCOPY))
+        SRCCOPY
+    );
+    if (not success)
     {
         MessageBox(hWnd, L"BitBlt has failed", L"Failed", MB_OK);
         std::abort();
@@ -94,19 +101,18 @@ auto CaptureAnImage(HWND hWnd) -> int
     BITMAP bmpScreen;
     GetObject(hbmScreen.get(), sizeof(BITMAP), &bmpScreen);
 
-    BITMAPFILEHEADER bmfHeader;
     BITMAPINFOHEADER bi{
-        bi.biSize = sizeof(BITMAPINFOHEADER),
-        bi.biWidth = bmpScreen.bmWidth,
-        bi.biHeight = bmpScreen.bmHeight,
-        bi.biPlanes = 1,
-        bi.biBitCount = 32,
-        bi.biCompression = BI_RGB,
-        bi.biSizeImage = 0,
-        bi.biXPelsPerMeter = 0,
-        bi.biYPelsPerMeter = 0,
-        bi.biClrUsed = 0,
-        bi.biClrImportant = 0,
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = bmpScreen.bmWidth,
+        .biHeight = bmpScreen.bmHeight,
+        .biPlanes = 1,
+        .biBitCount = 32,
+        .biCompression = BI_RGB,
+        .biSizeImage = 0,
+        .biXPelsPerMeter = 0,
+        .biYPelsPerMeter = 0,
+        .biClrUsed = 0,
+        .biClrImportant = 0,
     };
 
     DWORD dwBmpSize = ((bmpScreen.bmWidth * bi.biBitCount + 31) / 32) * 4 * bmpScreen.bmHeight;
@@ -121,37 +127,41 @@ auto CaptureAnImage(HWND hWnd) -> int
 
     // Gets the "bits" from the bitmap, and copies them into a buffer 
     // that's pointed to by lpbitmap.
-    GetDIBits(hdcWindow.get(), hbmScreen.get(), 0,
+    GetDIBits(
+        hdcWindow.get(), 
+        hbmScreen.get(), 
+        0,
         (UINT)bmpScreen.bmHeight,
         lpbitmap.get(),
-        (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+        (BITMAPINFO*)&bi, 
+        DIB_RGB_COLORS
+    );
 
     // A file is created, this is where we will save the screen capture.
-    HANDLE hFile{ 
-        CreateFile(L"captureqwsx.bmp",
-            GENERIC_WRITE,
-            0,
-            NULL,
-            CREATE_ALWAYS,
-            FILE_ATTRIBUTE_NORMAL, NULL) 
-    };
+    HANDLE hFile = CreateFile(
+        L"captureqwsx.bmp",
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL, 
+        nullptr
+    );
     if (not hFile or hFile == INVALID_HANDLE_VALUE)
         std::abort();
     HandleUniquePtr file{ hFile };
 
-    // Add the size of the headers to the size of the bitmap to get the total file size.
-    DWORD dwSizeofDIB = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-    // Offset to where the actual bitmap bits start.
-    bmfHeader.bfOffBits = (DWORD)sizeof(BITMAPFILEHEADER) + (DWORD)sizeof(BITMAPINFOHEADER);
-    // Size of the file.
-    bmfHeader.bfSize = dwSizeofDIB;
-    // bfType must always be BM for Bitmaps.
-    bmfHeader.bfType = 0x4D42; // BM.
-
     DWORD dwBytesWritten = 0;
-    WriteFile(hFile, (LPSTR)&bmfHeader, sizeof(BITMAPFILEHEADER), &dwBytesWritten, NULL);
-    WriteFile(hFile, (LPSTR)&bi, sizeof(BITMAPINFOHEADER), &dwBytesWritten, NULL);
-    WriteFile(hFile, (LPSTR)lpbitmap.get(), dwBmpSize, &dwBytesWritten, NULL);
+    BITMAPFILEHEADER bmfHeader{
+        .bfType = 0x4D42, // bfType must always be BM for Bitmaps..
+        // Add the size of the headers to the size of the bitmap to get the total file size.
+        .bfSize = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER),
+        // Offset to where the actual bitmap bits start.
+        .bfOffBits = (DWORD)sizeof(BITMAPFILEHEADER) + (DWORD)sizeof(BITMAPINFOHEADER)
+    };
+    WriteFile(hFile, (LPSTR)&bmfHeader, sizeof(BITMAPFILEHEADER), &dwBytesWritten, nullptr);
+    WriteFile(hFile, (LPSTR)&bi, sizeof(BITMAPINFOHEADER), &dwBytesWritten, nullptr);
+    WriteFile(hFile, (LPSTR)lpbitmap.get(), dwBmpSize, &dwBytesWritten, nullptr);
 
     return 0;
 }
