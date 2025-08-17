@@ -150,6 +150,7 @@ export namespace UI
 				.Id = 100,
 				.Class = L"Button",
 				.Text = L"", // window text
+				// See https://stackoverflow.com/a/78207145 for why ClipSiblings is needed.
 				.Styles = Win32::Styles::ClipSiblings | Win32::Styles::ButtonOwnerDrawn | Win32::Styles::Child | Win32::Styles::Visible,
 				.X = 10,
 				.Y = 10,
