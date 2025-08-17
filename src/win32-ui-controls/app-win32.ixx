@@ -63,6 +63,7 @@ export namespace Win32
 		::LPWSTR,
 		::PAINTSTRUCT,
 		::HDC,
+		::HRGN,
 		::RECT,
 		::POINT,
 		::TRACKMOUSEEVENT,
@@ -421,6 +422,7 @@ export namespace Win32
 		{
 			Child = WS_CHILD,
 			ClipSiblings = WS_CLIPSIBLINGS,
+			ClipChildren = WS_CLIPCHILDREN,
 			Visible = WS_VISIBLE,
 			OverlappedWindow = WS_OVERLAPPEDWINDOW,
 			HScroll = WS_HSCROLL,

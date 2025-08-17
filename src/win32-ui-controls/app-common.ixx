@@ -118,10 +118,16 @@ export namespace UI
 		Win32::HWND Hwnd = nullptr;
 		Win32::WPARAM wParam = 0;
 		Win32::LPARAM lParam = 0;
-		auto operator==(this const auto&, std::uint32_t msg) noexcept -> bool
+		constexpr auto operator==(this auto&&, std::uint32_t msg) noexcept -> bool
 		{
 			return VMsg == msg;
 		}
+	};
+
+	template<typename T, typename M>
+	concept Handles = requires(T t, M m)
+	{
+		{ t.OnMessage(m) } -> std::convertible_to<Win32::LRESULT>;
 	};
 
 	struct GenericWin32Message

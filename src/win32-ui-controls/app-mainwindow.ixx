@@ -4,6 +4,7 @@ import :common;
 import :win32;
 import :toplevelwindow;
 import :controls;
+import :painting;
 
 export namespace UI
 {
@@ -18,7 +19,7 @@ export namespace UI
 				.hInstance = Win32::GetModuleHandleW(nullptr),
 				.hIcon = Win32::LoadIconW(nullptr, Win32::IdiApplication),
 				.hCursor = Win32::LoadCursorW(nullptr, Win32::IdcArrow),
-				.hbrBackground = static_cast<Win32::HBRUSH>(Win32::GetStockObject(Win32::Brushes::White)),
+				.hbrBackground = BlackBrush,
 				.lpszClassName = self.ClassName.data()
 			};
 		}
@@ -37,6 +38,11 @@ export namespace UI
 		void Init(this auto&& self)
 		{
 			self.m_button.Create(self.m_window.get());
+		}
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
+		{
+			return Win32::DefWindowProcW(msg.Hwnd, msg.uMsg, msg.wParam, msg.lParam);
 		}
 
 		OwnerDrawnButton m_button;

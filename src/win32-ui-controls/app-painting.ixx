@@ -17,7 +17,8 @@ export namespace UI
 		Win32::HGDIOBJ Previous = nullptr;
 	};
 
-	using BrushDeleter = Raii::IndirectUniquePtr<Win32::HBRUSH, Win32::DeleteObject>;
+	using BrushUniquePtr = Raii::IndirectUniquePtr<Win32::HBRUSH, Win32::DeleteObject>;
+	using HrgnUniquePtr = Raii::IndirectUniquePtr<Win32::HRGN, Win32::DeleteObject>;
 
 	template<std::uint16_t R, std::uint16_t G, std::uint16_t B>
 	struct ColoredBrush
@@ -34,7 +35,7 @@ export namespace UI
 		void Create(this auto&& self)
 		{
 			Win32::COLORREF color = Win32::RGB(R, G, B);
-			self.Brush = BrushDeleter{ Win32::CreateSolidBrush(color) };
+			self.Brush = BrushUniquePtr{ Win32::CreateSolidBrush(color) };
 		}
 
 		auto Get(this auto&& self) noexcept -> Win32::HBRUSH
@@ -49,7 +50,7 @@ export namespace UI
 			return self.Get();
 		}
 
-		mutable BrushDeleter Brush;
+		mutable BrushUniquePtr Brush;
 	};
 
 	constexpr ColoredBrush<255, 0, 0> RedBrush;
@@ -100,19 +101,24 @@ export namespace UI
 	constexpr ColoredPen<0, 255, 0> GreenPen;
 	constexpr ColoredPen<0, 0, 255> BluePen;
 
-	template<int VStockObject, typename TDummy>
+	template<int VStockObject, typename TDummy, typename TConvertible = void>
 	struct StockObject
 	{
-		operator Win32::HGDIOBJ(this auto&& self) { return self.Get(); }
-		auto Get(this auto&&) noexcept -> Win32::HGDIOBJ { return Win32::GetStockObject(VStockObject); }
+		operator Win32::HGDIOBJ(this auto&& self) noexcept 
+			{ return self.Get(); }
+		operator TConvertible(this auto&& self) noexcept requires (not (std::is_void_v<TConvertible>))
+			{ return static_cast<TConvertible>(self.Get()); }
+		auto Get(this auto&&) noexcept -> Win32::HGDIOBJ 
+			{ return Win32::GetStockObject(VStockObject); }
 	};
 
 	template<int VStockObject>
-	using StockBrush = StockObject<VStockObject, struct DummyBrush>;
+	using StockBrush = StockObject<VStockObject, struct DummyBrush, Win32::HBRUSH>;
 	template<int VStockObject>
-	using StockPen = StockObject<VStockObject, struct DummyPen>;
+	using StockPen = StockObject<VStockObject, struct DummyPen, Win32::HPEN>;
 
 	constexpr StockBrush<Win32::Brushes::Black> BlackBrush;
+	constexpr StockBrush<Win32::Brushes::White> WhiteBrush;
 	constexpr StockPen<Win32::Pens::White> WhitePen;
 	constexpr StockPen<Win32::Pens::Black> BlackPen;
 }

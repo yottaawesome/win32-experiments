@@ -26,7 +26,8 @@ export namespace UI
 		Win32::Messages::MouseHover,
 		Win32::Messages::MouseLeave,
 		Win32::Messages::MouseMove,
-		Win32::Messages::EraseBackground
+		Win32::Messages::EraseBackground,
+		Win32::Messages::Create
 	};
 
 	struct Control : Window
@@ -64,28 +65,27 @@ export namespace UI
 		auto HandleMessage(
 			this auto&& self,
 			Win32::HWND hwnd,
-			Win32::UINT msg,
+			Win32::UINT msgType,
 			Win32::WPARAM wParam,
 			Win32::LPARAM lParam,
 			Win32::UINT_PTR uIdSubclass,
 			Win32::DWORD_PTR dwRefData
 		) -> Win32::LRESULT
 		{
-			return[&self, hwnd, msg, wParam, lParam]<size_t...Is>(std::index_sequence<Is...>)
+			return[&self, hwnd, msgType, wParam, lParam]<size_t...Is>(std::index_sequence<Is...>)
 			{
-				Win32::LRESULT result = 0;
-				bool handled = ((
-					std::get<Is>(HandledControlMessages) == msg
-						? (result = self.OnMessage(Win32Message<std::get<Is>(HandledControlMessages)>{ hwnd, wParam, lParam }), true)
-						: false
-				) or ...);
-				return handled ? result : self.OnMessage(GenericWin32Message{ .Hwnd = hwnd, .uMsg = msg, .wParam = wParam, .lParam = lParam });
+				Win32::LRESULT result;
+				bool handled = (... or 
+					[&self, &result, msgType]<Win32::DWORD VRawMsgType>(Win32Message<VRawMsgType> msg)
+					{
+						//if constexpr (Handles<decltype(self), decltype(winMsg)>) // works
+						//if constexpr (requires { self.On(winMsg); }) // doesn't work
+						if constexpr (requires { self.OnMessage(Win32Message<VRawMsgType>{}); })
+							return msg == msgType ? (result = self.OnMessage(msg), true) : false;
+						return false;
+					}(Win32Message<std::get<Is>(HandledControlMessages)>{ hwnd, wParam, lParam }));
+				return handled ? result : Win32::DefSubclassProc(hwnd, msgType, wParam, lParam);
 			}(std::make_index_sequence<HandledControlMessages.size()>());
-		}
-
-		auto OnMessage(this Control& self, auto msg) noexcept -> Win32::LRESULT
-		{
-			return Win32::DefSubclassProc(msg.Hwnd, msg.uMsg, msg.wParam, msg.lParam);
 		}
 
 		template<typename TControl>
@@ -109,8 +109,6 @@ export namespace UI
 
 	struct Button : Control
 	{
-		using Control::OnMessage;
-		
 		constexpr static std::wstring_view ClassName = L"Button";
 
 		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::LeftButtonUp> msg) -> Win32::LRESULT
@@ -144,7 +142,6 @@ export namespace UI
 	struct OwnerDrawnButton : Button, MouseTracking<true>
 	{
 		using Button::ClassName;
-		using Control::OnMessage;
 		using MouseTracking::OnMessage;
 
 		auto GetDefaultProperties(this auto&& self) -> ControlProperties
@@ -153,7 +150,7 @@ export namespace UI
 				.Id = 100,
 				.Class = L"Button",
 				.Text = L"", // window text
-				.Styles = Win32::Styles::ButtonOwnerDrawn | Win32::Styles::Child | Win32::Styles::Visible,
+				.Styles = Win32::Styles::ClipSiblings | Win32::Styles::ButtonOwnerDrawn | Win32::Styles::Child | Win32::Styles::Visible,
 				.X = 10,
 				.Y = 10,
 				.Width = 300,
@@ -188,6 +185,19 @@ export namespace UI
 			return 0;
 		}*/
 		
+		HrgnUniquePtr Region;
+
+		auto Init(this auto&& self)
+		{
+			self.Region = HrgnUniquePtr{ Win32::CreateRoundRectRgn(0, 0, 300, 50, 5, 5) };
+			Win32::SetWindowRgn(self.GetHandle(), self.Region.get(), true);
+		}
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Create> msg) -> Win32::LRESULT
+		{
+			return Win32::DefSubclassProc(msg.Hwnd, msg.uMsg, msg.wParam, msg.lParam);
+		}
+
 		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
 		{
 			PaintContext{ msg.Hwnd }
