@@ -14,17 +14,19 @@ namespace Win32
 	template<auto VValue>
 	struct Win32Constant
 	{
-		auto Get() const noexcept
+		static constexpr auto operator()() noexcept
 		{
 			if constexpr (std::invocable<decltype(VValue)>)
 				return std::invoke(VValue);
 			else
 				return VValue;
-		}
+		};
 
-		operator std::invoke_result_t<decltype(&Win32Constant::Get), Win32Constant>() const noexcept
+		using TReturn = decltype(Win32Constant::operator()());
+
+		operator TReturn(this auto&& self) noexcept
 		{
-			return Get();
+			return std::invoke(self);
 		}
 	};
 }
