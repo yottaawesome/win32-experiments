@@ -24,7 +24,7 @@ namespace Win32
 
 		using TReturn = decltype(Win32Constant::operator()());
 
-		operator TReturn(this auto&& self) noexcept
+		constexpr operator TReturn(this auto&& self) noexcept
 		{
 			return std::invoke(self);
 		}
