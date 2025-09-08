@@ -107,6 +107,30 @@ export namespace UI
 		auto GetId(this const auto& self) noexcept -> unsigned { return self.GetDefaultProperties().Id; }
 	};
 
+	template<unsigned VId, int VX, int VY, int VWidth, int VHeight>
+	struct Output : Control, Textable
+	{
+		auto GetSubclassId(this auto&&) noexcept -> unsigned
+		{
+			return VId;
+		}
+
+		auto GetDefaultProperties(this auto&& self) -> ControlProperties
+		{
+			return {
+				.Id = VId,
+				.Text = L"", // initial window text
+				.Styles = Win32::Styles::Child | Win32::Styles::Visible | Win32::Styles::Border | Win32::Styles::Static::Right,
+				.X = VX,
+				.Y = VY,
+				.Width = VWidth,
+				.Height = VHeight
+			};
+		};
+
+		constexpr static std::wstring_view ClassName = L"Static";
+	};
+
 	struct Button : Control
 	{
 		constexpr static std::wstring_view ClassName = L"Button";

@@ -90,7 +90,6 @@ export namespace Error
 	};
 }
 
-
 export namespace UI
 {
 	using HwndUniquePtr = Raii::IndirectUniquePtr<Win32::HWND, Win32::DestroyWindow>;

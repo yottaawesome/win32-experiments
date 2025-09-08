@@ -15,11 +15,12 @@ namespace A
         using Ts::operator()...;
     };
 
-    template<typename TVariant>
+    template<typename...TArgs>
     struct Variant
     {
-        TVariant Value;
-        Variant(TVariant&& variant) : Value(std::forward<TVariant>(variant)) {}
+        std::variant<TArgs...> Value;
+        constexpr Variant() = default;
+        Variant(std::variant<TArgs...>&& variant) : Value(std::forward<std::variant<TArgs...>>(variant)) {}
 
         auto Visit(this auto&& self, auto&&...fn)
         {
@@ -33,10 +34,10 @@ namespace A
         std::array handles{ awaitables.GetHandle()... };
         Win32::DWORD result = Win32::WaitForMultipleObjects(sizeof...(awaitables), handles.data(), false, Win32::Infinite);
 
-        return []<size_t...Is>(Win32::DWORD result, std::index_sequence<Is...>) -> std::variant<Integral<Is>...>
+        return []<size_t...Is>(Win32::DWORD result, std::index_sequence<Is...>) -> Variant<Integral<Is>..., Integral<Win32::WaitTimeout>>
         {
-            std::variant<Integral<Is>...> returnValue;
-            ((Integral<Is>{} == Is ? (returnValue = Integral<Is>{}, true) : false) or ...);
+            Variant<Integral<Is>..., Integral<Win32::WaitTimeout>> returnValue;
+            ((Integral<Is>{} == Is ? (returnValue.Value = Integral<Is>{}, true) : false) or ...);
             return returnValue;
         }(result, std::make_index_sequence<sizeof...(awaitables)>{});
     }
@@ -51,12 +52,14 @@ namespace A
     {
         Win32::HANDLE eventA = Win32::CreateEventA(nullptr, false, false, nullptr);
         Win32::HANDLE eventB = Win32::CreateEventA(nullptr, false, false, nullptr);
-        Variant{ 
-            WaitOn(
-                AwaitableType{eventA}, 
-                AwaitableType{eventB}
-            ) 
-        }.Visit(
+        WaitOn(
+            AwaitableType{eventA}, 
+            AwaitableType{eventB}
+        ).Visit(
+            [](Integral<Win32::WaitTimeout>)
+            {
+
+            },
             [](Integral<0>)
             {
                 
