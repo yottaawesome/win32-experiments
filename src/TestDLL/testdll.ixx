@@ -26,7 +26,7 @@ export namespace TestDLL
 		return f;
 	}
 
-	struct TestClass
+	struct __declspec(dllexport) TestClass
 	{
 		void AA() {}
 		void BB() { throw std::runtime_error("Test exception"); }

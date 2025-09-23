@@ -41,3 +41,4 @@ node_modules/
 *.pfx
 *.aps
 /src/SecureSocket/response.txt
+/src/bitblt/captureqwsx.bmp

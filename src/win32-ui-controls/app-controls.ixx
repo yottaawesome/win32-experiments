@@ -1,0 +1,246 @@
+export module app:controls;
+import :common;
+import :win32;
+import :painting;
+
+export namespace UI
+{
+	struct ControlProperties
+	{
+		Win32::DWORD Id;
+		std::wstring Class;
+		std::wstring Text;
+		Win32::DWORD Styles = 0;
+		Win32::DWORD ExtendedStyles = 0;
+		int X = 0;
+		int Y = 0;
+		int Width = 0;
+		int Height = 0;
+	};
+
+	constexpr std::array HandledControlMessages{
+		Win32::Messages::LeftButtonUp,
+		Win32::Messages::Paint,
+		Win32::Messages::Notify,
+		Win32::Messages::DrawItem,
+		Win32::Messages::MouseHover,
+		Win32::Messages::MouseLeave,
+		Win32::Messages::MouseMove,
+		Win32::Messages::EraseBackground,
+		Win32::Messages::Create
+	};
+
+	struct Control : Window
+	{
+		auto Create(this auto&& self, Win32::HWND parent) -> void
+		{
+			static_assert(
+				requires { { self.ClassName.data() } -> std::same_as<const wchar_t*>; },
+				"This type needs a ClassName member that specifies the Win32 class name!");
+
+			auto properties = self.GetDefaultProperties();
+			Win32::HWND window = Win32::CreateWindowExW(
+				properties.ExtendedStyles,
+				self.ClassName.data(),
+				properties.Text.empty() ? nullptr : properties.Text.data(),
+				properties.Styles,
+				properties.X,
+				properties.Y,
+				properties.Width,
+				properties.Height,
+				parent,
+				(Win32::HMENU)(Win32::UINT_PTR)(properties.Id),
+				Win32::GetModuleHandleW(nullptr),
+				nullptr
+			);
+			if (self.m_window = HwndUniquePtr(window); not self.m_window)
+				throw Error::Win32Error(Win32::GetLastError(), "Failed creating button.");
+			if (not Win32::SetWindowSubclass(self.m_window.get(), SubclassProc<std::remove_cvref_t<decltype(self)>>, self.GetSubclassId(), reinterpret_cast<Win32::DWORD_PTR>(&self)))
+				throw Error::Win32Error(Win32::GetLastError(), "Failed creating button.");
+
+			if constexpr (requires { self.Init(); })
+				self.Init();
+		}
+
+		auto HandleMessage(
+			this auto&& self,
+			Win32::HWND hwnd,
+			Win32::UINT msgType,
+			Win32::WPARAM wParam,
+			Win32::LPARAM lParam,
+			Win32::UINT_PTR uIdSubclass,
+			Win32::DWORD_PTR dwRefData
+		) -> Win32::LRESULT
+		{
+			return[&self, hwnd, msgType, wParam, lParam]<size_t...Is>(std::index_sequence<Is...>)
+			{
+				Win32::LRESULT result;
+				bool handled = (... or 
+					[&self, &result, msgType]<Win32::DWORD VRawMsgType>(Win32Message<VRawMsgType> msg)
+					{
+						//if constexpr (Handles<decltype(self), decltype(winMsg)>) // works
+						//if constexpr (requires { self.On(winMsg); }) // doesn't work
+						if constexpr (requires { self.OnMessage(Win32Message<VRawMsgType>{}); })
+							return msg == msgType ? (result = self.OnMessage(msg), true) : false;
+						return false;
+					}(Win32Message<std::get<Is>(HandledControlMessages)>{ hwnd, wParam, lParam }));
+				return handled ? result : Win32::DefSubclassProc(hwnd, msgType, wParam, lParam);
+			}(std::make_index_sequence<HandledControlMessages.size()>());
+		}
+
+		template<typename TControl>
+		static auto SubclassProc(
+			Win32::HWND hwnd,
+			Win32::UINT msg,
+			Win32::WPARAM wParam,
+			Win32::LPARAM lParam,
+			Win32::UINT_PTR idSubclass,
+			Win32::DWORD_PTR refData
+		) -> Win32::LRESULT
+		{
+			TControl* pThis = reinterpret_cast<TControl*>(refData);
+			return pThis
+				? pThis->HandleMessage(hwnd, msg, wParam, lParam, idSubclass, refData)
+				: Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
+		}
+
+		auto GetId(this const auto& self) noexcept -> unsigned { return self.GetDefaultProperties().Id; }
+	};
+
+	template<unsigned VId, int VX, int VY, int VWidth, int VHeight>
+	struct Output : Control, Textable
+	{
+		auto GetSubclassId(this auto&&) noexcept -> unsigned
+		{
+			return VId;
+		}
+
+		auto GetDefaultProperties(this auto&& self) -> ControlProperties
+		{
+			return {
+				.Id = VId,
+				.Text = L"", // initial window text
+				.Styles = Win32::Styles::Child | Win32::Styles::Visible | Win32::Styles::Border | Win32::Styles::Static::Right,
+				.X = VX,
+				.Y = VY,
+				.Width = VWidth,
+				.Height = VHeight
+			};
+		};
+
+		constexpr static std::wstring_view ClassName = L"Static";
+	};
+
+	struct Button : Control
+	{
+		constexpr static std::wstring_view ClassName = L"Button";
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::LeftButtonUp> msg) -> Win32::LRESULT
+		{
+			if constexpr (requires { self.OnClick(); })
+				self.OnClick();
+			return Win32::DefSubclassProc(msg.Hwnd, msg.uMsg, msg.wParam, msg.lParam);
+		}
+
+		auto GetDefaultProperties(this auto&& self) -> ControlProperties
+		{
+			return {
+				.Id = 100,
+				.Class = L"Button",
+				.Text = L"", // window text
+				.Styles = Win32::Styles::PushButton | Win32::Styles::Child | Win32::Styles::Visible,
+				.X = 10,
+				.Y = 10,
+				.Width = 100,
+				.Height = 50
+			};
+		};
+
+		void Click(this auto&& self) noexcept
+		{
+			if (self.GetHandle())
+				Win32::SendMessageW(self.GetHandle(), Win32::Messages::ButtonClick, 0, 0);
+		}
+	};
+
+	struct OwnerDrawnButton : Button, MouseTracking<true>
+	{
+		using Button::ClassName;
+		using MouseTracking::OnMessage;
+
+		auto GetDefaultProperties(this auto&& self) -> ControlProperties
+		{
+			return {
+				.Id = 100,
+				.Class = L"Button",
+				.Text = L"", // window text
+				// See https://stackoverflow.com/a/78207145 for why ClipSiblings is needed.
+				.Styles = Win32::Styles::ClipSiblings | Win32::Styles::ButtonOwnerDrawn | Win32::Styles::Child | Win32::Styles::Visible,
+				.X = 10,
+				.Y = 10,
+				.Width = 300,
+				.Height = 50
+			};
+		};
+		
+		/*auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
+		{
+			Win32::PAINTSTRUCT ps;
+			Win32::HDC hdc = Win32::BeginPaint(self.GetHandle(), &ps);
+			auto oldBrush = Win32::SelectObject(hdc, UI::StockObjects::BlackBrush);
+			auto oldPen = Win32::SelectObject(hdc, UI::RedPen);
+			Win32::RoundRect(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, 5, 5);
+
+			std::wstring_view message = self.MouseHovering ? L"Hover!" : L"No hover!";
+
+			Win32::SetBkMode(hdc, Win32::BackgroundMode::Transparent);
+			Win32::SetTextColor(hdc, Win32::RGB(255, 255, 255));
+			Win32::DrawTextW(
+				hdc,
+				message.data(),
+				static_cast<Win32::DWORD>(message.size()),
+				&ps.rcPaint,
+				Win32::DrawTextOptions::Center | Win32::DrawTextOptions::VerticalCenter | Win32::DrawTextOptions::SingleLine
+			);
+
+			Win32::SelectObject(hdc, oldPen);
+			Win32::SelectObject(hdc, oldBrush);
+			Win32::EndPaint(self.GetHandle(), &ps);
+
+			return 0;
+		}*/
+		
+		HrgnUniquePtr Region;
+
+		auto Init(this auto&& self)
+		{
+			self.Region = HrgnUniquePtr{ Win32::CreateRoundRectRgn(0, 0, 300, 50, 5, 5) };
+			Win32::SetWindowRgn(self.GetHandle(), self.Region.get(), true);
+		}
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Create> msg) -> Win32::LRESULT
+		{
+			return Win32::DefSubclassProc(msg.Hwnd, msg.uMsg, msg.wParam, msg.lParam);
+		}
+
+		auto OnMessage(this auto&& self, Win32Message<Win32::Messages::Paint> msg) -> Win32::LRESULT
+		{
+			PaintContext{ msg.Hwnd }
+				.Select(UI::BlackBrush)
+				.Select(UI::RedPen)
+				.RoundBorder(5, 5)
+				.SetBackgroundMode(Win32::BackgroundMode::Transparent)
+				.SetTextColor(255, 255, 255)
+				.DrawTextInClientRect(
+					self.MouseHovering ? L"Hover!" : L"No hover!",
+					Win32::DrawTextOptions::Center, 
+					Win32::DrawTextOptions::VerticalCenter, 
+					Win32::DrawTextOptions::SingleLine
+				);
+
+			return 0;
+		}
+	
+		auto GetSubclassId(this auto&& self) noexcept { return 1; }
+	};
+}
