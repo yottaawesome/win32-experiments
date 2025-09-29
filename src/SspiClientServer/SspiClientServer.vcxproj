@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SspiExample-Client.ixx" />
+    <ClCompile Include="SspiExample-Client2.ixx" />
     <ClCompile Include="SspiExample-Common.ixx" />
     <ClCompile Include="SspiExample.ixx" />
     <ClCompile Include="Win32.ixx" />
