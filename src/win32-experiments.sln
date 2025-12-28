@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31912.275
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BitsTest", "BitsTest\BitsTest.vcxproj", "{5B0D9911-39E2-4980-98D8-8190E2EAFDA0}"
 EndProject
@@ -252,6 +252,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win32-ui-controls", "win32-ui-controls\win32-ui-controls.vcxproj", "{CA023F49-A910-4690-A09F-F941F787CCAC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bitblt", "bitblt\bitblt.vcxproj", "{EC9F715A-D212-43A2-B0CB-574EB1778782}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileLockMutex", "FileLockMutex\FileLockMutex.vcxproj", "{5AA9ABE9-47EB-437F-927F-C7B0FA910729}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1077,6 +1079,14 @@ Global
 		{EC9F715A-D212-43A2-B0CB-574EB1778782}.Release|x64.Build.0 = Release|x64
 		{EC9F715A-D212-43A2-B0CB-574EB1778782}.Release|x86.ActiveCfg = Release|Win32
 		{EC9F715A-D212-43A2-B0CB-574EB1778782}.Release|x86.Build.0 = Release|Win32
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729}.Debug|x64.ActiveCfg = Debug|x64
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729}.Debug|x64.Build.0 = Debug|x64
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729}.Debug|x86.ActiveCfg = Debug|Win32
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729}.Debug|x86.Build.0 = Debug|Win32
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729}.Release|x64.ActiveCfg = Release|x64
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729}.Release|x64.Build.0 = Release|x64
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729}.Release|x86.ActiveCfg = Release|Win32
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1187,6 +1197,7 @@ Global
 		{5EAA7383-6772-479F-812B-CDEB4ED23F97} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{CA023F49-A910-4690-A09F-F941F787CCAC} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
 		{EC9F715A-D212-43A2-B0CB-574EB1778782} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
+		{5AA9ABE9-47EB-437F-927F-C7B0FA910729} = {1794881F-BC72-4AF9-8923-8CD754E66A2A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
