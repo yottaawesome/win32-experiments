@@ -14,7 +14,7 @@ export namespace Strings
 		}
 		constexpr auto ToView(this auto&& self) noexcept -> std::wstring_view
 		{
-			return std::wstring_view(self.data, N - 1); // exclude null terminator
+			return std::wstring_view(self.data);
 		}
 	};
 }
