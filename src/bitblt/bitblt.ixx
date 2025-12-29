@@ -10,7 +10,7 @@ import std;
 template<auto VDeleter>
 struct Deleter
 {
-    static auto operator()(auto ptr) { VDeleter(ptr); }
+    static constexpr void operator()(auto ptr) { VDeleter(ptr); }
 };
 template<typename T, auto VDeleter>
 using DirectUniquePtr = std::unique_ptr<T, Deleter<VDeleter>>;
@@ -25,25 +25,25 @@ struct DcUniquePtr
     }
 
     DcUniquePtr() = default;
-    DcUniquePtr(HWND hwnd, HDC dc)
-        : Hwnd(hwnd), Dc(dc) 
-    { }
 
     DcUniquePtr(const DcUniquePtr&) = delete;
     DcUniquePtr& operator=(const DcUniquePtr) = delete;
 
-    DcUniquePtr(DcUniquePtr&& other)
+    DcUniquePtr(DcUniquePtr&& other) noexcept
     {
         Move(other);
     }
-
-    DcUniquePtr& operator=(DcUniquePtr&& other)
+    DcUniquePtr& operator=(DcUniquePtr&& other) noexcept
     {
         Move(other);
         return *this;
     }
 
-    void Move(DcUniquePtr& other)
+    DcUniquePtr(HWND hwnd, HDC dc)
+        : Hwnd(hwnd), Dc(dc)
+    { }
+
+    void Move(DcUniquePtr& other) noexcept
     {
         Close();
         Hwnd = other.Hwnd;
@@ -52,14 +52,13 @@ struct DcUniquePtr
         other.Dc = nullptr;
     }
 
-    void Close()
+    void Close() noexcept
     {
-        if (Dc)
-        {
-            ReleaseDC(Hwnd, Dc);
-            Hwnd = nullptr;
-            Dc = nullptr;
-        }
+        if (not Dc)
+            return;
+        ReleaseDC(Hwnd, Dc);
+        Hwnd = nullptr;
+        Dc = nullptr;
     }
 
     HWND Hwnd = nullptr;
@@ -82,14 +81,12 @@ auto CaptureAnImage(HWND hWnd) -> int
 {
     // Retrieve the handle to a display device context for the client 
     // area of the window. 
-    DcUniquePtr hdcScreen{ nullptr, GetDC(NULL) };
     DcUniquePtr hdcWindow{ hWnd, GetDC(hWnd) };
-
     // Create a compatible DC, which is used in a BitBlt from the window DC.
     CompatibleDcUniquePtr hdcMemDC{ CreateCompatibleDC(hdcWindow.Dc) };
     if (not hdcMemDC)
     {
-        MessageBox(hWnd, L"CreateCompatibleDC has failed", L"Failed", MB_OK);
+        MessageBoxW(hWnd, L"CreateCompatibleDC has failed", L"Failed", MB_OK);
         std::abort();
     }
 
@@ -101,6 +98,7 @@ auto CaptureAnImage(HWND hWnd) -> int
     SetStretchBltMode(hdcWindow.Dc, HALFTONE);
 
     // The source DC is the entire screen, and the destination DC is the current window (HWND).
+    DcUniquePtr hdcScreen{ nullptr, GetDC(NULL) };
     BOOL success = StretchBlt(
         hdcWindow.Dc,
         0, 0,
@@ -114,7 +112,7 @@ auto CaptureAnImage(HWND hWnd) -> int
     );
     if (not success)
     {
-        MessageBox(hWnd, L"StretchBlt has failed", L"Failed", MB_OK);
+        MessageBoxW(hWnd, L"StretchBlt has failed", L"Failed", MB_OK);
         std::abort();
     }
 
@@ -124,7 +122,7 @@ auto CaptureAnImage(HWND hWnd) -> int
     };
     if (not hbmScreen)
     {
-        MessageBox(hWnd, L"CreateCompatibleBitmap Failed", L"Failed", MB_OK);
+        MessageBoxW(hWnd, L"CreateCompatibleBitmap Failed", L"Failed", MB_OK);
         std::abort();
     }
 
@@ -141,7 +139,7 @@ auto CaptureAnImage(HWND hWnd) -> int
     );
     if (not success)
     {
-        MessageBox(hWnd, L"BitBlt has failed", L"Failed", MB_OK);
+        MessageBoxW(hWnd, L"BitBlt has failed", L"Failed", MB_OK);
         std::abort();
     }
 
