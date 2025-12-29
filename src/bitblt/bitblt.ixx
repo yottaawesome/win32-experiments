@@ -27,7 +27,7 @@ struct DcUniquePtr
     DcUniquePtr() = default;
 
     DcUniquePtr(const DcUniquePtr&) = delete;
-    DcUniquePtr& operator=(const DcUniquePtr) = delete;
+    DcUniquePtr& operator=(const DcUniquePtr&) = delete;
 
     DcUniquePtr(DcUniquePtr&& other) noexcept
     {
