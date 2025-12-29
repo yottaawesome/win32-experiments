@@ -17,7 +17,55 @@ using DirectUniquePtr = std::unique_ptr<T, Deleter<VDeleter>>;
 template<typename T, auto VDeleter>
 using IndirectUniquePtr = std::unique_ptr<std::remove_pointer_t<T>, Deleter<VDeleter>>;
 
-using DcUniquePtr = IndirectUniquePtr<HDC, ReleaseDC>;
+struct DcUniquePtr
+{
+    ~DcUniquePtr()
+    {
+        Close();
+    }
+
+    DcUniquePtr() = default;
+    DcUniquePtr(HWND hwnd, HDC dc)
+        : Hwnd(hwnd), Dc(dc) 
+    { }
+
+    DcUniquePtr(const DcUniquePtr&) = delete;
+    DcUniquePtr& operator=(const DcUniquePtr) = delete;
+
+    DcUniquePtr(DcUniquePtr&& other)
+    {
+        Move(other);
+    }
+
+    DcUniquePtr& operator=(DcUniquePtr&& other)
+    {
+        Move(other);
+        return *this;
+    }
+
+    void Move(DcUniquePtr& other)
+    {
+        Close();
+        Hwnd = other.Hwnd;
+        Dc = other.Dc;
+        other.Hwnd = nullptr;
+        other.Dc = nullptr;
+    }
+
+    void Close()
+    {
+        if (Dc)
+        {
+            ReleaseDC(Hwnd, Dc);
+            Hwnd = nullptr;
+            Dc = nullptr;
+        }
+    }
+
+    HWND Hwnd = nullptr;
+    HDC Dc = nullptr;
+};
+
 template<typename T>
 using ObjectUniquePtr = IndirectUniquePtr<T, DeleteObject>;
 using HandleUniquePtr = IndirectUniquePtr<HANDLE, CloseHandle>;
@@ -34,11 +82,11 @@ auto CaptureAnImage(HWND hWnd) -> int
 {
     // Retrieve the handle to a display device context for the client 
     // area of the window. 
-    DcUniquePtr hdcScreen{ GetDC(NULL) };
-    DcUniquePtr hdcWindow{ GetDC(hWnd) };
+    DcUniquePtr hdcScreen{ nullptr, GetDC(NULL) };
+    DcUniquePtr hdcWindow{ hWnd, GetDC(hWnd) };
 
     // Create a compatible DC, which is used in a BitBlt from the window DC.
-    CompatibleDcUniquePtr hdcMemDC{ CreateCompatibleDC(hdcWindow.get()) };
+    CompatibleDcUniquePtr hdcMemDC{ CreateCompatibleDC(hdcWindow.Dc) };
     if (not hdcMemDC)
     {
         MessageBox(hWnd, L"CreateCompatibleDC has failed", L"Failed", MB_OK);
@@ -50,15 +98,15 @@ auto CaptureAnImage(HWND hWnd) -> int
     GetClientRect(hWnd, &rcClient);
 
     // This is the best stretch mode.
-    SetStretchBltMode(hdcWindow.get(), HALFTONE);
+    SetStretchBltMode(hdcWindow.Dc, HALFTONE);
 
     // The source DC is the entire screen, and the destination DC is the current window (HWND).
     BOOL success = StretchBlt(
-        hdcWindow.get(),
+        hdcWindow.Dc,
         0, 0,
         rcClient.right,
         rcClient.bottom,
-        hdcScreen.get(),
+        hdcScreen.Dc,
         0, 0,
         GetSystemMetrics(SM_CXSCREEN),
         GetSystemMetrics(SM_CYSCREEN),
@@ -72,7 +120,7 @@ auto CaptureAnImage(HWND hWnd) -> int
 
     // Create a compatible bitmap from the Window DC.
     ObjectUniquePtr<HBITMAP> hbmScreen{
-        CreateCompatibleBitmap(hdcWindow.get(), rcClient.right - rcClient.left, rcClient.bottom - rcClient.top)
+        CreateCompatibleBitmap(hdcWindow.Dc, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top)
     };
     if (not hbmScreen)
     {
@@ -87,7 +135,7 @@ auto CaptureAnImage(HWND hWnd) -> int
         hdcMemDC.get(),
         0, 0,
         rcClient.right - rcClient.left, rcClient.bottom - rcClient.top,
-        hdcWindow.get(),
+        hdcWindow.Dc,
         0, 0,
         SRCCOPY
     );
@@ -128,7 +176,7 @@ auto CaptureAnImage(HWND hWnd) -> int
     // Gets the "bits" from the bitmap, and copies them into a buffer 
     // that's pointed to by lpbitmap.
     GetDIBits(
-        hdcWindow.get(), 
+        hdcWindow.Dc, 
         hbmScreen.get(), 
         0,
         (UINT)bmpScreen.bmHeight,
