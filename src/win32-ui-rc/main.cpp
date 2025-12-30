@@ -214,7 +214,7 @@ auto BrushDlgProc(
 
 auto wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int) -> int
 {
-	auto result = DialogBoxParamW(hInstance, MAKEINTRESOURCE(101), nullptr, &BrushDlgProc, 0L);
+	auto result = DialogBoxParamW(hInstance, MAKEINTRESOURCE(CustBrush), nullptr, &BrushDlgProc, 0L);
 	auto lastError = GetLastError();
 	return 0;
 }
