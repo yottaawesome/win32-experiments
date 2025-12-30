@@ -257,6 +257,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileLockMutex", "FileLockMu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win32-dialogs", "win32-dialogs\win32-dialogs.vcxproj", "{EE97430A-78F7-46BE-9C80-E3C47D48B90F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win32-ui-rc", "win32-ui-rc\win32-ui-rc.vcxproj", "{82781886-BDF1-4857-97DB-EE20B092C4D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -1097,6 +1099,14 @@ Global
 		{EE97430A-78F7-46BE-9C80-E3C47D48B90F}.Release|x64.Build.0 = Release|x64
 		{EE97430A-78F7-46BE-9C80-E3C47D48B90F}.Release|x86.ActiveCfg = Release|Win32
 		{EE97430A-78F7-46BE-9C80-E3C47D48B90F}.Release|x86.Build.0 = Release|Win32
+		{82781886-BDF1-4857-97DB-EE20B092C4D0}.Debug|x64.ActiveCfg = Debug|x64
+		{82781886-BDF1-4857-97DB-EE20B092C4D0}.Debug|x64.Build.0 = Debug|x64
+		{82781886-BDF1-4857-97DB-EE20B092C4D0}.Debug|x86.ActiveCfg = Debug|Win32
+		{82781886-BDF1-4857-97DB-EE20B092C4D0}.Debug|x86.Build.0 = Debug|Win32
+		{82781886-BDF1-4857-97DB-EE20B092C4D0}.Release|x64.ActiveCfg = Release|x64
+		{82781886-BDF1-4857-97DB-EE20B092C4D0}.Release|x64.Build.0 = Release|x64
+		{82781886-BDF1-4857-97DB-EE20B092C4D0}.Release|x86.ActiveCfg = Release|Win32
+		{82781886-BDF1-4857-97DB-EE20B092C4D0}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1209,6 +1219,7 @@ Global
 		{EC9F715A-D212-43A2-B0CB-574EB1778782} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
 		{5AA9ABE9-47EB-437F-927F-C7B0FA910729} = {1794881F-BC72-4AF9-8923-8CD754E66A2A}
 		{EE97430A-78F7-46BE-9C80-E3C47D48B90F} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
+		{82781886-BDF1-4857-97DB-EE20B092C4D0} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}
