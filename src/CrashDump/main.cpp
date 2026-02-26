@@ -5,6 +5,7 @@
 #pragma comment(lib, "Dbghelp.lib")
 
 import CrashHandler;
+import std;
 
 // https://docs.microsoft.com/en-us/windows/win32/api/minidumpapiset/nf-minidumpapiset-minidumpwritedump
 typedef bool(WINAPI* MINIDUMPWRITEDUMP)(
@@ -86,6 +87,7 @@ long WINAPI HandleException(_EXCEPTION_POINTERS* apExceptionInfo)
 
 int main(int argc, char* args[])
 {
+
     SetUnhandledExceptionFilter(HandleException);
     BoltDownExceptionFilter();
     // https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-setunhandledexceptionfilter

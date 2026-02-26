@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="usingdetours.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />
