@@ -63,8 +63,7 @@ private:
         return EXCEPTION_EXECUTE_HANDLER; // Terminate the process
     }
 #endif
-
-    static void signalHandler(int sig) 
+    static void signalHandler(int sig)
     {
         std::cerr << "[CRASH] Received signal: " << sig << std::endl;
 
