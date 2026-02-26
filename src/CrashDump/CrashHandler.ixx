@@ -13,6 +13,39 @@ module;
 
 export module CrashHandler;
 
+#ifdef _WIN32
+#include <windows.h>
+
+export void BoltDownExceptionFilter() {
+    // 1. Get the address of the function in kernel32.dll
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    if (!hKernel32) return;
+
+    void* pAddr = (void*)GetProcAddress(hKernel32, "SetUnhandledExceptionFilter");
+    if (!pAddr) return;
+
+    // 2. Prepare the "patch" code. 
+    // On x86/x64, we use 'ret' (Return) to exit the function immediately.
+    // x86 (32-bit) uses 'ret 4' (0xC2 0x04 0x00) because it's __stdcall
+    // x64 uses 'ret' (0xC3)
+#ifdef _M_IX86
+    unsigned char patch[] = { 0xC2, 0x04, 0x00 };
+#elif defined(_M_X64)
+    unsigned char patch[] = { 0xC3 };
+#endif
+
+    // 3. Change memory protection so we can write to the DLL's code section
+    DWORD oldProtect;
+    if (VirtualProtect(pAddr, sizeof(patch), PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        // 4. Overwrite the start of the function with our 'ret' instruction
+        memcpy(pAddr, patch, sizeof(patch));
+
+        // 5. Restore original memory protection
+        VirtualProtect(pAddr, sizeof(patch), oldProtect, &oldProtect);
+    }
+}
+#endif
+
 // Suggested by Gemini: a simple crash handler that installs global handlers for unhandled exceptions and signals in a cross-platform manner.
 export class CrashManager 
 {
