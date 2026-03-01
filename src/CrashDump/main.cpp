@@ -4,22 +4,24 @@
 
 #pragma comment(lib, "Dbghelp.lib")
 
-import CrashHandler;
 import std;
+import CrashHandler;
+import AbortBehaviour;
 
 // https://docs.microsoft.com/en-us/windows/win32/api/minidumpapiset/nf-minidumpapiset-minidumpwritedump
-typedef bool(WINAPI* MINIDUMPWRITEDUMP)(
-    HANDLE hProcess, 
-    DWORD dwPid, 
-    HANDLE hFile, 
-    MINIDUMP_TYPE DumpType, 
-    PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
-    PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
-    PMINIDUMP_CALLBACK_INFORMATION CallbackParam
-);
+using MINIDUMPWRITEDUMP = 
+    auto(*)(
+        HANDLE hProcess, 
+        DWORD dwPid, 
+        HANDLE hFile, 
+        MINIDUMP_TYPE DumpType, 
+        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, 
+        PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam, 
+        PMINIDUMP_CALLBACK_INFORMATION CallbackParam
+    ) -> bool;
 
 // https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-unhandledexceptionfilter
-long WINAPI HandleException(_EXCEPTION_POINTERS* apExceptionInfo)
+auto HandleException(_EXCEPTION_POINTERS* apExceptionInfo) -> LONG
 {
     // Based on https://stackoverflow.com/a/9020804/7448661
     HMODULE dbghelpLib = nullptr;
@@ -87,7 +89,7 @@ long WINAPI HandleException(_EXCEPTION_POINTERS* apExceptionInfo)
 
 int main(int argc, char* args[])
 {
-
+	Abort::Sample1::Run();
     SetUnhandledExceptionFilter(HandleException);
     BoltDownExceptionFilter();
     // https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-setunhandledexceptionfilter
