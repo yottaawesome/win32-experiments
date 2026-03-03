@@ -19,6 +19,42 @@ import std;
 // ============================================================================
 namespace Shared
 {
+	using AddrInfoUniquePtr = std::unique_ptr<addrinfo, decltype([](auto info)static{ freeaddrinfo(info); })>;
+	struct SocketUniquePtr
+	{
+		~SocketUniquePtr()
+		{
+			if (m_socket != INVALID_SOCKET)
+				closesocket(m_socket);
+		}
+
+		SocketUniquePtr() = default;
+		explicit SocketUniquePtr(SOCKET s) 
+			: m_socket(s) 
+		{}
+		SocketUniquePtr(SocketUniquePtr&& other) noexcept 
+			: m_socket(std::exchange(other.m_socket, INVALID_SOCKET)) 
+		{}
+		SocketUniquePtr(const SocketUniquePtr&) = delete;
+		SocketUniquePtr& operator=(const SocketUniquePtr&) = delete;
+
+		auto operator=(SocketUniquePtr&& other) noexcept -> SocketUniquePtr&
+		{
+			if (this != &other)
+			{
+				if (m_socket != INVALID_SOCKET) 
+					closesocket(m_socket);
+				m_socket = std::exchange(other.m_socket, INVALID_SOCKET);
+			}
+			return *this;
+		}
+
+		auto get() const noexcept -> SOCKET { return m_socket; }
+
+	private:
+		SOCKET m_socket = INVALID_SOCKET;
+	};
+
 	inline constexpr const char* Port = "27015";
 	inline constexpr int BufferSize = 512;
 
@@ -394,43 +430,33 @@ namespace Server
 {
 	using namespace Shared;
 
-	auto CreateListenSocket(IoEventLoop& loop) -> SOCKET
+	auto CreateListenSocket(IoEventLoop& loop) -> SocketUniquePtr
 	{
-		addrinfo hints{};
-		hints.ai_family = AF_INET;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = IPPROTO_TCP;
-		hints.ai_flags = AI_PASSIVE;
+		auto hints = addrinfo{
+			.ai_flags = AI_PASSIVE,
+			.ai_family = AF_INET,
+			.ai_socktype = SOCK_STREAM,
+			.ai_protocol = IPPROTO_TCP,
+		};
 
-		addrinfo* result = nullptr;
-		if (getaddrinfo(nullptr, Port, &hints, &result) != 0)
+		auto result = AddrInfoUniquePtr{};
+		if (getaddrinfo(nullptr, Port, &hints, std::out_ptr(result)) != 0)
 			throw std::runtime_error("getaddrinfo failed");
 
-		SOCKET s = WSASocketW(
-			result->ai_family, result->ai_socktype, result->ai_protocol,
-			nullptr, 0, WSA_FLAG_OVERLAPPED);
+		auto s = SOCKET{ 
+			WSASocketW(result->ai_family, result->ai_socktype, result->ai_protocol, nullptr, 0, WSA_FLAG_OVERLAPPED) 
+		};
 		if (s == INVALID_SOCKET)
-		{
-			freeaddrinfo(result);
 			throw std::runtime_error("WSASocket failed");
-		}
 
-		if (bind(s, result->ai_addr, static_cast<int>(result->ai_addrlen)) == SOCKET_ERROR)
-		{
-			freeaddrinfo(result);
-			closesocket(s);
+		auto returnedSocket = SocketUniquePtr(s);
+		if (bind(returnedSocket.get(), result->ai_addr, static_cast<int>(result->ai_addrlen)) == SOCKET_ERROR)
 			throw std::runtime_error("bind failed");
-		}
-		freeaddrinfo(result);
-
-		if (listen(s, SOMAXCONN) == SOCKET_ERROR)
-		{
-			closesocket(s);
+		if (listen(returnedSocket.get(), SOMAXCONN) == SOCKET_ERROR)
 			throw std::runtime_error("listen failed");
-		}
 
-		loop.Associate(s);
-		return s;
+		loop.Associate(returnedSocket.get());
+		return returnedSocket;
 	}
 
 	// Coroutine: handle a single client connection (echo loop).
@@ -468,26 +494,23 @@ namespace Server
 	}
 
 	auto Run() -> int
+	try
 	{
-		try
-		{
-			WinsockScope wsa;
-			IoEventLoop loop;
-			SOCKET listenSocket = CreateListenSocket(loop);
+		WinsockScope wsa;
+		IoEventLoop loop;
+		auto listenSocket = CreateListenSocket(loop);
 
-			auto task = AcceptAndServe(loop, listenSocket);
-			task.Start();
-			loop.Run();
+		auto task = AcceptAndServe(loop, listenSocket.get());
+		task.Start();
+		loop.Run();
 
-			closesocket(listenSocket);
-			std::cout << "[Server] Done.\n";
-		}
-		catch (const std::exception& e)
-		{
-			std::cerr << "[Server] Error: " << e.what() << "\n";
-			return 1;
-		}
+		std::cout << "[Server] Done.\n";
 		return 0;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "[Server] Error: " << e.what() << "\n";
+		return 1;
 	}
 }
 
