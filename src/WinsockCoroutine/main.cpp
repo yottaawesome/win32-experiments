@@ -17,6 +17,7 @@ import std;
 // ============================================================================
 // Shared infrastructure: IOCP event loop + awaitable coroutine types
 // ============================================================================
+
 namespace Shared
 {
 	using AddrInfoUniquePtr = std::unique_ptr<addrinfo, decltype([](auto info)static{ freeaddrinfo(info); })>;
@@ -55,7 +56,7 @@ namespace Shared
 		SOCKET m_socket = INVALID_SOCKET;
 	};
 
-	inline constexpr const char* Port = "27015";
+	inline constexpr const char* Port = "27016";
 	inline constexpr int BufferSize = 512;
 
 	// RAII wrapper for WSAStartup / WSACleanup.
@@ -99,7 +100,8 @@ namespace Shared
 		// Associate a socket with this IOCP.
 		void Associate(SOCKET s)
 		{
-			if (!CreateIoCompletionPort(reinterpret_cast<HANDLE>(s), m_iocp, 0, 0))
+			auto result = CreateIoCompletionPort(reinterpret_cast<HANDLE>(s), m_iocp, 0, 0);
+			if (!result)
 				throw std::runtime_error("Failed to associate socket with IOCP");
 		}
 
@@ -119,8 +121,8 @@ namespace Shared
 				OVERLAPPED* overlapped = nullptr;
 
 				BOOL ok = GetQueuedCompletionStatus(m_iocp, &bytes, &key, &overlapped, INFINITE);
-				if (!overlapped)
-					break;
+				if (!ok && !overlapped)
+					continue;
 
 				auto* op = static_cast<IoOperation*>(overlapped);
 				op->bytesTransferred = bytes;
@@ -255,6 +257,7 @@ namespace Shared
 		SOCKET acceptSocket = INVALID_SOCKET;
 		IoOperation op{};
 		char buffer[(sizeof(sockaddr_in) + 16) * 2]{};
+		DWORD receivedBytes = 0;
 
 		AcceptAwaitable(IoEventLoop& loop, SOCKET listenSocket)
 			: loop(loop), listenSocket(listenSocket) {}
@@ -271,12 +274,11 @@ namespace Shared
 				throw std::runtime_error("WSASocket failed for accept");
 
 			loop.AddOp();
-			DWORD bytes = 0;
 			BOOL result = AcceptEx(
 				listenSocket, acceptSocket,
 				buffer, 0,
 				sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
-				&bytes, &op);
+				&receivedBytes, &op);
 
 			if (!result && WSAGetLastError() != ERROR_IO_PENDING)
 			{
@@ -309,6 +311,7 @@ namespace Shared
 		char* buffer;
 		DWORD bufferLen;
 		IoOperation op{};
+		DWORD flags = 0;
 
 		RecvAwaitable(IoEventLoop& loop, SOCKET s, char* buf, DWORD len)
 			: loop(loop), socket(s), buffer(buf), bufferLen(len) {}
@@ -321,7 +324,7 @@ namespace Shared
 			op.continuation = h;
 
 			WSABUF wsaBuf{ .len = bufferLen, .buf = buffer };
-			DWORD flags = 0;
+			flags = 0;
 			loop.AddOp();
 			int result = WSARecv(socket, &wsaBuf, 1, nullptr, &flags, &op, nullptr);
 			if (result == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
@@ -503,6 +506,7 @@ namespace Server
 		auto task = AcceptAndServe(loop, listenSocket.get());
 		task.Start();
 		loop.Run();
+		task.await_resume();
 
 		std::cout << "[Server] Done.\n";
 		return 0;
@@ -590,6 +594,7 @@ namespace Client
 			auto task = ConnectAndChat(loop);
 			task.Start();
 			loop.Run();
+			task.await_resume();
 		}
 		catch (const std::exception& e)
 		{
