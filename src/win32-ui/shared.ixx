@@ -238,6 +238,7 @@ export namespace Win32
 		constexpr auto CtlColorBtn = WM_CTLCOLORBTN;
 		constexpr auto Notify = WM_NOTIFY;
 		constexpr auto CustomDraw = NM_CUSTOMDRAW;
+		constexpr auto NonClientDestroy = WM_NCDESTROY;
 	}
 
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes

@@ -1334,3 +1334,110 @@ namespace Gradient
         return msg.message;
     }
 }
+
+export namespace LatestSample
+{
+	template<auto VDeleteFn>
+    struct Deleter
+    {
+        static constexpr void operator()(Win32::HWND hwnd) noexcept
+        {
+            VDeleteFn(hwnd);
+        }
+	};
+
+	using HwndUniquePtr = std::unique_ptr<std::remove_pointer_t<Win32::HWND>, Deleter<Win32::DestroyWindow>>;
+
+    struct MainWindow
+    {
+        HwndUniquePtr WindowHandle = nullptr;
+    };
+
+	template<typename TWindow>
+    auto RegisterWindowClass()
+    {
+        auto windowClass = Win32::WNDCLASSEXW{
+            .cbSize = sizeof(Win32::WNDCLASSEXW),
+            .lpfnWndProc = 
+                [](Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
+                {
+                    auto pThis = static_cast<TWindow*>(nullptr);
+                    if (msg == Win32::Messages::NonClientCreate)
+                    {
+                        auto pCreate = reinterpret_cast<Win32::CREATESTRUCT*>(lParam);
+                        pThis = reinterpret_cast<TWindow*>(pCreate->lpCreateParams);
+                        Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, reinterpret_cast<Win32::LONG_PTR>(pThis));
+                    }
+                    else
+                    {
+                        pThis = reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp_UserData));
+                    }
+
+					if (not pThis)
+                        return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+
+					if (msg == Win32::Messages::NonClientDestroy and pThis->WindowHandle.get() == hwnd)
+                    {
+                        Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, 0);
+                        pThis->WindowHandle.release();
+                        return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+                    }
+
+                    if constexpr (requires { pThis->OnSize(msg, wParam, lParam); })
+                    {
+                        if (msg == Win32::Messages::Size)
+							return pThis->OnSize(msg, wParam, lParam);
+                    }
+
+                    return msg == Win32::Messages::Destroy
+                        ? (Win32::PostQuitMessage(0), 0)
+                        : Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+                },
+            .hInstance = Win32::GetModuleHandleW(nullptr),
+            .lpszClassName = L"AnotherWeirdSampleWindowClass",
+        };
+        auto result = Win32::RegisterClassExW(&windowClass);
+        if (not result)
+        {
+            std::println("Failed registering class: {}", Win32::GetLastError());
+            std::terminate();
+        }
+        return result;
+	}
+
+    auto Run()
+    {
+		RegisterWindowClass<MainWindow>();
+
+        auto mainWindow = MainWindow{};
+        auto hwnd = Win32::CreateWindowExW(
+            0,
+            L"AnotherWeirdSampleWindowClass",
+            L"Another weird sample",
+            Win32::Styles::OverlappedWindow,
+            0,
+            0,
+            300,
+            200,
+            nullptr,
+            nullptr,
+            Win32::GetModuleHandleW(nullptr),
+            &mainWindow
+        );
+        if (not hwnd)
+        {
+            std::println("Failed creating window: {}", Win32::GetLastError());
+            std::terminate();
+        }
+        mainWindow.WindowHandle = HwndUniquePtr{ hwnd };
+        Win32::ShowWindow(hwnd, Win32::Sw_ShowDefault);
+
+        auto msg = Win32::MSG{};
+        while (Win32::GetMessageW(&msg, nullptr, 0, 0) > 0)
+        {
+            Win32::TranslateMessage(&msg);
+            Win32::DispatchMessageW(&msg);
+        }
+		return static_cast<int>(msg.wParam);
+	}
+}
