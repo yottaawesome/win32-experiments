@@ -1350,7 +1350,35 @@ export namespace LatestSample
 
     struct MainWindow
     {
-        HwndUniquePtr WindowHandle = nullptr;
+        HwndUniquePtr WindowHandle;
+
+        MainWindow(HwndUniquePtr hwnd) noexcept
+            : WindowHandle(std::move(hwnd))
+        {
+            if (WindowHandle)
+                Win32::SetWindowLongPtrW(WindowHandle.get(), Win32::Gwlp_UserData, reinterpret_cast<Win32::LONG_PTR>(this));
+        }
+
+        MainWindow(const MainWindow&) = delete;
+        MainWindow& operator=(const MainWindow&) = delete;
+
+        MainWindow(MainWindow&& other) noexcept
+            : WindowHandle(std::move(other.WindowHandle))
+        {
+            if (WindowHandle)
+                Win32::SetWindowLongPtrW(WindowHandle.get(), Win32::Gwlp_UserData, reinterpret_cast<Win32::LONG_PTR>(this));
+        }
+
+        MainWindow& operator=(MainWindow&& other) noexcept
+        {
+            if (this != &other)
+            {
+                WindowHandle = std::move(other.WindowHandle);
+                if (WindowHandle)
+                    Win32::SetWindowLongPtrW(WindowHandle.get(), Win32::Gwlp_UserData, reinterpret_cast<Win32::LONG_PTR>(this));
+            }
+            return *this;
+        }
     };
 
 	template<typename TWindow>
@@ -1361,19 +1389,8 @@ export namespace LatestSample
             .lpfnWndProc = 
                 [](Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
                 {
-                    auto pThis = static_cast<TWindow*>(nullptr);
-                    if (msg == Win32::Messages::NonClientCreate)
-                    {
-                        auto pCreate = reinterpret_cast<Win32::CREATESTRUCT*>(lParam);
-                        pThis = reinterpret_cast<TWindow*>(pCreate->lpCreateParams);
-                        Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, reinterpret_cast<Win32::LONG_PTR>(pThis));
-                    }
-                    else
-                    {
-                        pThis = reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp_UserData));
-                    }
-
-					if (not pThis)
+                    auto pThis = reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp_UserData));
+                    if (not pThis)
                         return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
 
 					if (msg == Win32::Messages::NonClientDestroy and pThis->WindowHandle.get() == hwnd)
@@ -1409,7 +1426,6 @@ export namespace LatestSample
     {
 		RegisterWindowClass<MainWindow>();
 
-        auto mainWindow = MainWindow{};
         auto hwnd = Win32::CreateWindowExW(
             0,
             L"AnotherWeirdSampleWindowClass",
@@ -1422,14 +1438,14 @@ export namespace LatestSample
             nullptr,
             nullptr,
             Win32::GetModuleHandleW(nullptr),
-            &mainWindow
+            nullptr
         );
         if (not hwnd)
         {
             std::println("Failed creating window: {}", Win32::GetLastError());
             std::terminate();
         }
-        mainWindow.WindowHandle = HwndUniquePtr{ hwnd };
+        auto mainWindow = MainWindow{ HwndUniquePtr{ hwnd } };
         Win32::ShowWindow(hwnd, Win32::Sw_ShowDefault);
 
         auto msg = Win32::MSG{};
