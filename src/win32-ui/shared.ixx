@@ -174,17 +174,17 @@ export namespace Win32
 
 	constexpr auto ColorWindow = COLOR_WINDOW;
 
-	auto GetLowWord(LPARAM lparam) noexcept -> WORD
+	constexpr auto GetLowWord(LPARAM lparam) noexcept -> WORD
 	{
 		return LOWORD(lparam);
 	}
 
-	auto GetHighWord(LPARAM lparam) noexcept -> WORD
+	constexpr auto GetHighWord(LPARAM lparam) noexcept -> WORD
 	{
 		return HIWORD(lparam);
 	}
 
-	auto SplitWord(LPARAM lparam) noexcept -> std::pair<WORD, WORD>
+	constexpr auto SplitWord(LPARAM lparam) noexcept -> std::pair<WORD, WORD>
 	{
 		return { GetLowWord(lparam), GetHighWord(lparam) };
 	}
