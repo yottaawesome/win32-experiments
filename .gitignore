@@ -44,3 +44,4 @@ node_modules/
 /src/bitblt/captureqwsx.bmp
 
 .idea/
+vcpkg_installed/

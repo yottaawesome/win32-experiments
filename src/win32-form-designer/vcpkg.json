@@ -1,0 +1,7 @@
+{
+  "name": "win32-form-designer",
+  "version": "1.0.0",
+  "dependencies": [
+    "nlohmann-json"
+  ]
+}

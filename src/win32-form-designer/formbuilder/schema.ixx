@@ -4,7 +4,7 @@ module;
 #include <Windows.h>
 #include <CommCtrl.h>
 
-export module schema;
+export module formbuilder:schema;
 import std;
 
 export namespace FormDesigner
@@ -53,7 +53,7 @@ export namespace FormDesigner
 	};
 
 	// Returns the Win32 window class name for a given ControlType.
-	constexpr const wchar_t* ClassNameFor(ControlType type) noexcept
+	constexpr auto ClassNameFor(ControlType type) noexcept -> const wchar_t*
 	{
 		switch (type)
 		{
@@ -69,7 +69,7 @@ export namespace FormDesigner
 	}
 
 	// Returns additional style flags implied by the ControlType.
-	constexpr DWORD ImpliedStyleFor(ControlType type) noexcept
+	constexpr auto ImpliedStyleFor(ControlType type) noexcept -> DWORD
 	{
 		switch (type)
 		{

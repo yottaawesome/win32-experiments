@@ -4,9 +4,9 @@ module;
 #include <Windows.h>
 #include <CommCtrl.h>
 
-export module loader;
+export module formbuilder:loader;
 import std;
-import schema;
+import :schema;
 
 export namespace FormDesigner
 {
@@ -25,7 +25,7 @@ export namespace FormDesigner
 				continue;
 			}
 
-			DWORD childStyle = WS_CHILD | WS_VISIBLE | ImpliedStyleFor(control.type) | control.style;
+			auto childStyle = DWORD{ WS_CHILD | WS_VISIBLE | ImpliedStyleFor(control.type) | control.style };
 
 			auto hwnd = CreateWindowExW(
 				control.exStyle,
@@ -60,7 +60,7 @@ export namespace FormDesigner
 	}
 
 	// Window procedure for designer-created forms.
-	LRESULT CALLBACK FormWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	auto CALLBACK FormWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 	{
 		switch (msg)
 		{
@@ -74,10 +74,10 @@ export namespace FormDesigner
 
 	// Creates and shows a top-level window from a Form definition.
 	// Returns the HWND of the created window, or nullptr on failure.
-	HWND LoadForm(const Form& form, HINSTANCE hInstance)
+	auto LoadForm(const Form& form, HINSTANCE hInstance) -> HWND
 	{
 		static constexpr auto ClassName = L"FormDesignerWindow";
-		static bool registered = false;
+		static auto registered = false;
 
 		if (not registered)
 		{
@@ -100,7 +100,7 @@ export namespace FormDesigner
 		}
 
 		// Calculate window rect so client area matches requested size.
-		RECT rc = { 0, 0, form.width, form.height };
+		auto rc = RECT{ 0, 0, form.width, form.height };
 		AdjustWindowRectEx(&rc, form.style, FALSE, form.exStyle);
 
 		auto hwnd = CreateWindowExW(
@@ -133,9 +133,9 @@ export namespace FormDesigner
 	}
 
 	// Runs the message loop. Call after LoadForm.
-	int RunMessageLoop()
+	auto RunMessageLoop() -> int
 	{
-		MSG msg{};
+		auto msg = MSG{};
 		while (GetMessageW(&msg, nullptr, 0, 0) > 0)
 		{
 			TranslateMessage(&msg);
