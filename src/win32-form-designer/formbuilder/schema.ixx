@@ -1,11 +1,6 @@
-module;
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <CommCtrl.h>
-
 export module formbuilder:schema;
 import std;
+import :win32;
 
 export namespace FormDesigner
 {
@@ -36,8 +31,8 @@ export namespace FormDesigner
 		std::wstring text;
 		Rect rect;
 		int id = 0;
-		DWORD style = 0;
-		DWORD exStyle = 0;
+		Win32::DWORD style = 0;
+		Win32::DWORD exStyle = 0;
 		std::string onClick;
 		std::vector<Control> children;
 	};
@@ -48,8 +43,8 @@ export namespace FormDesigner
 		std::wstring title = L"Untitled";
 		int width = 640;
 		int height = 480;
-		DWORD style = WS_OVERLAPPEDWINDOW;
-		DWORD exStyle = 0;
+		Win32::DWORD style = Win32::Styles::OverlappedWindow;
+		Win32::DWORD exStyle = 0;
 		std::vector<Control> controls;
 	};
 
@@ -58,28 +53,28 @@ export namespace FormDesigner
 	{
 		switch (type)
 		{
-		case ControlType::Button:   return WC_BUTTON;
-		case ControlType::CheckBox: return WC_BUTTON;
-		case ControlType::Label:    return WC_STATIC;
-		case ControlType::TextBox:  return WC_EDIT;
-		case ControlType::GroupBox: return WC_BUTTON;
-		case ControlType::ListBox:  return WC_LISTBOX;
-		case ControlType::ComboBox: return WC_COMBOBOX;
+		case ControlType::Button:   return Win32::Controls::Button;
+		case ControlType::CheckBox: return Win32::Controls::Button;
+		case ControlType::Label:    return Win32::Controls::Static;
+		case ControlType::TextBox:  return Win32::Controls::Edit;
+		case ControlType::GroupBox: return Win32::Controls::Button;
+		case ControlType::ListBox:  return Win32::Controls::ListBox;
+		case ControlType::ComboBox: return Win32::Controls::ComboBox;
 		default:                    return nullptr;
 		}
 	}
 
 	// Returns additional style flags implied by the ControlType.
-	constexpr auto ImpliedStyleFor(ControlType type) noexcept -> DWORD
+	constexpr auto ImpliedStyleFor(ControlType type) noexcept -> Win32::DWORD
 	{
 		switch (type)
 		{
-		case ControlType::CheckBox: return BS_AUTOCHECKBOX;
-		case ControlType::GroupBox: return BS_GROUPBOX;
-		case ControlType::TextBox:  return WS_BORDER | ES_AUTOHSCROLL;
-		case ControlType::Label:    return SS_LEFT;
-		case ControlType::ListBox:  return LBS_STANDARD;
-		case ControlType::ComboBox: return CBS_DROPDOWNLIST;
+		case ControlType::CheckBox: return Win32::Styles::AutoCheckBox;
+		case ControlType::GroupBox: return Win32::Styles::GroupBox;
+		case ControlType::TextBox:  return Win32::Styles::Border | Win32::Styles::EditAutoHScroll;
+		case ControlType::Label:    return Win32::Styles::StaticLeft;
+		case ControlType::ListBox:  return Win32::Styles::ListBoxStandard;
+		case ControlType::ComboBox: return Win32::Styles::ComboBoxDropDownList;
 		default:                    return 0;
 		}
 	}

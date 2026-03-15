@@ -1,20 +1,16 @@
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <CommCtrl.h>
-
 #pragma comment(lib, "Comctl32.lib")
 
 import std;
 import formbuilder;
 
-auto WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int) -> int
+auto __stdcall wWinMain(Win32::HINSTANCE hInstance, Win32::HINSTANCE, Win32::LPWSTR lpCmdLine, int) -> int
 try
 {
-	auto icc = INITCOMMONCONTROLSEX{
-		.dwSize = sizeof(INITCOMMONCONTROLSEX),
-		.dwICC = ICC_STANDARD_CLASSES,
+	auto icc = Win32::INITCOMMONCONTROLSEX{
+		.dwSize = sizeof(Win32::INITCOMMONCONTROLSEX),
+		.dwICC = Win32::Icc_StandardClasses,
 	};
-	InitCommonControlsEx(&icc);
+	Win32::InitCommonControlsEx(&icc);
 
 	auto path = std::filesystem::path{};
 	if (lpCmdLine and lpCmdLine[0] != L'\0')
@@ -30,10 +26,10 @@ try
 
 	auto events = FormDesigner::EventMap{};
 	events.onClick(301, [](const FormDesigner::ClickEvent& e) {
-		MessageBoxW(e.formHwnd, L"Form submitted!", L"Submit", MB_OK | MB_ICONINFORMATION);
+		Win32::MessageBoxW(e.formHwnd, L"Form submitted!", L"Submit", Win32::Mb_Ok | Win32::Mb_IconInformation);
 	});
 	events.onClick(302, [](const FormDesigner::ClickEvent& e) {
-		DestroyWindow(e.formHwnd);
+		Win32::DestroyWindow(e.formHwnd);
 	});
 
 	auto hwnd = FormDesigner::LoadForm(form, hInstance, events);
@@ -46,6 +42,6 @@ catch (const std::exception& ex)
 {
 	auto msg = std::string{ "Failed to load form:\n" } + ex.what();
 	auto wide = std::wstring(msg.begin(), msg.end());
-	MessageBoxW(nullptr, wide.c_str(), L"Form Designer Error", MB_ICONERROR | MB_OK);
+	Win32::MessageBoxW(nullptr, wide.c_str(), L"Form Designer Error", Win32::Mb_IconError | Win32::Mb_Ok);
 	return 1;
 }

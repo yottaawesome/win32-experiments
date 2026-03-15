@@ -1448,7 +1448,7 @@ export namespace LatestSample
 	}
 
     template<typename TControl>
-    static auto SubclassProc(
+    auto SubclassProc(
         Win32::HWND hwnd,
         Win32::UINT msg,
         Win32::WPARAM wParam,

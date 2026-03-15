@@ -1,11 +1,7 @@
-module;
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <nlohmann/json.hpp>
-
 export module formbuilder:parser;
 import std;
+import :win32;
+import :json;
 import :schema;
 
 namespace FormDesigner
@@ -56,10 +52,10 @@ namespace FormDesigner
 			control.id = j["id"].get<int>();
 
 		if (j.contains("style"))
-			control.style = j["style"].get<DWORD>();
+			control.style = j["style"].get<Win32::DWORD>();
 
 		if (j.contains("exStyle"))
-			control.exStyle = j["exStyle"].get<DWORD>();
+			control.exStyle = j["exStyle"].get<Win32::DWORD>();
 
 		if (j.contains("onClick"))
 			control.onClick = j["onClick"].get<std::string>();
@@ -93,10 +89,10 @@ export namespace FormDesigner
 			form.height = j["height"].get<int>();
 
 		if (j.contains("style"))
-			form.style = j["style"].get<DWORD>();
+			form.style = j["style"].get<Win32::DWORD>();
 
 		if (j.contains("exStyle"))
-			form.exStyle = j["exStyle"].get<DWORD>();
+			form.exStyle = j["exStyle"].get<Win32::DWORD>();
 
 		if (j.contains("controls"))
 			for (auto& control : j["controls"])

@@ -1,10 +1,6 @@
-module;
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 export module formbuilder:events;
 import std;
+import :win32;
 
 export namespace FormDesigner
 {
@@ -12,8 +8,8 @@ export namespace FormDesigner
 	struct ClickEvent
 	{
 		int controlId;
-		HWND controlHwnd;
-		HWND formHwnd;
+		Win32::HWND controlHwnd;
+		Win32::HWND formHwnd;
 	};
 
 	// Maps control IDs to strongly-typed event handlers.

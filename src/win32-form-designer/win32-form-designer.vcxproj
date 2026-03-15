@@ -148,6 +148,8 @@
     <ClCompile Include="formbuilder\events.ixx" />
     <ClCompile Include="formbuilder\parser.ixx" />
     <ClCompile Include="formbuilder\loader.ixx" />
+    <ClCompile Include="formbuilder\win32.ixx" />
+    <ClCompile Include="formbuilder\json.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sample-form.json" />
