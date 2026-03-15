@@ -145,6 +145,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="formbuilder\formbuilder.ixx" />
     <ClCompile Include="formbuilder\schema.ixx" />
+    <ClCompile Include="formbuilder\events.ixx" />
     <ClCompile Include="formbuilder\parser.ixx" />
     <ClCompile Include="formbuilder\loader.ixx" />
   </ItemGroup>

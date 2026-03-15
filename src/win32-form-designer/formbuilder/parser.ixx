@@ -61,6 +61,9 @@ namespace FormDesigner
 		if (j.contains("exStyle"))
 			control.exStyle = j["exStyle"].get<DWORD>();
 
+		if (j.contains("onClick"))
+			control.onClick = j["onClick"].get<std::string>();
+
 		if (j.contains("children"))
 			for (auto& child : j["children"])
 				control.children.push_back(ParseControl(child));

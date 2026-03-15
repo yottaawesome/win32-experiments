@@ -27,7 +27,16 @@ try
 	}
 
 	auto form = FormDesigner::LoadFormFromFile(path);
-	auto hwnd = FormDesigner::LoadForm(form, hInstance);
+
+	auto events = FormDesigner::EventMap{};
+	events.onClick(301, [](const FormDesigner::ClickEvent& e) {
+		MessageBoxW(e.formHwnd, L"Form submitted!", L"Submit", MB_OK | MB_ICONINFORMATION);
+	});
+	events.onClick(302, [](const FormDesigner::ClickEvent& e) {
+		DestroyWindow(e.formHwnd);
+	});
+
+	auto hwnd = FormDesigner::LoadForm(form, hInstance, events);
 	if (not hwnd)
 		return 1;
 

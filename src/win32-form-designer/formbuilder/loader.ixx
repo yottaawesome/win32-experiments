@@ -7,6 +7,7 @@ module;
 export module formbuilder:loader;
 import std;
 import :schema;
+import :events;
 
 export namespace FormDesigner
 {
@@ -64,6 +65,29 @@ export namespace FormDesigner
 	{
 		switch (msg)
 		{
+		case WM_COMMAND:
+		{
+			auto notificationCode = HIWORD(wParam);
+			if (notificationCode == BN_CLICKED)
+			{
+				auto* events = reinterpret_cast<const EventMap*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+				if (events)
+				{
+					auto controlId = static_cast<int>(LOWORD(wParam));
+					if (auto* handler = events->findClickHandler(controlId))
+					{
+						auto event = ClickEvent{
+							.controlId = controlId,
+							.controlHwnd = reinterpret_cast<HWND>(lParam),
+							.formHwnd = hwnd,
+						};
+						(*handler)(event);
+						return 0;
+					}
+				}
+			}
+			return DefWindowProcW(hwnd, msg, wParam, lParam);
+		}
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			return 0;
@@ -74,7 +98,7 @@ export namespace FormDesigner
 
 	// Creates and shows a top-level window from a Form definition.
 	// Returns the HWND of the created window, or nullptr on failure.
-	auto LoadForm(const Form& form, HINSTANCE hInstance) -> HWND
+	auto LoadForm(const Form& form, HINSTANCE hInstance, const EventMap& events) -> HWND
 	{
 		static constexpr auto ClassName = L"FormDesignerWindow";
 		static auto registered = false;
@@ -125,6 +149,9 @@ export namespace FormDesigner
 		}
 
 		CreateChildren(hwnd, hInstance, form.controls);
+
+		// Store event map pointer for WndProc dispatch.
+		SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&events));
 
 		ShowWindow(hwnd, SW_SHOWDEFAULT);
 		UpdateWindow(hwnd);

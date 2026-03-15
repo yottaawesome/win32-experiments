@@ -47,13 +47,15 @@
       "text": "Submit",
       "rect": [90, 210, 100, 30],
       "id": 301,
-      "style": 1
+      "style": 1,
+      "onClick": "submit_form"
     },
     {
       "type": "Button",
       "text": "Cancel",
       "rect": [200, 210, 100, 30],
-      "id": 302
+      "id": 302,
+      "onClick": "cancel_form"
     }
   ]
 }

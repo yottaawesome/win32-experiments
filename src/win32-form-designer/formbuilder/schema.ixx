@@ -38,6 +38,7 @@ export namespace FormDesigner
 		int id = 0;
 		DWORD style = 0;
 		DWORD exStyle = 0;
+		std::string onClick;
 		std::vector<Control> children;
 	};
 
