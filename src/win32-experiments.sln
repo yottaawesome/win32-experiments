@@ -265,6 +265,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinsockCoroutine", "Winsock
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ui-callbacks", "ui-callbacks\ui-callbacks.vcxproj", "{EB2156BD-5EE1-4126-9490-FF18B48FD00B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "layout-demo", "layout-demo\layout-demo.vcxproj", "{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -1137,6 +1139,14 @@ Global
 		{EB2156BD-5EE1-4126-9490-FF18B48FD00B}.Release|x64.Build.0 = Release|x64
 		{EB2156BD-5EE1-4126-9490-FF18B48FD00B}.Release|x86.ActiveCfg = Release|Win32
 		{EB2156BD-5EE1-4126-9490-FF18B48FD00B}.Release|x86.Build.0 = Release|Win32
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}.Debug|x64.ActiveCfg = Debug|x64
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}.Debug|x64.Build.0 = Debug|x64
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}.Debug|x86.ActiveCfg = Debug|Win32
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}.Debug|x86.Build.0 = Debug|Win32
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}.Release|x64.ActiveCfg = Release|x64
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}.Release|x64.Build.0 = Release|x64
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}.Release|x86.ActiveCfg = Release|Win32
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1253,6 +1263,7 @@ Global
 		{A88A390F-6894-46C7-863F-49558A6FCFD2} = {D5EBBA98-804C-4BCE-970F-09317CD2E609}
 		{73BB3896-60D2-446A-8526-4193ED933636} = {B0E5D086-DB71-4590-89D3-F34B6BFE75DE}
 		{EB2156BD-5EE1-4126-9490-FF18B48FD00B} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
+		{B7A3F8D1-2E4C-4F6A-9D1B-8C3E5F7A2D4E} = {A730DB0E-77C7-41FF-BCCA-BDDDA1E85096}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E75E5EB2-121F-4108-B2CE-5EE0AAAC43F2}

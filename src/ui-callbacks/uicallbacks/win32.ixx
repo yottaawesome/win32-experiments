@@ -2,6 +2,8 @@ module;
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <CommCtrl.h>
+#include <wingdi.h>
 
 export module uicallbacks:win32;
 
@@ -23,6 +25,14 @@ export namespace Win32
 		::LONG_PTR,
 		::CREATESTRUCT,
 		::WORD,
+		::HMENU,
+		::UINT_PTR,
+		::DWORD_PTR,
+		::MoveWindow,
+		::RemoveWindowSubclass,
+		::InitCommonControls,
+		::SetWindowSubclass,
+		::DefSubclassProc,
 		::MessageBoxW,
 		::EnableWindow,
 		::SetWindowTextW,
@@ -110,7 +120,14 @@ export namespace Win32
 			Size = WM_SIZE,
 			NonClientCreate = WM_NCCREATE,
 			Quit = WM_QUIT,
-			Command = WM_COMMAND
+			Command = WM_COMMAND,
+
+			LeftButtonDown = WM_LBUTTONDOWN,
+			RightButtonDown = WM_RBUTTONDOWN,
+			MiddleButtonDown = WM_MBUTTONDOWN,
+			LeftButtonUp = WM_LBUTTONUP,
+			RightButtonUp = WM_RBUTTONUP,
+			MiddleButtonUp = WM_MBUTTONUP,
 		};
 	}
 

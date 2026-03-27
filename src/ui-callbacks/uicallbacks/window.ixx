@@ -180,19 +180,19 @@ export namespace UiCallbacks::UI
             /*
 			* Alternative, which is more responsive
             * while (true)
+            {
+                if (Win32::PeekMessageW(&msg, nullptr, 0, 0, Win32::PeekMessageOptions::Remove))
                 {
-                    if (Win32::PeekMessageW(&msg, nullptr, 0, 0, Win32::PeekMessageOptions::Remove))
-                    {
-                        if (msg.message == Win32::WindowMessages::Quit)
-                            break;
-                        Win32::TranslateMessage(&msg);
-                        Win32::DispatchMessageW(&msg);
-                    }
-                    else if (not onIdle())
-                    {
-                        Win32::WaitMessage();
-                    }
+                    if (msg.message == Win32::WindowMessages::Quit)
+                        break;
+                    Win32::TranslateMessage(&msg);
+                    Win32::DispatchMessageW(&msg);
                 }
+                else if (not onIdle())
+                {
+                    Win32::WaitMessage();
+                }
+            }
             */
             while (running)
             {
@@ -266,56 +266,5 @@ export namespace UiCallbacks::UI
         Win32::HWND window = nullptr;
         std::unordered_map<Win32::UINT, MessageHandler> handlers;
         std::unordered_map<Win32::UINT, CommandHandler> commandHandlers;
-    };
-
-    class Button
-    {
-    public:
-        ~Button()
-        {
-			parent.RemoveCommand(id);
-            if (hwnd)
-				Win32::DestroyWindow(hwnd);
-		}
-
-		Button(const Button&) = delete;
-		auto operator=(const Button&) -> Button & = delete;
-
-        Button(Window& parentIn, Win32::WORD id, std::wstring_view text, int x, int y, int w, int h)
-			: parent(parentIn), id(id)
-        {
-            hwnd = Win32::CreateWindowExW(
-                0,
-                L"BUTTON",
-                text.data(),
-                Win32::WindowStyles::Child | Win32::WindowStyles::Visible, 
-                x, y, w, h,
-                parent.Handle(),
-                reinterpret_cast<HMENU>(id),
-                nullptr,
-                nullptr
-            );
-			if (not hwnd)
-                throw UiCallbacks::Error::Win32Error{ Win32::GetLastError(), "Failed to create button" };
-            // register the command handler on the parent
-            parent.OnCommand(
-                id,
-                [this](Win32::WORD notify) -> Win32::LRESULT
-                {
-                    if (notify == Win32::ButtonMessages::Clicked && onClick)
-                        onClick();
-                    return 0;
-                });
-        }
-
-        auto OnClick(std::move_only_function<void()> handler) -> void { onClick = std::move(handler); }
-        auto Enable(bool enabled) -> void { Win32::EnableWindow(hwnd, enabled); }
-        auto SetText(std::wstring_view text) -> void { Win32::SetWindowTextW(hwnd, text.data()); }
-
-    private:
-		Window& parent;
-		int id = 0;
-        Win32::HWND hwnd = nullptr;
-        std::move_only_function<void()> onClick;
     };
 }

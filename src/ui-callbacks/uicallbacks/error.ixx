@@ -32,8 +32,8 @@ export namespace UiCallbacks::Error
 	class Win32Error : public std::runtime_error
 	{
 	public:
-		Win32Error(Win32::DWORD errorCode, std::string_view message)
-			: std::runtime_error(Format(errorCode, message)), errorCode(errorCode) {}
+		Win32Error(Win32::DWORD errorCodeIn, std::string_view message)
+			: std::runtime_error(Format(errorCodeIn, message)), errorCode(errorCodeIn) {}
 
 		constexpr auto Code(this const Win32Error& self) noexcept -> Win32::DWORD { return self.errorCode; }
 
