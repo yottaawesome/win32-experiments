@@ -9,134 +9,149 @@ import std;
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
 
-constexpr auto DEFAULT_BUFLEN = 512;
-constexpr auto DEFAULT_PORT = "27015";
-
-int main()
+struct WinSockError : std::runtime_error
 {
-    WSADATA wsaData;
-    int iResult;
+    const int code = 0;
+    WinSockError(int code, std::string msg) : code(code), std::runtime_error(std::format("WinSock error {}: {}", code, std::move(msg)))
+    {}
+};
 
-    SOCKET ListenSocket = INVALID_SOCKET;
-    SOCKET ClientSocket = INVALID_SOCKET;
-
-    struct addrinfo* result = nullptr;
-    struct addrinfo hints {
-        .ai_flags = AI_PASSIVE,
-        .ai_family = AF_INET,
-        .ai_socktype = SOCK_STREAM,
-        .ai_protocol = IPPROTO_TCP,
-    };
-
-    int iSendResult;
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
-
-    // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != 0) 
+struct WsaContext
+{
+    ~WsaContext()
     {
-        std::println("WSAStartup failed with error: {}\n", iResult);
-        return 1;
+        WSACleanup();
     }
+    WsaContext()
+    {
+        WSADATA wsaData;
+        int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        if (iResult != 0) 
+			throw WinSockError{ iResult, "WSAStartup failed" };
+    }
+};
+
+struct Socket
+{
+    SOCKET handle;
+    Socket(SOCKET s) : handle(s) {}
+    ~Socket()
+    {
+        Close();
+    }
+
+    auto Close() -> void
+    {
+        if (handle == INVALID_SOCKET)
+            return;
+		shutdown(handle, SD_BOTH);
+        closesocket(handle);
+        handle = INVALID_SOCKET;
+    }
+
+	constexpr operator bool() const { return handle != INVALID_SOCKET; }
+
+    // Move-only
+    Socket(const Socket&) = delete;
+    Socket& operator=(const Socket&) = delete;
+    Socket(Socket&& other) noexcept : handle(other.handle) { other.handle = INVALID_SOCKET; }
+    Socket& operator=(Socket&& other) noexcept
+    {
+        if (this == &other)
+            return *this;
+        Close();
+        handle = other.handle;
+        other.handle = INVALID_SOCKET;
+        return *this;
+	}
+};
+
+struct AddrInfoDeleter
+{
+	constexpr AddrInfoDeleter() = default;
+    static void operator()(addrinfo* p) { freeaddrinfo(p); }
+};
+using AddrInfoUniquePtr = std::unique_ptr<addrinfo, AddrInfoDeleter>;
+
+auto main() -> int
+try
+{
+    // Initialize Winsock
+    auto ws = WsaContext{};
 
     // Resolve the server address and port
-    iResult = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
-    if (iResult != 0) 
-    {
-        std::println("getaddrinfo failed with error: {}\n", iResult);
-        WSACleanup();
-        return 1;
-    }
+    auto addrInfo = 
+        [] -> AddrInfoUniquePtr
+        {
+            constexpr auto DEFAULT_PORT = "27915";
+            auto hints = addrinfo{
+                .ai_flags = AI_PASSIVE,
+                .ai_family = AF_INET,
+                .ai_socktype = SOCK_STREAM,
+                .ai_protocol = IPPROTO_TCP,
+            };
+            auto result = AddrInfoUniquePtr{};
+            if (int addrResult{ getaddrinfo(nullptr, DEFAULT_PORT, &hints, std::out_ptr(result)) }; addrResult != 0)
+			    throw WinSockError{ addrResult, "getaddrinfo failed" };
+			return result;
+        }();
 
-    // Create a SOCKET for the server to listen for client connections.
-    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET) 
-    {
-        std::println("socket failed with error: {}\n", WSAGetLastError());
-        freeaddrinfo(result);
-        WSACleanup();
-        return 1;
-    }
+	// Set up a listening socket and accept a client connection. We only expect one connection, so we 
+    // close the listening socket after accepting one client.
+	auto clientSocket = 
+        [addrInfo = std::move(addrInfo)] -> Socket
+        {
+            // Setup the TCP listening socket
+            auto listenSocket = Socket{ socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol) };
+            if (not listenSocket)
+                throw WinSockError{ WSAGetLastError(), "socket failed" };
+            if (bind(listenSocket.handle, addrInfo->ai_addr, (int)addrInfo->ai_addrlen) == SOCKET_ERROR)
+                throw WinSockError{ WSAGetLastError(), "bind failed" };
+            if (listen(listenSocket.handle, SOMAXCONN) == SOCKET_ERROR)
+                throw WinSockError{ WSAGetLastError(), "listen failed" };
 
-    // Setup the TCP listening socket
-    iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult == SOCKET_ERROR) 
-    {
-        std::println("bind failed with error: {}\n", WSAGetLastError());
-        freeaddrinfo(result);
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    freeaddrinfo(result);
-
-    iResult = listen(ListenSocket, SOMAXCONN);
-    if (iResult == SOCKET_ERROR) 
-    {
-        std::println("listen failed with error: {}\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // Accept a client socket
-    ClientSocket = accept(ListenSocket, nullptr, nullptr);
-    if (ClientSocket == INVALID_SOCKET) 
-    {
-        std::println("accept failed with error: {}\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // No longer need server socket
-    closesocket(ListenSocket);
+            // Accept a client socket
+            auto clientSocket = Socket{ accept(listenSocket.handle, nullptr, nullptr) };
+            if (not clientSocket)
+                throw WinSockError{ WSAGetLastError(), "accept failed" };
+            return clientSocket;
+        }();
 
     // Receive until the peer shuts down the connection
-    do 
+    [clientSocket = std::move(clientSocket)] mutable
     {
-        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-        if (iResult > 0) 
+        auto receiveBuffer = std::array<char, 512>{};
+        auto result = int{};
+        do
         {
-            std::println("Bytes received: {}: {}\n", iResult, std::string_view(recvbuf, iResult));
-
-            // Echo the buffer back to the sender
-            iSendResult = send(ClientSocket, recvbuf, iResult, 0);
-            if (iSendResult == SOCKET_ERROR) 
+            result = recv(clientSocket.handle, receiveBuffer.data(), static_cast<int>(receiveBuffer.size()), 0);
+            if (result > 0)
             {
-                std::println("send failed with error: {}\n", WSAGetLastError());
-                closesocket(ClientSocket);
-                WSACleanup();
-                return 1;
+                std::println("Bytes received: {}: {}", result, std::string_view(receiveBuffer.data(), result));
+                // Echo the buffer back to the sender
+                auto bytesSent = int{ send(clientSocket.handle, receiveBuffer.data(), result, 0) };
+                if (bytesSent == SOCKET_ERROR)
+                    throw WinSockError{ WSAGetLastError(), "send failed" };
+                // echo complete, shutdown
+                std::println("Bytes sent: {}. Closing connection.", bytesSent);
+				clientSocket.Close();
+                break;
             }
-            std::println("Bytes sent: {}\n", iSendResult);
-        }
-        else if (iResult == 0)
-            std::println("Connection closing...\n");
-        else 
-        {
-            std::println("recv failed with error: {}\n", WSAGetLastError());
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
-        }
-    } while (iResult > 0);
-
-    // shutdown the connection since we're done
-    iResult = shutdown(ClientSocket, SD_SEND);
-    if (iResult == SOCKET_ERROR) 
-    {
-        std::println("shutdown failed with error: {}\n", WSAGetLastError());
-        closesocket(ClientSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // cleanup
-    closesocket(ClientSocket);
-    WSACleanup();
+            else if (result == 0)
+            {
+                std::println("Connection closing...");
+            }
+            else
+            {
+                throw WinSockError{ WSAGetLastError(), "recv failed" };
+            }
+        } while (result > 0);
+    }();
 
     return 0;
+}
+catch (const std::exception& ex)
+{
+    std::println("Exception: {}", ex.what());
+    return 1;
 }
