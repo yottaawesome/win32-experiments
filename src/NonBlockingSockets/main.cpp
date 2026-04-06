@@ -49,9 +49,9 @@ struct WsaContext
     }
     WsaContext()
     {
-        WSADATA wsaData;
-        if (int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData); iResult != 0)
-            throw WinSockError{ iResult, "WSAStartup failed" };
+        auto wsaData = WSADATA{};
+        if (int success = WSAStartup(MAKEWORD(2, 2), &wsaData); success != 0)
+            throw WinSockError{ success, "WSAStartup failed" };
     }
 	WsaContext(const WsaContext&) = delete;
 	WsaContext& operator=(const WsaContext&) = delete;
@@ -102,7 +102,7 @@ struct AddrInfoDeleter
 };
 using AddrInfoUniquePtr = std::unique_ptr<addrinfo, AddrInfoDeleter>;
 
-int main(int argc, char** argv)
+auto main(int argc, char** argv) -> int
 try
 {
     if (argc != 2) 

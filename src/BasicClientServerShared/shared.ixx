@@ -12,10 +12,17 @@ export
 {
     struct WinSockError : std::runtime_error
     {
-        const int code = 0;
-        WinSockError(int code, std::string msg) : code(code), std::runtime_error(std::format("WinSock error {}: {}", code, std::move(msg)))
+        const int Code = 0;
+        WinSockError(int code, std::string msg) : Code(code), std::runtime_error(std::format("WinSock error {}: {}", Code, std::move(msg)))
         {}
     };
+
+    struct Win32Error : std::runtime_error
+    {
+        const DWORD Code = 0;
+        Win32Error(DWORD code, std::string msg) : Code(code), std::runtime_error(std::format("Win32 error {}: {}", Code, std::move(msg)))
+        {}
+	};
 
     struct WsaContext
     {
@@ -70,6 +77,146 @@ export
             other.handle = INVALID_SOCKET;
             return self;
         }
+
+        auto SetBlocking(this const Socket& self, bool blocking) -> void
+        {
+            auto mode = blocking ? 0ul : 1ul;
+            if (ioctlsocket(self.handle, FIONBIO, &mode) == SOCKET_ERROR)
+                throw WinSockError{ WSAGetLastError(), "ioctlsocket failed" };
+		}
+
+        struct [[nodiscard]] AsyncReceiveResult : OVERLAPPED
+        {
+            ~AsyncReceiveResult()
+            {
+                if (hEvent)
+                {
+                    CloseHandle(hEvent);
+					hEvent = nullptr;
+                }
+			}
+            AsyncReceiveResult() : OVERLAPPED{ .hEvent = CreateEventW(nullptr, true, false, nullptr) }
+            {
+                if (not hEvent)
+                    throw Win32Error{ GetLastError(), "Failed to create event" };
+            }
+            AsyncReceiveResult(const AsyncReceiveResult&) = delete;
+            auto operator=(const AsyncReceiveResult&) = delete;
+
+            DWORD ErrorCode = 0;
+            DWORD BytesTransferred = 0;
+			std::string Buffer = std::string(512, '\0');
+
+            auto WaitForCompletion(std::chrono::milliseconds wait = std::chrono::milliseconds{INFINITE}) -> bool
+            {
+                auto waitResult = WaitForSingleObject(hEvent, static_cast<DWORD>(wait.count()));
+                if (waitResult == WAIT_OBJECT_0)
+                    return true;
+				if (waitResult == WAIT_TIMEOUT)
+                    return false;
+                throw Win32Error{ GetLastError(), "WaitForSingleObject failed" };
+			}
+        };
+        auto AsyncRecv(this const Socket& self, std::uint32_t bufferSize) -> std::unique_ptr<AsyncReceiveResult>
+        {
+            auto result = std::make_unique<AsyncReceiveResult>();
+            auto toRecv = std::array{
+                WSABUF{
+                    .len = static_cast<ULONG>(result->Buffer.size()),
+					.buf = result->Buffer.data()
+                }
+            };
+            auto status = WSARecv(
+                self.handle,
+                toRecv.data(),
+                static_cast<DWORD>(toRecv.size()),
+                nullptr,
+                nullptr,
+                result.get(),
+                [](DWORD error, DWORD transferred, OVERLAPPED* overlapped, DWORD flags)
+                {
+                    auto* recvResult = static_cast<AsyncReceiveResult*>(overlapped);
+                    if (error != 0)
+                    {
+                        recvResult->ErrorCode = error;
+                        recvResult->Buffer = {};
+                    }
+                    else
+                    {
+                        recvResult->BytesTransferred = transferred;
+						recvResult->Buffer.resize(transferred);
+                    }
+                }
+            );
+			return result;
+        }
+
+        // You can also set OVERLAPPED as the first member, then reinterpret_cast to get the AsyncSendResult in the completion callback.
+        // That works because the OVERLAPPED is the first member, so the pointer to AsyncSendResult and the pointer to OVERLAPPED will be the same.
+        struct [[nodiscard]] AsyncSendResult : OVERLAPPED
+        {
+            ~AsyncSendResult()
+            {
+                if (hEvent)
+                {
+                    CloseHandle(hEvent);
+                    hEvent = nullptr;
+                }
+            }
+            AsyncSendResult() : OVERLAPPED{ .hEvent = CreateEventW(nullptr, true, false, nullptr) }
+            {
+                if (not hEvent)
+                    throw Win32Error{ GetLastError(), "Failed to create event" };
+            }
+            AsyncSendResult(const AsyncSendResult&) = delete;
+            auto operator=(const AsyncSendResult&) = delete;
+
+            DWORD ErrorCode = 0;
+            DWORD BytesTransferred = 0;
+            std::string Buffer;
+            
+            auto WaitForCompletion(std::chrono::milliseconds wait = std::chrono::milliseconds{ INFINITE }) -> bool
+            {
+                auto waitResult = WaitForSingleObject(hEvent, static_cast<DWORD>(wait.count()));
+                if (waitResult == WAIT_OBJECT_0)
+                    return true;
+                if (waitResult == WAIT_TIMEOUT)
+                    return false;
+                throw Win32Error{ GetLastError(), "WaitForSingleObject failed" };
+            }
+        };
+        auto AsyncSend(this const Socket& self, std::string_view data) -> std::unique_ptr<AsyncSendResult>
+        {
+            auto result = std::make_unique<AsyncSendResult>();
+            result->Buffer = std::string(data);
+            auto toSend = std::array{
+                WSABUF{
+                    .len = static_cast<ULONG>(result->Buffer.size()), 
+                    .buf = result->Buffer.data() 
+                }
+            };
+
+            auto status = WSASend(
+                self.handle,
+                toSend.data(),
+                static_cast<DWORD>(toSend.size()),
+                nullptr,
+                0,
+                result.get(),
+                [](DWORD error, DWORD transferred, OVERLAPPED* overlapped, DWORD flags)
+                {
+                    auto* sendResult = static_cast<AsyncSendResult*>(overlapped);
+                    if (error != 0)
+						sendResult->ErrorCode = error;
+                    else
+                        sendResult->BytesTransferred = transferred;
+                }
+            );
+            if (status == SOCKET_ERROR)
+                if (auto err = WSAGetLastError(); err != WSA_IO_PENDING)
+                    throw WinSockError{ err, "WSASend failed" };
+			return result;
+		}
 
         auto Send(this const Socket& self, const std::string_view& data) -> std::uint32_t
         {
