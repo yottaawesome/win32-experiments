@@ -146,7 +146,7 @@ try
         }();
 
     return
-        [connSocket = std::move(connSocket)]
+        [connSocket = std::move(connSocket)] -> int
         {
             // Create an event handle and setup an overlapped structure.
             auto recvOverlapped = Overlapped{};
