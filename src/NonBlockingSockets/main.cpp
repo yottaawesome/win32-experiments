@@ -1,15 +1,13 @@
+// Note that this sample demonstrates overlapped (asynchronous) I/O, not true non-blocking sockets,
+// which are set via ioctlsocket and require polling via select(), WSAPoll(), or WSAEventSelect(). 
+// The project name is a misnomer.
 // https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsarecv
 #define WIN32_LEAN_AND_MEAN
-
 #include <Windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-import std;
-
-// Need to link with Ws2_32.lib
 #pragma comment(lib, "ws2_32.lib")
-
-#pragma warning(disable: 4127)  // Conditional expression is a constant
+import std;
 
 struct WinSockError : std::runtime_error
 {
@@ -147,15 +145,17 @@ try
 			throw std::runtime_error("Unable to connect to server!");
         }();
 
-    return 
+    return
         [connSocket = std::move(connSocket)]
         {
             // Create an event handle and setup an overlapped structure.
             auto recvOverlapped = Overlapped{};
             auto buffer = std::array<char, 4096>{};
-            auto dataBuf = WSABUF{
-                .len = static_cast<ULONG>(buffer.size()),
-                .buf = buffer.data(),
+            auto buffers = std::array{ 
+                WSABUF{ 
+                    .len = static_cast<ULONG>(buffer.size()), 
+                    .buf = buffer.data() 
+                }
             };
             // Call WSARecv until the peer closes the connection
             // or until an error occurs
@@ -163,7 +163,8 @@ try
             {
                 auto flags = DWORD{};
                 auto recvBytes = DWORD{};
-                if (WSARecv(connSocket.handle, &dataBuf, 1, &recvBytes, &flags, &recvOverlapped, nullptr) == SOCKET_ERROR)
+				// WSASend and WSARecv can accept an array of WSABUFs to scatter/gather data.
+                if (WSARecv(connSocket.handle, buffers.data(), static_cast<DWORD>(buffers.size()), &recvBytes, &flags, &recvOverlapped, nullptr) == SOCKET_ERROR)
                     if (auto err = WSAGetLastError(); err != WSA_IO_PENDING)
                         throw WinSockError{ err, "WSARecv failed" };
                 if (WSAWaitForMultipleEvents(1, &recvOverlapped.hEvent, true, INFINITE, true) == WSA_WAIT_FAILED)
