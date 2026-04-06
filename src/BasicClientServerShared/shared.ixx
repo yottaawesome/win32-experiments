@@ -55,6 +55,8 @@ export
 
         constexpr auto IsValid(this const Socket& self) { return self.handle != INVALID_SOCKET; }
 
+		explicit constexpr operator bool() const { return IsValid(); }
+
         // Move-only
         Socket(const Socket&) = delete;
         Socket& operator=(const Socket&) = delete;
