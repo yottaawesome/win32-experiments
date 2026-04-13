@@ -12,8 +12,8 @@ auto hwndGrid = HWND{};       // grid-window control
 auto hwndBrush = HWND{};      // pattern-brush control  
 auto rctGrid = RECT{};        // grid-window rectangle  
 auto rctBrush = RECT{};       // pattern-brush rectangle  
-std::array<UINT, 8> bBrushBits = {};  // bitmap bits  
-std::array<RECT, 64> rect = {};       // grid-cell array  
+auto bBrushBits = std::array<UINT, 8>{};  // bitmap bits  
+auto rect = std::array<RECT, 64>{};       // grid-cell array  
 auto hbm = HBITMAP{};         // bitmap handle  
 
 auto BrushDlgProc(
@@ -44,54 +44,56 @@ auto BrushDlgProc(
 			GetClientRect(hwndBrush, &rctBrush);
 
 			// Determine the width and height of a single cell.  
-			int deltaX = (rctGrid.right - rctGrid.left) / static_cast<int>(bBrushBits.size());
-			int deltaY = (rctGrid.bottom - rctGrid.top) / static_cast<int>(bBrushBits.size());
+			auto deltaX = (rctGrid.right - rctGrid.left) / static_cast<int>(bBrushBits.size());
+			auto deltaY = (rctGrid.bottom - rctGrid.top) / static_cast<int>(bBrushBits.size());
 
 			// Initialize the array of cell rectangles.  
-			for (int y = rctGrid.top, i = 0; y < rctGrid.bottom; y += deltaY)
+			auto i = 0;
+			auto y = rctGrid.top;
+			for (; y < rctGrid.bottom; y += deltaY)
 			{
-				for (int x = rctGrid.left; x < (rctGrid.right - static_cast<int>(bBrushBits.size())) && i < 64; x += deltaX, i++)
+				for (auto x = rctGrid.left; x < (rctGrid.right - static_cast<int>(bBrushBits.size())) && i < 64; x += deltaX, i++)
 				{
 					rect[i].left = x; rect[i].top = y;
 					rect[i].right = x + deltaX;
 					rect[i].bottom = y + deltaY;
 				}
 			}
-			return FALSE;
+			return 0;
 		}
 
 		case WM_PAINT:
 		{
 			// Draw the grid.  
-			HDC hdc = GetDC(hwndGrid);
+			auto hdc = GetDC(hwndGrid);
 
-			for (int i = rctGrid.left; i < rctGrid.right; i += (rctGrid.right - rctGrid.left) / static_cast<int>(bBrushBits.size()))
+			for (auto i = rctGrid.left; i < rctGrid.right; i += (rctGrid.right - rctGrid.left) / static_cast<int>(bBrushBits.size()))
 			{
 				MoveToEx(hdc, i, rctGrid.top, NULL);
 				LineTo(hdc, i, rctGrid.bottom);
 			}
-			for (int i = rctGrid.top; i < rctGrid.bottom; i += (rctGrid.bottom - rctGrid.top) / static_cast<int>(bBrushBits.size()))
+			for (auto i = rctGrid.top; i < rctGrid.bottom; i += (rctGrid.bottom - rctGrid.top) / static_cast<int>(bBrushBits.size()))
 			{
 				MoveToEx(hdc, rctGrid.left, i, NULL);
 				LineTo(hdc, rctGrid.right, i);
 			}
 			ReleaseDC(hwndGrid, hdc);
-			return FALSE;
+			return 0;
 		}
 
 		case WM_LBUTTONDOWN:
 		{
 			// Store the mouse coordinates in a POINT structure.  
-			POINTS ptlHit = MAKEPOINTS(lParam);
+			auto ptlHit = MAKEPOINTS(lParam);
 
 			// Create a rectangular region with dimensions and  
 			// coordinates that correspond to those of the grid  
 			// window.  
-			HRGN hrgnCell = CreateRectRgn(rctGrid.left, rctGrid.top,
+			auto hrgnCell = CreateRectRgn(rctGrid.left, rctGrid.top,
 				rctGrid.right, rctGrid.bottom);
 
 			// Retrieve a window DC for the grid window.  
-			HDC hdc = GetDC(hwndGrid);
+			auto hdc = GetDC(hwndGrid);
 
 			// Select the region into the DC.  
 			SelectObject(hdc, hrgnCell);
@@ -101,7 +103,7 @@ auto BrushDlgProc(
 			{
 				// A button click occurred in the grid-window  
 				// rectangle; isolate the cell in which it occurred.  
-				for (int i = 0; i < 64; i++)
+				for (auto i = 0; i < 64; i++)
 				{
 					DeleteObject(hrgnCell);
 					hrgnCell = CreateRectRgn(
@@ -142,7 +144,7 @@ auto BrushDlgProc(
 
 			// Release the DC for the control.  
 			ReleaseDC(hwndGrid, hdc);
-			return TRUE;
+			return 1;
 		}
 
 		case WM_COMMAND:
@@ -150,12 +152,12 @@ auto BrushDlgProc(
 			{
 				case IDD_PAINTRECT:
 				{
-					HDC hdc = GetDC(hwndBrush);
+					auto hdc = GetDC(hwndBrush);
 					// Create a monochrome bitmap.  
-					hbm = CreateBitmap(8, 8, 1, 1, (LPBYTE)bBrushBits.data());
+					hbm = CreateBitmap(8, 8, 1, 1, reinterpret_cast<LPBYTE>(bBrushBits.data()));
 					// Select the custom brush into the DC.  
-					HBRUSH hbrush = CreatePatternBrush(hbm);
-					HBRUSH hbrushOld = (HBRUSH)SelectObject(hdc, hbrush);
+					auto hbrush = CreatePatternBrush(hbm);
+					auto hbrushOld = static_cast<HBRUSH>(SelectObject(hdc, hbrush));
 					// Use the custom brush to fill the rectangle.  
 					Rectangle(hdc, rctBrush.left, rctBrush.top, rctBrush.right, rctBrush.bottom);
 					// Clean up memory.  
@@ -164,20 +166,20 @@ auto BrushDlgProc(
 					DeleteObject(hbm);
 
 					ReleaseDC(hwndBrush, hdc);
-					return TRUE;
+					return 1;
 				}
 
 				case IDD_OK:
 				case IDD_CANCEL:
-					EndDialog(hdlg, TRUE);
-					return TRUE;
+					EndDialog(hdlg, 1);
+					return 1;
 			} // end switch  
 			break;
 		default:
-			return FALSE;
+			return 0;
 	}
 
-	return false;
+	return 0;
 }
 
 auto wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int) -> int
