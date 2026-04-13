@@ -42,3 +42,6 @@ node_modules/
 *.aps
 /src/SecureSocket/response.txt
 /src/bitblt/captureqwsx.bmp
+
+.idea/
+vcpkg_installed/

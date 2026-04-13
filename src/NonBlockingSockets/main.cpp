@@ -1,139 +1,190 @@
+// Note that this sample demonstrates overlapped (asynchronous) I/O, not true non-blocking sockets,
+// which are set via ioctlsocket and require polling via select(), WSAPoll(), or WSAEventSelect(). 
+// The project name is a misnomer.
 // https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsarecv
 #define WIN32_LEAN_AND_MEAN
-
 #include <Windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
 import std;
 
-// Need to link with Ws2_32.lib
-#pragma comment(lib, "ws2_32.lib")
-
-#pragma warning(disable: 4127)  // Conditional expression is a constant
-
-#define DATA_BUFSIZE 4096
-
-int main(int argc, char** argv)
+struct WinSockError : std::runtime_error
 {
-    WSADATA wsd;
-    struct addrinfo* result = NULL, * ptr = NULL, hints;
-    WSAOVERLAPPED RecvOverlapped;
-    SOCKET ConnSocket = INVALID_SOCKET;
-    WSABUF DataBuf;
-    DWORD RecvBytes, Flags;
-    char buffer[DATA_BUFSIZE];
+    const int code = 0;
+    WinSockError(int code, std::string msg) : code(code), std::runtime_error(std::format("WinSock error {}: {}", code, std::move(msg)))
+    {}
+};
 
-    int err = 0;
-    int rc;
+struct Overlapped : OVERLAPPED
+{
+    ~Overlapped()
+    {
+        if (hEvent)
+        {
+            WSACloseEvent(hEvent);
+            hEvent = nullptr;
+        }
+    }
 
-    if (argc != 2) {
+	Overlapped(const Overlapped&) = delete;
+	Overlapped& operator=(const Overlapped&) = delete;
+
+    Overlapped() : 
+        OVERLAPPED{
+            .hEvent = [] -> HANDLE
+            {
+                auto event = WSACreateEvent();
+                return event ? event : throw std::runtime_error("Failed to create event");
+            }()
+        }
+    { }
+};
+
+struct WsaContext
+{
+    ~WsaContext()
+    {
+        WSACleanup();
+    }
+    WsaContext()
+    {
+        auto wsaData = WSADATA{};
+        if (int success = WSAStartup(MAKEWORD(2, 2), &wsaData); success != 0)
+            throw WinSockError{ success, "WSAStartup failed" };
+    }
+	WsaContext(const WsaContext&) = delete;
+	WsaContext& operator=(const WsaContext&) = delete;
+};
+
+struct Socket
+{
+    SOCKET handle = INVALID_SOCKET;
+    Socket() = default;
+    Socket(SOCKET s) : handle(s) {}
+    ~Socket()
+    {
+        Close();
+    }
+
+    auto Close(this Socket& self) -> void
+    {
+        if (self.handle == INVALID_SOCKET)
+            return;
+        shutdown(self.handle, SD_BOTH);
+        closesocket(self.handle);
+        self.handle = INVALID_SOCKET;
+    }
+
+    constexpr auto IsValid(this const Socket& self) { return self.handle != INVALID_SOCKET; }
+
+    explicit constexpr operator bool() const { return IsValid(); }
+
+    // Move-only
+    Socket(const Socket&) = delete;
+    Socket& operator=(const Socket&) = delete;
+    Socket(Socket&& other) noexcept : handle(other.handle) { other.handle = INVALID_SOCKET; }
+    auto operator=(this Socket& self, Socket&& other) noexcept -> Socket&
+    {
+        if (&self == &other)
+            return self;
+        self.Close();
+        self.handle = other.handle;
+        other.handle = INVALID_SOCKET;
+        return self;
+    }
+};
+
+struct AddrInfoDeleter
+{
+    constexpr AddrInfoDeleter() = default;
+    static void operator()(addrinfo* p) { freeaddrinfo(p); }
+};
+using AddrInfoUniquePtr = std::unique_ptr<addrinfo, AddrInfoDeleter>;
+
+auto main(int argc, char** argv) -> int
+try
+{
+    if (argc != 2) 
+    {
         std::println("usage: {} server-name", argv[0]);
         return 1;
     }
-    // Load Winsock
-    rc = WSAStartup(MAKEWORD(2, 2), &wsd);
-    if (rc != 0) {
-        std::println("Unable to load Winsock: {}", rc);
-        return 1;
-    }
-    // Make sure the hints struct is zeroed out
-    SecureZeroMemory((PVOID)&hints, sizeof(struct addrinfo));
+    auto wsaContext = WsaContext{};
 
-    // Initialize the hints to retrieve the server address for IPv4
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
+    auto endpoint = 
+		[address = argv[1]] -> AddrInfoUniquePtr
+        {
+            // Initialize the hints to retrieve the server address for IPv4
+            auto hints = addrinfo{
+                .ai_family = AF_INET,
+                .ai_socktype = SOCK_STREAM,
+                .ai_protocol = IPPROTO_TCP
+            };
+            auto endpoint = AddrInfoUniquePtr{};
+            if (auto rc = getaddrinfo(address, "27015", &hints, std::out_ptr(endpoint)); rc != 0)
+				throw WinSockError{ rc, "getaddrinfo failed" };
+            return endpoint;
+        }();
 
-    rc = getaddrinfo(argv[1], "27015", &hints, &result);
-    if (rc != 0) {
-        std::println("getaddrinfo failed with error: {}", rc);
-        return 1;
-    }
+	auto connSocket = 
+        [endpoint = std::move(endpoint)] -> Socket
+        {
+            for (auto ptr = endpoint.get(); ptr != nullptr; ptr = ptr->ai_next)
+            {
+                auto connSocket = Socket{ socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol) };
+                if (not connSocket.IsValid())
+					throw WinSockError{ WSAGetLastError(), "socket failed" };
 
-    for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-
-        ConnSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
-        if (ConnSocket == INVALID_SOCKET) {
-            std::println("socket failed with error: ", WSAGetLastError());
-            freeaddrinfo(result);
-            return 1;
-        }
-
-        rc = connect(ConnSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-        if (rc == SOCKET_ERROR) {
-
-            if (WSAECONNREFUSED == (err = WSAGetLastError())) {
-                closesocket(ConnSocket);
-                ConnSocket = INVALID_SOCKET;
-                continue;
+                if (connect(connSocket.handle, ptr->ai_addr, (int)ptr->ai_addrlen) == 0)
+                {
+					std::println("Client connected...");
+                    return connSocket;
+                }
+                if (auto err = WSAGetLastError(); err != WSAECONNREFUSED)
+                    throw WinSockError{ err, "connect failed" };
             }
-            std::println("connect failed with error: {}\n", err);
-            freeaddrinfo(result);
-            closesocket(ConnSocket);
-            return 1;
-        }
-        break;
-    }
-    if (ConnSocket == INVALID_SOCKET) {
-        std::println("Unable to establish connection with the server!\n");
-        freeaddrinfo(result);
-        return 1;
-    }
+			throw std::runtime_error("Unable to connect to server!");
+        }();
 
-    std::println("Client connected...\n");
+    return
+        [connSocket = std::move(connSocket)] -> int
+        {
+            // Create an event handle and setup an overlapped structure.
+            auto recvOverlapped = Overlapped{};
+            auto buffer = std::array<char, 4096>{};
+            auto buffers = std::array{ 
+                WSABUF{ 
+                    .len = static_cast<ULONG>(buffer.size()), 
+                    .buf = buffer.data() 
+                }
+            };
+            // Call WSARecv until the peer closes the connection
+            // or until an error occurs
+            while (true)
+            {
+                auto flags = DWORD{};
+                auto recvBytes = DWORD{};
+				// WSASend and WSARecv can accept an array of WSABUFs to scatter/gather data.
+                if (WSARecv(connSocket.handle, buffers.data(), static_cast<DWORD>(buffers.size()), &recvBytes, &flags, &recvOverlapped, nullptr) == SOCKET_ERROR)
+                    if (auto err = WSAGetLastError(); err != WSA_IO_PENDING)
+                        throw WinSockError{ err, "WSARecv failed" };
+                if (WSAWaitForMultipleEvents(1, &recvOverlapped.hEvent, true, INFINITE, true) == WSA_WAIT_FAILED)
+                    throw WinSockError{ WSAGetLastError(), "WSAWaitForMultipleEvents failed" };
+                if (not WSAGetOverlappedResult(connSocket.handle, &recvOverlapped, &recvBytes, false, &flags))
+                    throw WinSockError{ WSAGetLastError(), "WSARecv operation failed" };
 
-    // Make sure the RecvOverlapped struct is zeroed out
-    SecureZeroMemory((PVOID)&RecvOverlapped, sizeof(WSAOVERLAPPED));
-
-    // Create an event handle and setup an overlapped structure.
-    RecvOverlapped.hEvent = WSACreateEvent();
-    if (RecvOverlapped.hEvent == NULL) {
-        std::println("WSACreateEvent failed: {}", WSAGetLastError());
-        freeaddrinfo(result);
-        closesocket(ConnSocket);
-        return 1;
-    }
-
-    DataBuf.len = DATA_BUFSIZE;
-    DataBuf.buf = buffer;
-
-    // Call WSARecv until the peer closes the connection
-    // or until an error occurs
-    while (1) {
-
-        Flags = 0;
-        rc = WSARecv(ConnSocket, &DataBuf, 1, &RecvBytes, &Flags, &RecvOverlapped, NULL);
-        if ((rc == SOCKET_ERROR) && (WSA_IO_PENDING != (err = WSAGetLastError()))) {
-            std::println("WSARecv failed with error: {}", err);
-            break;
-        }
-
-        rc = WSAWaitForMultipleEvents(1, &RecvOverlapped.hEvent, TRUE, INFINITE, TRUE);
-        if (rc == WSA_WAIT_FAILED) {
-            std::println("WSAWaitForMultipleEvents failed with error: {}", WSAGetLastError());
-            break;
-        }
-
-        rc = WSAGetOverlappedResult(ConnSocket, &RecvOverlapped, &RecvBytes, FALSE, &Flags);
-        if (rc == FALSE) {
-            std::println("WSARecv operation failed with error: {}", WSAGetLastError());
-            break;
-        }
-
-        std::println("Read {} bytes\n", RecvBytes);
-
-        WSAResetEvent(RecvOverlapped.hEvent);
-
-        // If 0 bytes are received, the connection was closed
-        if (RecvBytes == 0)
-            break;
-    }
-
-    WSACloseEvent(RecvOverlapped.hEvent);
-    closesocket(ConnSocket);
-    freeaddrinfo(result);
-
-    WSACleanup();
-
-    return 0;
+                std::println("Read {} bytes", recvBytes);
+                WSAResetEvent(recvOverlapped.hEvent);
+                // If 0 bytes are received, the connection was closed
+                if (recvBytes == 0)
+                    break;
+            }
+            return 0;
+	    }();
+}
+catch(const std::exception& ex)
+{
+    std::println("Exception: {}", ex.what());
+    return 1;
 }
