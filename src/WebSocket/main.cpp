@@ -16,6 +16,13 @@ struct HInternetDeleter
 };
 using HInternetUniquePtr = std::unique_ptr<std::remove_pointer_t<HINTERNET>, HInternetDeleter>;
 
+template<std::invocable TFn>
+struct Finally
+{
+	~Finally() { ToInvoke(); }
+	TFn ToInvoke = [] {};
+};
+
 auto GetLastErrorAsString() -> std::string
 {
 	// https://stackoverflow.com/questions/24145038/how-to-get-description-of-winhttp-errors-using-error-codes
