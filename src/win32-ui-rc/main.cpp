@@ -16,8 +16,47 @@ int GetStrLngth(LPTSTR cArray)
     return i - 1;
 }
 
+template<unsigned VDimensions>
+struct Vector
+{
+    float Dimensions[VDimensions]{};
+
+    constexpr auto x(this Vector& self) noexcept -> float requires (VDimensions > 0)
+    {
+        return self.VDimensions[0];
+    }
+    constexpr auto y(this Vector& self) noexcept -> float requires (VDimensions > 1)
+    {
+        return self.VDimensions[1];
+    }
+    constexpr auto z(this Vector& self) noexcept -> float requires (VDimensions > 2)
+    {
+        return self.VDimensions[2];
+    }
+    constexpr auto operator*(this const Vector& self, const Vector& other)
+    {
+        return
+            self.Dimensions[0] * other.Dimensions[0]
+            + self.Dimensions[1] * other.Dimensions[1]
+            + self.Dimensions[2] * other.Dimensions[2];
+    }
+    constexpr auto operator+(this const Vector& self, const Vector& other) -> Vector
+    {
+        return {
+            .Dimensions {
+                self.Dimensions[0] + other.Dimensions[0]
+                , self.Dimensions[1] + other.Dimensions[1]
+                , self.Dimensions[2] + other.Dimensions[2]
+            }
+        };
+    }
+};
+
 DWORD RetrieveWidth(LPTSTR cArray, int iLength)
 {
+    Vector<3> v1;
+    Vector<3> v2;
+    auto x = v1* v2;
     int i, iTmp;
     double dVal, dCount;
 
