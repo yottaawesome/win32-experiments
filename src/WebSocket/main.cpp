@@ -53,7 +53,7 @@ auto GetLastErrorAsString() -> std::string
 auto main() -> int
 try
 {
-	auto server = std::wstring{ L"127.0.0.1" };
+	auto server = std::wstring{ L"echo.websocket.org"};
 	auto hSession = HINTERNET{
 		WinHttpOpen(
 			L"Example/1.0",
@@ -64,14 +64,16 @@ try
 		) };
 	auto session = HInternetUniquePtr{ hSession };
 
-	auto port = 51935;
+	auto port = 443;// 51935;
 	auto hConnectionHandle = HINTERNET{
 		WinHttpConnect(
 			hSession,
 			server.c_str(),
 			port,
 			0
-		) };
+		)};
+	if (not hConnectionHandle)
+		throw std::runtime_error{ GetLastErrorAsString() };
 	auto connectionHandle = HInternetUniquePtr{ hConnectionHandle };
 
 	auto hRequestHandle = HINTERNET{
@@ -83,7 +85,9 @@ try
 			nullptr,
 			nullptr,
 			WINHTTP_FLAG_SECURE
-		) };
+		)};
+	if (not hRequestHandle)
+		throw std::runtime_error{ GetLastErrorAsString() };
 	auto requestHandle = HInternetUniquePtr{ hRequestHandle };
 
 	auto dwFlags = DWORD{
@@ -130,6 +134,7 @@ try
 		throw std::runtime_error{GetLastErrorAsString()};
 
 	constexpr auto message = std::string_view{ "Hello world" };
+	constexpr auto message2 = std::wstring_view{ L"Hello world" };
 	auto dwError = WinHttpWebSocketSend(
 		hWebSocketHandle,
 		WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE,
