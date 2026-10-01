@@ -6,12 +6,12 @@ export namespace Utl
 {
 	auto TranslateErrorCode(Win32::DWORD errorCode) -> std::string
 	{
-		constexpr Win32::DWORD flags =
+		constexpr auto flags =
 			Win32::FormatMessageFlags::AllocateBuffer
 			| Win32::FormatMessageFlags::FromSystem
 			| Win32::FormatMessageFlags::IgnoreInserts;
 
-		void* messageBuffer = nullptr;
+		auto messageBuffer = static_cast<void*>(nullptr);
 		Win32::FormatMessageA(
 			flags,
 			nullptr,
@@ -24,7 +24,7 @@ export namespace Utl
 		if (not messageBuffer)
 			return std::format("FormatMessageA() failed on code {} with error {}", errorCode, Win32::GetLastError());
 
-		std::string msg(static_cast<char*>(messageBuffer));
+		auto msg = std::string(static_cast<char*>(messageBuffer));
 		// This should never happen
 		// See also https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-raisefailfastexception
 		if (Win32::LocalFree(messageBuffer))
@@ -45,21 +45,20 @@ export namespace Error
 			const std::source_location& loc = std::source_location::current(),
 			const std::stacktrace& trace = std::stacktrace::current()
 		) : runtime_error(std::format("{}: {}", msg, Utl::TranslateErrorCode(code)))
-		{
-		}
+		{ }
 	};
 }
 
 export namespace Utl
 {
-	std::string ConvertString(std::wstring_view wstr)
+	auto ConvertString(std::wstring_view wstr) -> std::string
 	{
 		if (wstr.empty())
 			return {};
 
 		// https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte
 		// Returns the size in bytes, this differs from MultiByteToWideChar, which returns the size in characters
-		const int sizeInBytes = Win32::WideCharToMultiByte(
+		auto sizeInBytes = Win32::WideCharToMultiByte(
 			Win32::CpUtf8,										// CodePage
 			Win32::WcNoBestFitChars,							// dwFlags 
 			&wstr[0],										// lpWideCharStr
@@ -70,10 +69,10 @@ export namespace Utl
 			nullptr											// lpUsedDefaultChar
 		);
 		if (sizeInBytes == 0)
-			throw Error::Win32Error(Win32::GetLastError(), "WideCharToMultiByte() [1] failed");
+			throw Error::Win32Error{Win32::GetLastError(), "WideCharToMultiByte() [1] failed"};
 
-		std::string strTo(sizeInBytes / sizeof(char), '\0');
-		const int status = WideCharToMultiByte(
+		auto strTo = std::string(sizeInBytes / sizeof(char), '\0');
+		auto status = WideCharToMultiByte(
 			Win32::CpUtf8,										// CodePage
 			Win32::WcNoBestFitChars,							// dwFlags 
 			&wstr[0],										// lpWideCharStr
@@ -84,40 +83,40 @@ export namespace Utl
 			nullptr											// lpUsedDefaultChar
 		);
 		if (status == 0)
-			throw Error::Win32Error(Win32::GetLastError(), "WideCharToMultiByte() [2] failed");
+			throw Error::Win32Error{Win32::GetLastError(), "WideCharToMultiByte() [2] failed"};
 
 		return strTo;
 	}
 
-	std::wstring ConvertString(std::string_view str)
+	auto ConvertString(std::string_view str) -> std::wstring
 	{
 		if (str.empty())
 			return {};
 
 		// https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-multibytetowidechar
 		// Returns the size in characters, this differs from WideCharToMultiByte, which returns the size in bytes
-		int sizeInCharacters = Win32::MultiByteToWideChar(
+		auto sizeInCharacters = Win32::MultiByteToWideChar(
 			Win32::CpUtf8,									// CodePage
 			0,											// dwFlags
-			&str[0],									// lpMultiByteStr
+			str.data(),									// lpMultiByteStr
 			static_cast<int>(str.size() * sizeof(char)),// cbMultiByte
 			nullptr,									// lpWideCharStr
 			0											// cchWideChar
 		);
 		if (sizeInCharacters == 0)
-			throw Error::Win32Error(Win32::GetLastError(), "MultiByteToWideChar() [1] failed");
+			throw Error::Win32Error{Win32::GetLastError(), "MultiByteToWideChar() [1] failed"};
 
-		std::wstring wstrTo(sizeInCharacters, '\0');
-		int status = Win32::MultiByteToWideChar(
+		auto wstrTo = std::wstring(sizeInCharacters, '\0');
+		auto status = Win32::MultiByteToWideChar(
 			Win32::CpUtf8,									// CodePage
 			0,											// dwFlags
-			&str[0],									// lpMultiByteStr
+			str.data(),									// lpMultiByteStr
 			static_cast<int>(str.size() * sizeof(char)),	// cbMultiByte
-			&wstrTo[0],									// lpWideCharStr
+			wstrTo.data(),									// lpWideCharStr
 			static_cast<int>(wstrTo.size())				// cchWideChar
 		);
 		if (status == 0)
-			throw Error::Win32Error(Win32::GetLastError(), "MultiByteToWideChar() [2] failed");
+			throw Error::Win32Error{Win32::GetLastError(), "MultiByteToWideChar() [2] failed"};
 
 		return wstrTo;
 	}
@@ -128,7 +127,7 @@ export namespace RAII
 	template<auto VDeleteFn>
 	struct Deleter
 	{
-		void operator()(auto handle) const noexcept
+		static constexpr void operator()(auto handle) noexcept
 		{
 			VDeleteFn(handle);
 		}
@@ -147,14 +146,14 @@ export namespace RAII
 
 export namespace Registry
 {
-	std::wstring GetString(
+	auto GetString(
 		Win32::HKEY hKey,
 		const std::wstring& subKey,
 		const std::wstring& value
-	)
+	) -> std::wstring
 	{
-		Win32::DWORD dataSize{};
-		Win32::LONG retCode = Win32::RegGetValueW(
+		auto dataSize = Win32::DWORD{};
+		auto retCode = Win32::RegGetValueW(
 			hKey,
 			subKey.c_str(),
 			value.c_str(),
@@ -166,7 +165,7 @@ export namespace Registry
 		if (retCode != 0)
 			throw Error::Win32Error{ static_cast<Win32::DWORD>(retCode), "Cannot read string from registry" };
 
-		std::wstring data;
+		auto data = std::wstring{};
 		data.resize(dataSize / sizeof(wchar_t));
 
 		retCode = Win32::RegGetValueW(
@@ -175,15 +174,13 @@ export namespace Registry
 			value.c_str(),
 			Win32::RrfRtRegSz,
 			nullptr,
-			&data[0],
+			data.data(),
 			&dataSize
 		);
-
 		if (retCode != 0)
 			throw Error::Win32Error{ static_cast<Win32::DWORD>(retCode), "Cannot read string from registry" };
 
-		Win32::DWORD stringLengthInWchars = dataSize / sizeof(wchar_t);
-
+		auto stringLengthInWchars = Win32::DWORD{dataSize / sizeof(wchar_t)};
 		stringLengthInWchars--; // Exclude the NUL written by the Win32 API
 		data.resize(stringLengthInWchars);
 
@@ -194,29 +191,31 @@ export namespace Registry
 export namespace Security
 {
 	// https://learn.microsoft.com/en-us/windows/win32/secauthz/enabling-and-disabling-privileges-in-c--
-	Win32::BOOL SetPrivilege(
+	auto SetPrivilege(
 		Win32::HANDLE hToken,          // access token handle
 		Win32::LPCWSTR lpszPrivilege,  // name of privilege to enable/disable
 		Win32::BOOL bEnablePrivilege   // to enable or disable privilege
-	)
+	) -> Win32::BOOL
 	{
-		Win32::TOKEN_PRIVILEGES tp;
-		Win32::LUID luid;
+		auto luid = Win32::LUID{};
 
-		bool success = Win32::LookupPrivilegeValueW(
+		auto success = Win32::LookupPrivilegeValueW(
 			nullptr,            // lookup privilege on local system
 			lpszPrivilege,   // privilege to lookup 
 			&luid // receives LUID of privilege
 		);        
 		if (not success)
-			throw Error::Win32Error(Win32::GetLastError(), "LookupPrivilegeValue error");
-
-		tp.PrivilegeCount = 1;
-		tp.Privileges[0].Luid = luid;
-		if (bEnablePrivilege)
-			tp.Privileges[0].Attributes = Win32::SePrivilegeEnabled;
-		else
-			tp.Privileges[0].Attributes = 0;
+			throw Error::Win32Error{Win32::GetLastError(), "LookupPrivilegeValue error"};
+		
+		auto tp = Win32::TOKEN_PRIVILEGES{
+			.PrivilegeCount = 1,
+			.Privileges = {
+				{
+					.Luid = luid,
+					.Attributes = bEnablePrivilege ? Win32::SePrivilegeEnabled : 0ul
+				}
+			}
+		};
 
 		// Enable the privilege or disable all privileges.
 		success = Win32::AdjustTokenPrivileges(
@@ -224,11 +223,11 @@ export namespace Security
 			false,
 			&tp,
 			sizeof(Win32::TOKEN_PRIVILEGES),
-			(Win32::PTOKEN_PRIVILEGES)nullptr,
-			(Win32::PDWORD)nullptr
+			nullptr,
+			nullptr
 		);
-		if (!success)
-			throw Error::Win32Error(Win32::GetLastError(), "AdjustTokenPrivileges error");
+		if (not success)
+			throw Error::Win32Error{Win32::GetLastError(), "AdjustTokenPrivileges error"};
 
 		if (Win32::GetLastError() == Win32::ErrorNotAllAssigned)
 			return false;

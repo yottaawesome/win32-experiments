@@ -10,8 +10,7 @@ namespace Log
 {
 	void LogToFile(std::string_view message)
 	{
-		std::ofstream log;
-		log.open("C:\\temp\\service-log.txt", std::ios::app);
+		auto log = std::ofstream{ "C:\\temp\\service-log.txt", std::ios::app };
 		log << message.data();
 		log.close();
 	}
@@ -46,38 +45,37 @@ namespace Log
 
 namespace Service
 {
-    constexpr std::wstring_view ServiceName = L"ThisIsATestService";
-	Win32::SERVICE_STATUS gSvcStatus{};
-	Win32::SERVICE_STATUS_HANDLE gSvcStatusHandle = nullptr;
-	Win32::HANDLE ghSvcStopEvent = nullptr;
+    constexpr auto ServiceName = std::wstring_view{ L"ThisIsATestService" };
+	auto gSvcStatus = Win32::SERVICE_STATUS{};
+	auto gSvcStatusHandle = Win32::SERVICE_STATUS_HANDLE{ nullptr };
+	auto ghSvcStopEvent = Win32::HANDLE{ nullptr };
 
     void Install()
     {
-		wchar_t szPath[Win32::MaxPath];
+		auto servicePath = std::array<wchar_t, Win32::MaxPath>{};
+		if (not Win32::GetModuleFileNameW(nullptr, servicePath.data(), servicePath.size()))
+			throw Error::Win32Error{Win32::GetLastError(), "Cannot install service"};
 
-		if (not Win32::GetModuleFileNameW(nullptr, szPath, Win32::MaxPath))
-			throw Error::Win32Error(Win32::GetLastError(), "Cannot install service");
-
-		auto scManager = RAII::ServiceUniquePtr(
+		auto scManager = RAII::ServiceUniquePtr{
 			Win32::OpenSCManagerW(
 				nullptr,
 				nullptr,
 				Win32::ScManagerAllAccess
-			));
+			) };
 		if (not scManager)
-			throw Error::Win32Error(Win32::GetLastError(), "Cannot OpenSCManager service");
+			throw Error::Win32Error{Win32::GetLastError(), "Cannot OpenSCManager service"};
 
-		//Check if service exists
-		auto service = RAII::ServiceUniquePtr(
+		// Check if service exists
+		auto service = RAII::ServiceUniquePtr{
 			Win32::OpenServiceW(
 				scManager.get(), 
 				ServiceName.data(), 
 				Win32::ServiceAllAccess
-			));
+			) };
 		if (service)
 			return;
 
-		service = RAII::ServiceUniquePtr(
+		service = RAII::ServiceUniquePtr{
 			Win32::CreateServiceW(
 				scManager.get(),              // SCM database 
 				ServiceName.data(),                   // name of service 
@@ -86,13 +84,13 @@ namespace Service
 				Win32::ServiceWin32OwnProcess, // service type 
 				Win32::ServiceDemandStart,      // start type 
 				Win32::ServiceErrorNormal,      // error control type 
-				szPath,                    // path to service's binary 
+				servicePath.data(),                    // path to service's binary 
 				nullptr,                      // no load ordering group 
 				nullptr,                      // no tag identifier 
 				nullptr,                      // no dependencies 
 				nullptr,                      // LocalSystem account 
 				nullptr // no password 
-			));                    
+			) };
 		if (not service)
 			throw Error::Win32Error(Win32::GetLastError(), "Cannot OpenSCManager service");
 
@@ -101,26 +99,26 @@ namespace Service
 
 	void Uninstall()
 	{
-		auto schSCManager = RAII::ServiceUniquePtr(
+		auto schSCManager = RAII::ServiceUniquePtr{
 			Win32::OpenSCManagerW(
 				nullptr,
 				nullptr,
 				Win32::ScManagerAllAccess
-			));
+			) };
 		if (not schSCManager)
 			throw Error::Win32Error(Win32::GetLastError(), "OpenSCManager() failed");
 
-		auto schService = RAII::ServiceUniquePtr(
+		auto schService = RAII::ServiceUniquePtr{
 			Win32::OpenServiceW(
 				schSCManager.get(),
 				ServiceName.data(),
 				Win32::Delete
-			));
+			)};
 		if (not schService)
-			throw Error::Win32Error(Win32::GetLastError(), "OpenService() failed");
+			throw Error::Win32Error{Win32::GetLastError(), "OpenService() failed"};
 
 		if (not Win32::DeleteService(schService.get()))
-			throw Error::Win32Error(Win32::GetLastError(), "DeleteService() failed");
+			throw Error::Win32Error{Win32::GetLastError(), "DeleteService() failed"};
 
 		Log::Info("Service deleted successfully");
 	}
@@ -131,7 +129,7 @@ namespace Service
 		Win32::DWORD dwWaitHint
 	)
 	{
-		static DWORD dwCheckPoint = 1;
+		static auto dwCheckPoint = Win32::DWORD{ 1 };
 
 		// Fill in the SERVICE_STATUS structure.
 
@@ -153,7 +151,7 @@ namespace Service
 		Win32::SetServiceStatus(gSvcStatusHandle, &gSvcStatus);
 	}
 
-	Win32::DWORD __stdcall SvcCtrlHandler(Win32::DWORD dwCtrl, Win32::DWORD eventType, Win32::LPVOID lpEventData, Win32::LPVOID lpContext)
+	auto SvcCtrlHandler(Win32::DWORD dwCtrl, Win32::DWORD eventType, Win32::LPVOID lpEventData, Win32::LPVOID lpContext) -> Win32::DWORD
 	{
 		switch (dwCtrl)
 		{
@@ -172,7 +170,7 @@ namespace Service
 
 			case Win32::ServiceControlSessionChange:
 			{
-				Win32::WTSSESSION_NOTIFICATION* sessionData = (Win32::WTSSESSION_NOTIFICATION*)lpEventData;
+				auto sessionData = static_cast<Win32::WTSSESSION_NOTIFICATION*>(lpEventData);
 				ReportSvcStatus(gSvcStatus.dwCurrentState, Win32::NoError, 0);
 				return Win32::NoError;
 			}
@@ -190,17 +188,17 @@ namespace Service
 		// https://stackoverflow.com/questions/19796409/how-to-impersonate-a-user-from-a-service-correctly
 		// https://stackoverflow.com/questions/26913172/create-process-in-user-session-from-service
 		// https://web.archive.org/web/20101009012531/http://blogs.msdn.com/b/winsdk/archive/2009/07/14/launching-an-interactive-process-from-windows-service-in-windows-vista-and-later.aspx
-		Win32::DWORD dwSessionID = Win32::WTSGetActiveConsoleSessionId();
+		auto dwSessionID = Win32::DWORD{Win32::WTSGetActiveConsoleSessionId()};
 		if (dwSessionID == 0xFFFFFFFF)
-			throw Error::Win32Error(Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed");
+			throw Error::Win32Error{Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed"};
 
-		Win32::HANDLE hToken = nullptr;
+		auto hToken = Win32::HANDLE{};
 		if (not Win32::WTSQueryUserToken(dwSessionID, &hToken))
-			throw Error::Win32Error(Win32::GetLastError(), "WTSQueryUserToken failed.");
+			throw Error::Win32Error{Win32::GetLastError(), "WTSQueryUserToken failed"};
 
-		RAII::HandleUniquePtr userPrimaryToken(hToken);
-		Win32::HANDLE hDuplicated = nullptr;
-		bool success = Win32::DuplicateTokenEx(
+		auto userPrimaryToken = RAII::HandleUniquePtr{hToken};
+		auto hDuplicated = Win32::HANDLE{};
+		auto success = Win32::DuplicateTokenEx(
 			userPrimaryToken.get(),
 			Win32::Token::Read | Win32::Token::AssignPrimary | Win32::Token::Duplicate | Win32::Token::Query,
 			nullptr,
@@ -209,18 +207,18 @@ namespace Service
 			&hDuplicated
 		);
 		if (not success)
-			throw Error::Win32Error(Win32::GetLastError(), "DuplicateToken failed.");
-		RAII::HandleUniquePtr duplicatedToken(hDuplicated);
+			throw Error::Win32Error{Win32::GetLastError(), "DuplicateToken failed"};
+		auto duplicatedToken = RAII::HandleUniquePtr{hDuplicated};
 
 		void* environment = nullptr;
 		if (not Win32::CreateEnvironmentBlock(&environment, duplicatedToken.get(), false))
-			throw Error::Win32Error(Win32::GetLastError(), "CreateEnvironmentBlock failed.");
+			throw Error::Win32Error{Win32::GetLastError(), "CreateEnvironmentBlock failed"};
 
-		RAII::EnvironmentUniquePtr environmentBlock(environment);
+		auto environmentBlock = RAII::EnvironmentUniquePtr{environment};
 
-		Win32::PROCESS_INFORMATION info{ 0 };
-		Win32::STARTUPINFO startup{ .cb = sizeof(startup) };
-		std::wstring commandLine = L"command line";
+		auto info = Win32::PROCESS_INFORMATION{ 0 };
+		auto startup = Win32::STARTUPINFO{ .cb = sizeof(Win32::STARTUPINFO) };
+		auto commandLine = std::wstring{L"command line"};
 		success = Win32::CreateProcessAsUserW(
 			duplicatedToken.get(),
 			LR"(A:\Code\cpp\win32-experiments\src\x64\Debug\UserProcess.exe)",
@@ -235,10 +233,10 @@ namespace Service
 			&info
 		);
 		if (not success)
-			throw Error::Win32Error(Win32::GetLastError(), "CreateProcessAsUserW failed.");
+			throw Error::Win32Error{Win32::GetLastError(), "CreateProcessAsUserW failed"};
 
-		RAII::HandleUniquePtr hProc(info.hProcess);
-		RAII::HandleUniquePtr hProcThread(info.hThread);
+		auto hProc = RAII::HandleUniquePtr{info.hProcess};
+		auto hProcThread = RAII::HandleUniquePtr{info.hThread};
 	}
 	catch (const std::exception& ex)
 	{
@@ -248,28 +246,28 @@ namespace Service
 	void LoadUserProfile()
 	try
 	{
-		Win32::HANDLE hCurrent = nullptr;
+		auto hCurrent = Win32::HANDLE{};
 		if (not Win32::OpenProcessToken(Win32::GetCurrentProcess(), Win32::TokenAllAccess, &hCurrent))
-			throw Error::Win32Error(Win32::GetLastError(), "OpenProcessToken failed");
-		auto serviceToken = RAII::HandleUniquePtr(hCurrent);
+			throw Error::Win32Error{Win32::GetLastError(), "OpenProcessToken failed"};
+		auto serviceToken = RAII::HandleUniquePtr{hCurrent};
 
 		// https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
 		if (not Security::SetPrivilege(serviceToken.get(), L"SeRestorePrivilege", true))
-			throw Error::Win32Error(Win32::GetLastError(), "SetPrivilege (restore) failed");
+			throw Error::Win32Error{Win32::GetLastError(), "SetPrivilege (restore) failed"};
 		if (not Security::SetPrivilege(serviceToken.get(), L"SeBackupPrivilege", true))
-			throw Error::Win32Error(Win32::GetLastError(), "SetPrivilege (backup) failed");
+			throw Error::Win32Error{Win32::GetLastError(), "SetPrivilege (backup) failed"};
 
-		Win32::DWORD dwSessionID = Win32::WTSGetActiveConsoleSessionId();
+		auto dwSessionID = Win32::DWORD{Win32::WTSGetActiveConsoleSessionId()};
 		if (dwSessionID == 0xFFFFFFFF)
-			throw Error::Win32Error(Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed");
+			throw Error::Win32Error{Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed"};
 
-		Win32::HANDLE hToken = nullptr;
+		auto hToken = Win32::HANDLE{};
 		if (not Win32::WTSQueryUserToken(dwSessionID, &hToken))
-			throw Error::Win32Error(Win32::GetLastError(), "WTSQueryUserToken failed.");
+			throw Error::Win32Error{Win32::GetLastError(), "WTSQueryUserToken failed"};
 
-		RAII::HandleUniquePtr userPrimaryToken(hToken);
-		Win32::HANDLE hDuplicated = nullptr;
-		bool success = Win32::DuplicateTokenEx(
+		auto userPrimaryToken = RAII::HandleUniquePtr{hToken};
+		auto hDuplicated = Win32::HANDLE{};
+		auto success = Win32::DuplicateTokenEx(
 			userPrimaryToken.get(),
 			Win32::Token::Impersonate | Win32::Token::Query,
 			nullptr,
@@ -278,20 +276,23 @@ namespace Service
 			&hDuplicated
 		);
 		if (not success)
-			throw Error::Win32Error(Win32::GetLastError(), "DuplicateToken failed.");
-		RAII::HandleUniquePtr duplicatedToken(hDuplicated);
+			throw Error::Win32Error{Win32::GetLastError(), "DuplicateToken failed"};
+		auto duplicatedToken = RAII::HandleUniquePtr{hDuplicated};
 
-		std::wstring username(256 + 1, '\0');
-		Win32::DWORD size = static_cast<Win32::DWORD>(username.size());
+		auto username = std::wstring(256 + 1, '\0');
+		auto size = Win32::DWORD{static_cast<Win32::DWORD>(username.size())};
 		if (not Win32::GetUserNameW(username.data(), &size))
-			throw Error::Win32Error(Win32::GetLastError(), "GetUserNameW failed");
+			throw Error::Win32Error{Win32::GetLastError(), "GetUserNameW failed"};
 		username.resize(size - 1);
 
-		Win32::PROFILEINFOW profile{ .dwSize = sizeof(Win32::PROFILEINFOW), .lpUserName = username.data() };
+		auto profile = Win32::PROFILEINFOW{ 
+			.dwSize = sizeof(Win32::PROFILEINFOW), 
+			.lpUserName = username.data() 
+		};
 		// Fails probably because "The calling process must have the SE_RESTORE_NAME and SE_BACKUP_NAME privileges.
 		// See https://learn.microsoft.com/en-us/windows/win32/secauthz/enabling-and-disabling-privileges-in-c--
 		if (not Win32::LoadUserProfileW(duplicatedToken.get(), &profile))
-			throw Error::Win32Error(Win32::GetLastError(), "Failed to load profile");
+			throw Error::Win32Error{Win32::GetLastError(), "Failed to load profile"};
 		Win32::UnloadUserProfile(duplicatedToken.get(), &profile);
 	}
 	catch (const std::exception& ex)
@@ -304,17 +305,17 @@ namespace Service
 	{
 		// https://stackoverflow.com/questions/38634070/why-loaduserprofile-fails-with-error-5-denied-access-in-this-code-running-in
 		// https://stackoverflow.com/questions/19796409/how-to-impersonate-a-user-from-a-service-correctly
-		Win32::DWORD dwSessionID = Win32::WTSGetActiveConsoleSessionId();
+		auto dwSessionID = Win32::DWORD{Win32::WTSGetActiveConsoleSessionId()};
 		if (dwSessionID == 0xFFFFFFFF)
-			throw Error::Win32Error(Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed");
+			throw Error::Win32Error{Win32::GetLastError(), "WTSGetActiveConsoleSessionId failed"};
 
-		Win32::HANDLE hToken = nullptr;
+		auto hToken = Win32::HANDLE{};
 		if (not Win32::WTSQueryUserToken(dwSessionID, &hToken))
-			throw Error::Win32Error(Win32::GetLastError(), "WTSQueryUserToken failed.");
+			throw Error::Win32Error{Win32::GetLastError(), "WTSQueryUserToken failed."};
 
-		RAII::HandleUniquePtr userPrimaryToken(hToken);
-		Win32::HANDLE hDuplicated = nullptr;
-		bool success = Win32::DuplicateTokenEx(
+		auto userPrimaryToken = RAII::HandleUniquePtr{hToken};
+		auto hDuplicated = Win32::HANDLE{};
+		auto success = Win32::DuplicateTokenEx(
 			userPrimaryToken.get(),
 			Win32::Token::Impersonate | Win32::Token::Query,
 			nullptr,
@@ -323,16 +324,17 @@ namespace Service
 			&hDuplicated
 		);
 		if (not success)
-			throw Error::Win32Error(Win32::GetLastError(), "DuplicateToken failed.");
-		RAII::HandleUniquePtr duplicatedToken(hDuplicated);
+			throw Error::Win32Error{Win32::GetLastError(), "DuplicateToken failed."};
+		auto duplicatedToken = RAII::HandleUniquePtr{hDuplicated};
 
 		if (not Win32::ImpersonateLoggedOnUser(duplicatedToken.get()))
-			throw Error::Win32Error(Win32::GetLastError(), "ImpersonateLoggedOnUser failed.");
+			throw Error::Win32Error{Win32::GetLastError(), "ImpersonateLoggedOnUser failed."};
 
-		Win32::HKEY hkeyCurrentUser = nullptr;
+		auto hkeyCurrentUser = Win32::HKEY{};
+
 		if (auto result = Win32::RegOpenCurrentUser(Win32::HkeyAllAccess, &hkeyCurrentUser); result)
-			throw Error::Win32Error(result, "RegOpenCurrentUser failed");
-		RAII::HkeyUniquePtr registryCurrentUser(hkeyCurrentUser);
+			throw Error::Win32Error{static_cast<Win32::DWORD>(result), "RegOpenCurrentUser failed"};
+		auto registryCurrentUser = RAII::HkeyUniquePtr{hkeyCurrentUser};
 
 		Win32::RevertToSelf();
 		Log::Info("Successful impersonation.");
@@ -343,15 +345,12 @@ namespace Service
 		Log::Info("ImpersonateUser: {}\n", ex.what());
 	}
 
-    void __stdcall SvcMain(Win32::DWORD dwArgc, Win32::LPWSTR lpszArgv[])
+	// The entry point for the dispatcher thread for the service.
+    void SvcMain(Win32::DWORD dwArgc, Win32::LPWSTR lpszArgv[])
 	try
     {
-		gSvcStatusHandle = Win32::RegisterServiceCtrlHandlerExW(
-			ServiceName.data(),
-			SvcCtrlHandler,
-			0
-		);
-		if (!gSvcStatusHandle)
+		gSvcStatusHandle = Win32::RegisterServiceCtrlHandlerExW(ServiceName.data(), SvcCtrlHandler, 0);
+		if (not gSvcStatusHandle)
 		{
 			Log::Info("RegisterServiceCtrlHandler() failed.");
 			return;
@@ -362,7 +361,6 @@ namespace Service
 		gSvcStatus.dwServiceSpecificExitCode = 0;
 
 		// Report initial status to the SCM
-
 		ReportSvcStatus(Win32::ServiceStartPending, 0, 3000);
 
 		// Perform service-specific initialization and work.
@@ -374,12 +372,7 @@ namespace Service
 
 		// Create an event. The control handler function, SvcCtrlHandler,
 		// signals this event when it receives the stop control code.
-		ghSvcStopEvent = Win32::CreateEventW(
-			nullptr,    // default security attributes
-			true,    // manual reset event
-			false,   // not signaled
-			nullptr // no name
-		);
+		ghSvcStopEvent = Win32::CreateEventW(nullptr, true, false, nullptr);
 		if (not ghSvcStopEvent)
 		{
 			ReportSvcStatus(Win32::ServiceStopped, Win32::GetLastError(), 0);
@@ -396,9 +389,8 @@ namespace Service
 		{
 			// Check whether to stop the service.
 			Win32::WaitForSingleObject(ghSvcStopEvent, Win32::Infinite);
-
 			ReportSvcStatus(Win32::ServiceStopped, Win32::NoError, 0);
-			return;
+			break;
 		}
     }
 	catch (const std::exception& ex)
@@ -408,12 +400,14 @@ namespace Service
 	}
 }
 
-int __cdecl wmain(int argc, wchar_t* argv[])
+// This is the main entry point for the service. It registers the 
+// service control handler and starts the service control dispatcher.
+auto wmain(int argc, wchar_t* argv[]) -> int
 try
 {
 	if (argc == 2)
 	{
-		std::wstring str(argv[1]);
+		auto str = std::wstring{ argv[1] };
 		if (str == L"install")
 		{
 			Service::Install();
@@ -427,13 +421,12 @@ try
 	}
     
 	Log::Info("Running...");
-    Win32::SERVICE_TABLE_ENTRY DispatchTable[] =
-    {
-        { const_cast<Win32::LPWSTR>(Service::ServiceName.data()), static_cast<Win32::LPSERVICE_MAIN_FUNCTIONW>(Service::SvcMain)},
-        { nullptr, nullptr }
-    };
+	auto DispatchTable = std::array{
+		Win32::SERVICE_TABLE_ENTRY{ const_cast<Win32::LPWSTR>(Service::ServiceName.data()), static_cast<Win32::LPSERVICE_MAIN_FUNCTIONW>(Service::SvcMain)},
+		Win32::SERVICE_TABLE_ENTRY{ nullptr, nullptr }
+	};
 
-    if (not Win32::StartServiceCtrlDispatcherW(DispatchTable))
+    if (not Win32::StartServiceCtrlDispatcherW(DispatchTable.data()))
         Log::Info(L"StartServiceCtrlDispatcher");
 
     return 0;

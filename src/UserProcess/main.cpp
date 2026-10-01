@@ -43,34 +43,31 @@ namespace Log
 	}
 }
 
-int main()
+auto main() -> int
+try
 {
 	Log::Info("Hello, world!");
+	auto value = Registry::GetString(
+		Win32::HKCU,
+		LR"(SOFTWARE\Mozilla\Firefox\Default Browser Agent)",
+		L"CurrentDefault"
+	);
 
-	try
-	{
-		std::wstring value = Registry::GetString(
-			Win32::HKCU,
-			LR"(SOFTWARE\Mozilla\Firefox\Default Browser Agent)",
-			L"CurrentDefault"
-		);
+	// Not necessary
+	/*Win32::PROFILEINFOW profile{.dwSize= sizeof(Win32::PROFILEINFOW)};
+	Win32::BOOL success = Win32::LoadUserProfileW(
+		Win32::GetCurrentProcessToken(),
+		&profile
+	);
+	if (not success)
+		throw Error::Win32Error(Win32::GetLastError(), "Failed to load profile");*/
 
-		// Not necessary
-		/*Win32::PROFILEINFOW profile{.dwSize= sizeof(Win32::PROFILEINFOW)};
-		Win32::BOOL success = Win32::LoadUserProfileW(
-			Win32::GetCurrentProcessToken(),
-			&profile
-		);
-		if (not success)
-			throw Error::Win32Error(Win32::GetLastError(), "Failed to load profile");*/
-
-		Log::Info(L"Got {}", value);
-		std::wcout << value << std::endl;
-	}
-	catch (const std::exception& ex)
-	{
-		Log::Info("Failed reading from registry: {}", ex.what());
-	}
-
+	Log::Info(L"Got {}", value);
+	std::wcout << value << std::endl;
 	return 0;
+}
+catch (const std::exception& ex)
+{
+	Log::Info("Failed reading from registry: {}", ex.what());
+	return 1;
 }
