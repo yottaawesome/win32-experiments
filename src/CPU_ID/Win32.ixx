@@ -114,6 +114,8 @@ export namespace Win32
 			Visible = WS_VISIBLE,
 			Child = WS_CHILD,
 			Border = WS_BORDER,
+			ThickFrame = WS_THICKFRAME,
+			MaximizeBox = WS_MAXIMIZEBOX,
 		};
 	}
 
