@@ -1,3 +1,5 @@
+#pragma comment(lib, "Comctl32.lib")
+
 import std;
 import Win32;
 import Intrinsics;
@@ -290,10 +292,85 @@ namespace Strings
 	FixedString(const char(&)[N]) -> FixedString<N, char>;
     template<size_t N>
     FixedString(const wchar_t(&)[N]) -> FixedString<N, wchar_t>;
+
+    auto Convert(const std::string& str) -> std::wstring
+    {
+        if (str.empty())
+            return {};
+        auto sizeNeeded = Win32::MultiByteToWideChar(
+            Win32::CodePage::Utf8,
+            0,
+            str.data(),
+            static_cast<int>(str.size()),
+            nullptr,
+            0
+        );
+        if (sizeNeeded <= 0)
+            throw Error::Win32Error{ Win32::GetLastError(), "MultiByteToWideChar() failed [1]" };
+
+        auto wstr = std::wstring(sizeNeeded, '\0');
+        auto result = Win32::MultiByteToWideChar(
+            Win32::CodePage::Utf8,
+            0,
+            str.data(),
+            static_cast<int>(str.size()),
+            wstr.data(),
+            sizeNeeded
+        );
+        if (result <= 0)
+            throw Error::Win32Error{ Win32::GetLastError(), "MultiByteToWideChar() failed [2]" };
+
+        return wstr;
+    }
+}
+
+namespace RAII
+{
+    template<auto VDeleteFn>
+    struct Deleter
+    {
+        static constexpr void operator()(auto handle) noexcept
+        {
+            VDeleteFn(handle);
+        }
+    };
+    template<typename T, auto VDeleter>
+    using IndirectUniquePtr = std::unique_ptr<std::remove_pointer_t<T>, Deleter<VDeleter>>;
+    using FontUniquePtr = IndirectUniquePtr<Win32::HFONT, Win32::DeleteObject>;
 }
 
 namespace UI
 {
+    template<std::invocable CreateFn>
+    struct Font
+    {
+        CreateFn Fn;
+
+        auto Get() const -> Win32::HFONT
+        {
+            static auto font = RAII::FontUniquePtr{ Fn() };
+            return font.get();
+        }
+
+        operator Win32::HFONT() const
+        {
+            return Get();
+        }
+    };
+
+    constexpr auto SystemFont = Font{
+        [] -> Win32::HFONT
+        {
+            auto metrics = Win32::NONCLIENTMETRICS{ .cbSize = sizeof(Win32::NONCLIENTMETRICS) };
+            Win32::SystemParametersInfoW(Win32::SpiGetNonClientMetrics, metrics.cbSize, &metrics, 0);
+            // When you're done with the font, don't forget to call Win32::DeleteObject();
+            auto font = Win32::CreateFontIndirectW(&metrics.lfCaptionFont);
+            if (not font)
+                throw Error::Win32Error{ Win32::GetLastError(), "Failed to load system font." };
+            return font;
+        }
+    };
+
     class Window
     {
     public:
@@ -301,9 +378,9 @@ namespace UI
 		{
             if (m_hwnd)
             {
-				Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, 0);
-                Win32::DestroyWindow(m_hwnd);
-				m_hwnd = nullptr;
+                auto tmp = m_hwnd;
+				release();
+                Win32::DestroyWindow(tmp);
             }
 		}
 
@@ -311,15 +388,56 @@ namespace UI
 			: m_hwnd(hwnd)
 		{}
 
-		auto HandleMessage(Win32::HWND hwnd, unsigned uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> std::optional<Win32::LRESULT>
+        auto HandleMessage(
+            Win32::HWND hwnd, 
+            unsigned uMsg, 
+            Win32::WPARAM wParam, 
+            Win32::LPARAM lParam
+        ) -> std::optional<Win32::LRESULT>
 		{
-			return std::nullopt;
+            switch (uMsg)
+            {
+			    case Win32::Messages::CtlColorStatic:
+                {
+                    return reinterpret_cast<Win32::LRESULT>(Win32::GetStockObject(Win32::Brushes::White));
+                }
+			    default:
+				    return std::nullopt;
+            }
 		}
 
 		void release()
 		{
-			m_hwnd = nullptr;
+            if (m_hwnd)
+            {
+                Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, 0);
+                m_hwnd = nullptr;
+            }
 		}
+
+        auto GetHwnd() const noexcept -> Win32::HWND
+        {
+            return m_hwnd;
+        }
+
+        auto SetFontOnChildren(Win32::HFONT font)
+        {
+            Win32::EnumChildWindows(
+                GetHwnd(),
+                [](Win32::HWND child, Win32::LPARAM fontValue) -> Win32::BOOL
+                {
+                    Win32::SendMessageW(
+                        child,
+                        Win32::Messages::SetFont,
+                        static_cast<Win32::WPARAM>(fontValue),
+                        true
+                    );
+                    return true;
+                },
+                reinterpret_cast<Win32::LPARAM>(font)
+            );
+        }
+
     private:
 		Win32::HWND m_hwnd = nullptr;
     };
@@ -327,9 +445,44 @@ namespace UI
 	template<Strings::FixedString ClassName, typename TWindow>
     struct WindowClass
     {
+    public:
+		~WindowClass()
+		{
+			Unregister();
+		}
+
 		WindowClass() 
         { 
-            Register(); 
+            Register();
+        }
+
+        auto CreateWindow(const std::wstring& title, Win32::DWORD styles, Win32::DWORD exStyles) const -> std::unique_ptr<TWindow>
+        {
+            auto hInstance = Win32::GetModuleHandleW(nullptr);
+            if (not hInstance)
+                throw Error::Win32Error{ Win32::GetLastError(), "GetModuleHandleW failed" };
+
+            auto hwnd = Win32::CreateWindowExW(
+                exStyles,
+                ClassName.ToView().data(),
+                title.c_str(),
+                styles,
+                0, 0,
+                800, 600,
+                nullptr,
+                nullptr,
+                hInstance,
+                nullptr);
+            if (not hwnd)
+                throw Error::Win32Error{ Win32::GetLastError(), "CreateWindowExW failed" };
+            return std::unique_ptr<TWindow>(reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData)));
+        }
+
+    private:
+        auto Unregister() const -> void
+        {
+			if (not Win32::UnregisterClassW(ClassName.ToView().data(), Win32::GetModuleHandleW(nullptr)))
+				throw Error::Win32Error{ Win32::GetLastError(), "UnregisterClassW failed" };
         }
 
 		auto Register() const -> void
@@ -353,28 +506,6 @@ namespace UI
 			};
 			if (not Win32::RegisterClassExW(&wc))
 				throw Error::Win32Error{ Win32::GetLastError(), "RegisterClassExW failed" };
-		}
-
-		auto CreateWindow() const -> std::unique_ptr<TWindow>
-		{
-			auto hInstance = Win32::GetModuleHandleW(nullptr);
-			if (not hInstance)
-				throw Error::Win32Error{ Win32::GetLastError(), "GetModuleHandleW failed" };
-
-			auto hwnd = Win32::CreateWindowExW(
-				0,
-				ClassName.ToView().data(),
-				L"My Window",
-				Win32::WindowStyles::OverlappedWindow | Win32::WindowStyles::Visible,
-				0, 0, 
-                800, 600,
-				nullptr,
-				nullptr,
-				hInstance,
-				nullptr);
-			if (not hwnd)
-				throw Error::Win32Error{ Win32::GetLastError(), "CreateWindowExW failed" };
-            return std::unique_ptr<TWindow>(reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData)));
 		}
 
 	private:
@@ -413,14 +544,230 @@ namespace UI
             return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
 		}
     };
+
+	template<typename TImplementation>
+    class Control
+    {
+    protected:
+        static auto SubclassProc(
+            Win32::HWND hwnd,
+            unsigned uMsg,
+            Win32::WPARAM wParam,
+            Win32::LPARAM lParam,
+            Win32::UINT_PTR,
+            Win32::DWORD_PTR dwRefData
+        ) -> Win32::LRESULT
+        {
+            if (auto pThis = reinterpret_cast<TImplementation*>(dwRefData); pThis)
+                if (auto result = pThis->HandleMessage(hwnd, uMsg, wParam, lParam); result)
+                    return *result;
+            return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
+        }
+    };
+
+	class Label : public Control<Label>
+    {
+    public:
+        ~Label()
+        {
+            if (not m_hwnd)
+                return;
+			auto tmp = m_hwnd;
+            m_hwnd = nullptr;
+            Win32::RemoveWindowSubclass(tmp, &Control<Label>::SubclassProc, 0);
+			Win32::DestroyWindow(tmp);
+        }
+
+		Label(const Label&) = delete;
+		auto operator=(const Label&) -> Label & = delete;
+
+		Label(Label&& other)
+			: m_hwnd{ other.m_hwnd }
+		{
+			other.m_hwnd = nullptr;
+            if (not Win32::SetWindowSubclass(m_hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(this)))
+                throw std::runtime_error{ "Failed to track control window destruction" };
+		}
+
+        Label(
+            unsigned controlId, 
+            const std::wstring& text, 
+            Win32::HWND parent, 
+            unsigned x, 
+            unsigned y, 
+            unsigned width, 
+            unsigned height,
+			Win32::DWORD additionalStyles = 0
+        )
+        {
+            if (not parent)
+				throw std::invalid_argument("parent window handle is null");
+			Create(controlId, text, parent, x, y, width, height, additionalStyles);
+        }
+
+        auto HandleMessage(Win32::HWND hwnd, unsigned uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> std::optional<Win32::LRESULT>
+        {
+            if (uMsg == Win32::Messages::NonClientDestroy)
+            {
+                Win32::RemoveWindowSubclass(hwnd, &Control<Label>::SubclassProc, 0);
+                m_hwnd = nullptr;
+            }
+            return std::nullopt;
+        }
+
+        [[nodiscard]]
+		auto GetHwnd() const noexcept -> Win32::HWND
+		{
+			return m_hwnd;
+		}
+
+		auto SetText(const std::wstring& text)
+		{
+			if (not m_hwnd)
+				throw std::runtime_error("Label window handle is null");
+			Win32::SetWindowTextW(m_hwnd, text.c_str());
+		}
+
+        auto SetText(bool value)
+        {
+            if (not m_hwnd)
+                throw std::runtime_error("Label window handle is null");
+            Win32::SetWindowTextW(m_hwnd, value ? L"True" : L"False");
+        }
+
+    protected:
+        void Create(
+            unsigned controlId,
+            const std::wstring& text,
+            Win32::HWND parent,
+            unsigned x,
+            unsigned y,
+            unsigned width,
+            unsigned height,
+            Win32::DWORD additionalStyles = 0
+        )
+        {
+            auto hwnd = Win32::CreateWindowExW(
+                0,
+                L"STATIC",
+                text.c_str(),
+                Win32::WindowStyles::Child | Win32::WindowStyles::Visible | additionalStyles,
+                x, y,
+                width, height,
+                parent,
+                reinterpret_cast<Win32::HMENU>(static_cast<Win32::ULONG_PTR>(controlId)),
+                Win32::GetModuleHandleW(nullptr),
+                nullptr);
+            if (not hwnd)
+                throw Error::Win32Error{ Win32::GetLastError(), "CreateWindowExW failed" };
+            if (not Win32::SetWindowSubclass(hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(this)))
+                throw std::runtime_error{ "Failed to track control window destruction" };
+
+            m_hwnd = hwnd;
+        }
+
+        Win32::HWND m_hwnd = nullptr;
+    };
+
+    class Layout
+    {
+    public:
+		Layout(Win32::HWND reference, unsigned rows, unsigned columns)
+			: m_reference(reference), m_rows(rows), m_columns(columns)
+		{
+			if (not reference)
+				throw std::invalid_argument("reference window handle is null");
+			if (rows == 0 or columns == 0)
+				throw std::invalid_argument("rows and columns must be greater than zero");
+		}
+
+        auto AddWindow(this auto&& self, Win32::HWND hwnd, unsigned row, unsigned column) -> decltype(self)
+        {
+            if (not hwnd)
+				throw std::invalid_argument("window handle is null");
+			self.m_toSize.push_back({hwnd, row, column});
+            return self;
+        }
+
+        auto Apply(this auto&& self) -> decltype(self)
+        {
+			auto referenceRect = Win32::RECT{};
+            Win32::GetClientRect(self.m_reference, &referenceRect);
+
+            auto rowHeight = (referenceRect.bottom - referenceRect.top) / self.m_rows;
+            auto colWidth = (referenceRect.right - referenceRect.left) / self.m_columns;
+
+			for (auto& wnd : self.m_toSize)
+			{
+				auto x = colWidth * wnd.column;
+				auto y = rowHeight * wnd.row;
+				Win32::SetWindowPos(wnd.hwnd, nullptr, x, y, colWidth, rowHeight, Win32::SetWindowPosFlags::NoZOrder);
+			}
+            return self;
+        }
+
+    private:
+		unsigned m_rows = 1;
+		unsigned m_columns = 1;
+		Win32::HWND m_reference = nullptr;
+        struct Position
+		{
+			Win32::HWND hwnd = nullptr;
+            unsigned row = 0;
+			unsigned column = 0;
+		};
+		std::vector<Position> m_toSize;
+    };
+
+	auto NextControlId() -> unsigned
+	{
+		static auto nextId = 1u;
+		return nextId++;
+	}
+
+	struct CaptionedLabel
+	{
+		UI::Label Caption;
+		UI::Label Value;
+		
+        CaptionedLabel(const std::wstring& caption, const std::wstring& value, Win32::HWND parent)
+			: Caption{ UI::NextControlId(), caption, parent, 0, 0, 100, 30, Win32::SS::Right }
+            , Value{ UI::NextControlId(), value, parent, 0, 0, 100, 30, Win32::SS::Left }
+        { }
+
+        CaptionedLabel(const std::wstring& caption, bool value, Win32::HWND parent)
+            : Caption{ UI::NextControlId(), caption, parent, 0, 0, 100, 30, Win32::SS::Right }
+            , Value{ UI::NextControlId(), value ? L"true" : L"false", parent, 0, 0, 100, 30, Win32::SS::Left }
+        {}
+	};
 }
 
 auto wWinMain(Win32::HINSTANCE, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 {
-	using WindowClass = UI::WindowClass<L"MyWindowClass", UI::Window>;
+	using WindowClass = UI::WindowClass<L"CpuViewer", UI::Window>;
 
 	auto windowClass = WindowClass{};
-	auto window = windowClass.CreateWindow();
+	auto window = windowClass.CreateWindow(L"CPU Viewer", Win32::WindowStyles::OverlappedWindow | Win32::WindowStyles::Visible, 0);
+
+	auto labels = std::array{
+        UI::CaptionedLabel{ L"Manufacturer: ", Strings::Convert(InstructionSet::Vendor()), window->GetHwnd() },
+        UI::CaptionedLabel{ L"Brand: ", Strings::Convert(InstructionSet::Brand()), window->GetHwnd() },
+        UI::CaptionedLabel{ L"SSE3: ", InstructionSet::SSE(), window->GetHwnd() },
+        UI::CaptionedLabel{ L"PCLMULQDQ: ", InstructionSet::PCLMULQDQ(), window->GetHwnd() },
+        UI::CaptionedLabel{ L"MONITOR: ", InstructionSet::MONITOR(), window->GetHwnd() },
+        UI::CaptionedLabel{ L"SSSE3: ", InstructionSet::SSSE3(), window->GetHwnd() },
+        UI::CaptionedLabel{ L"FMA: ", InstructionSet::FMA(), window->GetHwnd() },
+	};
+
+    auto layout = UI::Layout{ window->GetHwnd(), static_cast<unsigned>(std::max(labels.size(), 20ull)), 2};
+	for (unsigned i = 0; i < labels.size(); ++i)
+	{
+		layout.AddWindow(labels[i].Caption.GetHwnd(), i, 0);
+		layout.AddWindow(labels[i].Value.GetHwnd(), i, 1);
+	}
+    layout.Apply();
+
+    window->SetFontOnChildren(UI::SystemFont);
 
 	auto msg = Win32::MSG{};
 	while (Win32::GetMessageW(&msg, nullptr, 0, 0))

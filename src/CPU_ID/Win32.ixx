@@ -2,6 +2,7 @@ module;
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <commctrl.h>
 
 export module Win32;
 
@@ -37,6 +38,28 @@ export namespace Win32
 		::CREATESTRUCT,
 		::MSG,
 		::HBRUSH,
+		::RECT,
+		::ULONG_PTR,
+		::HMENU,
+		::DWORD_PTR,
+		::UINT_PTR,
+		::HFONT,
+		::NONCLIENTMETRICS,
+		::BOOL,
+		::MultiByteToWideChar,
+		::WideCharToMultiByte,
+		::SetWindowTextW,
+		::DeleteObject,
+		::CreateFontIndirectW,
+		::SystemParametersInfoW,
+		::EnumChildWindows,
+		::SendMessageW,
+		::RemoveWindowSubclass,
+		::DefSubclassProc,
+		::SetWindowSubclass,
+		::GetClientRect,
+		::SetWindowPos,
+		::UnregisterClassW,
 		::DestroyWindow,
 		::GetStockObject,
 		::GetMessageW,
@@ -56,6 +79,21 @@ export namespace Win32
 		::LocalFree
 		;
 
+	constexpr auto SpiGetNonClientMetrics = SPI_GETNONCLIENTMETRICS;
+
+	namespace CodePage
+	{
+		constexpr auto Utf8 = CP_UTF8;
+	}
+
+	namespace SetWindowPosFlags
+	{
+		constexpr auto NoZOrder = SWP_NOZORDER;
+		constexpr auto NoActivate = SWP_NOACTIVATE;
+		constexpr auto NoMove = SWP_NOMOVE;
+		constexpr auto NoSize = SWP_NOSIZE;
+	}
+
 	namespace Brushes
 	{
 		enum
@@ -73,7 +111,9 @@ export namespace Win32
 		enum
 		{
 			OverlappedWindow = WS_OVERLAPPEDWINDOW,
-			Visible = WS_VISIBLE
+			Visible = WS_VISIBLE,
+			Child = WS_CHILD,
+			Border = WS_BORDER,
 		};
 	}
 
@@ -95,13 +135,35 @@ export namespace Win32
 		};
 	}
 
+	namespace SS
+	{
+		enum
+		{
+			NoChange = SS_NOPREFIX,
+			NoPrefix = SS_NOPREFIX,
+			Center = SS_CENTER,
+			Left = SS_LEFT,
+			Right = SS_RIGHT,
+			Simple = SS_SIMPLE,
+			LeftNoWordWrap = SS_LEFTNOWORDWRAP,
+			OwnerDraw = SS_OWNERDRAW,
+			TypeMask = SS_TYPEMASK,
+			CenterImage = SS_CENTERIMAGE,
+			EditControl = SS_EDITCONTROL,
+			EndEllipsis = SS_ENDELLIPSIS,
+			EllipsisMask = SS_ELLIPSISMASK,
+		};
+	}
+
 	namespace Messages
 	{
 		enum
 		{
 			NonClientCreate = WM_NCCREATE,
 			NonClientDestroy = WM_NCDESTROY,
-			Destroy = WM_DESTROY
+			Destroy = WM_DESTROY,
+			CtlColorStatic = WM_CTLCOLORSTATIC,
+			SetFont = WM_SETFONT,
 		};
 	}
 }
