@@ -19,11 +19,6 @@ export namespace UI
 		Control(const Control&) = delete;
 		auto operator=(const Control&) -> Control & = delete;
 
-		// Move semantics are expected to be implemented in derived classes,
-		// this is deliberately left empty.
-        Control(Control&& other) noexcept {};
-        auto operator=(Control&& other) noexcept -> Control & { return *this; };
-
         void Destroy()
         {
             if (not m_hwnd)
@@ -50,18 +45,6 @@ export namespace UI
         }
 
     protected:
-        auto Move(this auto&& self, Control& other) noexcept -> decltype(self)
-        {
-            if (&self == &other)
-                return self;
-
-            self.Destroy();
-            self.m_hwnd = std::exchange(other.m_hwnd, nullptr);
-            if (self.m_hwnd)
-                Win32::SetWindowSubclass(self.m_hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(&self));
-            return self;
-        }
-
         static auto SubclassProc(
             Win32::HWND hwnd,
             unsigned uMsg,

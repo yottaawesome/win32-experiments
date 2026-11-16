@@ -14,8 +14,6 @@ export namespace UI
 			Destroy();
 		}
 
-		Button() = default;
-
 		Button(
 			unsigned controlId,
 			const std::wstring& text,
@@ -46,17 +44,6 @@ export namespace UI
 		// Copy
 		Button(const Button&) = delete;
 		auto operator=(const Button&) -> Button & = delete;
-
-		//
-		// Move
-		Button(Button&& other) noexcept
-		{
-			Move(other);
-		};
-		auto operator=(Button&& other) noexcept -> Button &
-		{
-			return Move(other);
-		}
 
 		std::move_only_function<auto()-> void> OnClick;
 

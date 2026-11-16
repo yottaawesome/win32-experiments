@@ -9,15 +9,6 @@ export namespace UI
     class Label : public Control<Label>
     {
     public:
-        Label(Label&& other) noexcept
-		{
-			Move(other);
-		};
-		auto operator=(Label&& other) noexcept -> Label &
-		{
-			return Move(other);
-		}
-
         Label(
             unsigned controlId,
             const std::wstring& text,

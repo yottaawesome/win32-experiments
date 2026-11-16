@@ -93,7 +93,7 @@ private:
         m_panel->GetHwnd(),
 		0, 0,
 		100, 30,
-		[this] { Win32::PostQuitMessage(0); },
+		[this] { Win32::PostMessageW(m_window->GetHwnd(), Win32::Messages::Close, 0, 0); },
 		Win32::WindowStyles::Visible | Win32::WindowStyles::Child
 	};
 
