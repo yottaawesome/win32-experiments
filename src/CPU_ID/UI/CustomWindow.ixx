@@ -18,10 +18,8 @@ export namespace UI
         CustomWindow(const CustomWindow&) = delete;
         auto operator=(const CustomWindow&) -> CustomWindow & = delete;
 
-		// Move semantics are expected to be implemented in derived classes, 
-        // this is deliberately left empty.
-        CustomWindow(CustomWindow&& other) noexcept {};
-        auto operator=(CustomWindow&& other) noexcept -> CustomWindow& { return *this; };
+        CustomWindow(CustomWindow&&) = delete;
+        auto operator=(CustomWindow&&) -> CustomWindow& = delete;
 
         void Destroy()
         {
@@ -69,17 +67,6 @@ export namespace UI
         }
 
 	protected:
-        auto Move(this auto&& self, CustomWindow& other) -> decltype(self)
-        {
-            if (&self == &other)
-                return self;
-            self.Destroy();
-            self.m_hwnd = std::exchange(other.m_hwnd, nullptr);
-            if (self.m_hwnd)
-                Win32::SetWindowLongPtrW(self.m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(&self));
-            return self;
-        }
-
 		auto LinkHwndToThis(this auto&& self) -> void
 		{
 			if (not self.m_hwnd)

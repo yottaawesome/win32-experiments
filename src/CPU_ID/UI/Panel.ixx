@@ -21,16 +21,6 @@ export namespace UI
 			LinkHwndToThis();
         }
 
-        Panel(Panel&& other) noexcept
-        {
-            Move(other);
-        }
-
-        auto operator=(Panel&& other) noexcept -> Panel&
-        {
-            return Move(other);
-        }
-
         auto HandleMessage(
             Win32::HWND hwnd,
             unsigned uMsg,

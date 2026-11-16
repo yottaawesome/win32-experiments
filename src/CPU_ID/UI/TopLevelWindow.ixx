@@ -15,16 +15,6 @@ export namespace UI
             LinkHwndToThis();
         }
 
-		TopLevelWindow(TopLevelWindow&& other) noexcept
-		{
-			Move(other);
-        }
-
-		auto operator=(TopLevelWindow&& other) noexcept -> TopLevelWindow&
-		{
-            return Move(other);
-		}
-
 		[[nodiscard]]
         auto HandleMessage(
             Win32::HWND hwnd,
