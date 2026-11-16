@@ -1,17 +1,86 @@
+module;
+
+#include <cstdio>
+#include <ctime>
+
 export module CpuId:Error;
 import std;
 import Win32;
 
 export namespace Error
 {
+	[[noreturn]]
 	void ErrorExit(
 		int exitCode, 
-		const std::string& message, 
+		std::string_view message,
 		const std::source_location& location = std::source_location::current()
-	)
+	) noexcept
 	{
-		std::cerr << message << std::endl;
-		std::exit(exitCode);
+		// Avoid heap-backed diagnostics, including STL debug bookkeeping.
+		auto frames = std::array<Win32::LPVOID, 64>{};
+		auto frameCount = Win32::RtlCaptureStackBackTrace(
+			1, static_cast<Win32::DWORD>(frames.size()), frames.data(), nullptr);
+		auto timestamp = std::array<char, 32>{};
+		auto now = std::time(nullptr);
+		auto utc = std::tm{};
+		if (gmtime_s(&utc, &now) == 0)
+			std::strftime(timestamp.data(), timestamp.size(), "%Y-%m-%dT%H:%M:%SZ", &utc);
+
+		auto writeReport = [&](std::FILE* output) noexcept
+		{
+			std::fprintf(
+				output,
+				"\nFatal error at %s:%u\nFunction: %s\nExit code: %d\nMessage: ",
+				location.file_name(),
+				static_cast<unsigned>(location.line()),
+				location.function_name(),
+				exitCode);
+			if (not message.empty())
+				std::fwrite(message.data(), 1, message.size(), output);
+			std::fputc('\n', output);
+			std::fprintf(output, "Time: %s\nStacktrace:\n", timestamp.data());
+			for (unsigned i = 0; i < frameCount; ++i)
+			{
+				std::fprintf(output, "%u> %p", i, frames[i]);
+				auto module = Win32::HMODULE{};
+				auto modulePath = std::array<wchar_t, 1024>{};
+				if (Win32::GetModuleHandleExW(
+					Win32::GetModuleHandleFlags::FromAddress | Win32::GetModuleHandleFlags::UnchangedRefCount,
+					reinterpret_cast<const wchar_t*>(frames[i]),
+					&module))
+				{
+					auto length = Win32::GetModuleFileNameW(
+						module, modulePath.data(), static_cast<Win32::DWORD>(modulePath.size()));
+					if (length > 0 and length < modulePath.size())
+						std::fprintf(
+							output, " (%ls+0x%llX)", modulePath.data(),
+							static_cast<unsigned long long>(
+								reinterpret_cast<std::uintptr_t>(frames[i]) - reinterpret_cast<std::uintptr_t>(module)));
+				}
+				std::fputc('\n', output);
+			}
+			std::fflush(output);
+		};
+
+		writeReport(stderr);
+
+		auto logPath = std::array<wchar_t, 1024>{};
+		constexpr auto logName = std::wstring_view{L"CPU_ID-fatal-error.log"};
+		auto pathLength = Win32::GetTempPathW(static_cast<Win32::DWORD>(logPath.size()), logPath.data());
+		if (pathLength > 0 and pathLength + logName.size() < logPath.size())
+		{
+			std::copy(logName.begin(), logName.end(), logPath.data() + pathLength);
+			logPath[pathLength + logName.size()] = L'\0';
+			auto log = static_cast<std::FILE*>(nullptr);
+			if (_wfopen_s(&log, logPath.data(), L"a") == 0)
+			{
+				writeReport(log);
+				std::fclose(log);
+			}
+		}
+
+		// Fatal callback failures must not re-enter application code during teardown.
+		std::_Exit(exitCode);
 	}
 
 	auto TranslateWin32Error(Win32::DWORD errorCode) -> std::string

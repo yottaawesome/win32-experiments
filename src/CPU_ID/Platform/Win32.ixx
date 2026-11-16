@@ -13,6 +13,7 @@ export namespace Win32
 		::DWORD,
 		::PDWORD,
 		::HINSTANCE,
+		::HMODULE,
 		::PTOKEN_PRIVILEGES,
 		::LPWSTR,
 		::SERVICE_TABLE_ENTRY,
@@ -80,10 +81,23 @@ export namespace Win32
 		::SetEvent,
 		::FormatMessageW,
 		::GetModuleHandleW,
+		::GetModuleHandleExW,
+		::GetModuleFileNameW,
+		::GetTempPathW,
+		::RtlCaptureStackBackTrace,
 		::LocalFree
 		;
 
 	constexpr auto SpiGetNonClientMetrics = SPI_GETNONCLIENTMETRICS;
+
+	namespace GetModuleHandleFlags
+	{
+		enum
+		{
+			FromAddress = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+			UnchangedRefCount = GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
+		};
+	}
 
 	namespace CodePage
 	{

@@ -17,12 +17,16 @@ public:
 	auto Run() -> int
 	{
         auto msg = Win32::MSG{};
-        while (Win32::GetMessageW(&msg, nullptr, 0, 0))
+        while (true)
         {
+            auto result = Win32::GetMessageW(&msg, nullptr, 0, 0);
+            if (result == -1)
+                throw Error::Win32Error{Win32::GetLastError(), "GetMessageW failed"};
+            if (result == 0)
+                return static_cast<int>(msg.wParam);
             Win32::TranslateMessage(&msg);
             Win32::DispatchMessageW(&msg);
         }
-        return static_cast<int>(msg.wParam);
 	}
 
 private:
@@ -160,7 +164,16 @@ private:
         };
 };
 
-auto wWinMain(Win32::HINSTANCE, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
+auto wWinMain(Win32::HINSTANCE, Win32::HINSTANCE, Win32::LPWSTR, int) noexcept -> int
+try
 {
 	return App{}.Run();
+}
+catch (const std::exception& error)
+{
+    Error::ErrorExit(1, error.what());
+}
+catch (...)
+{
+    Error::ErrorExit(1, "Unknown exception during application startup or message loop");
 }

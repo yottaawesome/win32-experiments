@@ -1,6 +1,7 @@
 export module CpuId:UI.WindowClass;
 import std;
 import Win32;
+import :Error;
 import :Strings;
 
 export namespace UI
@@ -97,7 +98,8 @@ export namespace UI
             unsigned uMsg, 
             Win32::WPARAM wParam, 
             Win32::LPARAM lParam
-        ) -> Win32::LRESULT
+        ) noexcept -> Win32::LRESULT
+        try
         {
             auto pThis = static_cast<TWindow*>(nullptr);
             if (uMsg == Win32::Messages::NonClientCreate)
@@ -131,6 +133,14 @@ export namespace UI
 				if (uMsg == Win32::Messages::Destroy)
 					return (Win32::PostQuitMessage(0), 0);
             return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+        }
+        catch (const std::exception& error)
+        {
+            Error::ErrorExit(1, error.what());
+        }
+        catch (...)
+        {
+            Error::ErrorExit(1, "Unknown exception in window procedure");
         }
     };
 }

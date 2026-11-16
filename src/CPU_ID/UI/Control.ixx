@@ -46,7 +46,7 @@ export namespace UI
 		{
 			if (m_hwnd)
 			{
-				Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, 0);
+				Win32::RemoveWindowSubclass(m_hwnd, &Control::SubclassProc, 0);
 				m_hwnd = nullptr;
 			}
 		}
@@ -65,12 +65,21 @@ export namespace UI
             Win32::LPARAM lParam,
             Win32::UINT_PTR,
             Win32::DWORD_PTR dwRefData
-        ) -> Win32::LRESULT
+        ) noexcept -> Win32::LRESULT
+        try
         {
             if (auto pThis = reinterpret_cast<TImplementation*>(dwRefData); pThis)
                 if (auto result = pThis->HandleMessage(hwnd, uMsg, wParam, lParam); result)
                     return *result;
             return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
+        }
+        catch (const std::exception& error)
+        {
+            Error::ErrorExit(1, error.what());
+        }
+        catch (...)
+        {
+            Error::ErrorExit(1, "Unknown exception in control subclass procedure");
         }
 
         void Create(std::wstring_view className, ControlArgs args)
