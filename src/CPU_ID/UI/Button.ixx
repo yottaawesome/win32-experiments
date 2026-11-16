@@ -49,8 +49,14 @@ export namespace UI
 
 		//
 		// Move
-		Button(Button&& other) noexcept = default;
-		auto operator=(Button&& other) noexcept -> Button & = default;
+		Button(Button&& other) noexcept
+		{
+			Move(other);
+		};
+		auto operator=(Button&& other) noexcept -> Button &
+		{
+			return Move(other);
+		}
 
 		std::move_only_function<auto()-> void> OnClick;
 

@@ -9,11 +9,14 @@ export namespace UI
     class Label : public Control<Label>
     {
     public:
-        Label(const Label&) = delete;
-        auto operator=(const Label&) -> Label & = delete;
-
-        Label(Label&& other) noexcept = default;
-        auto operator=(Label&& other) noexcept -> Label & = default;
+        Label(Label&& other) noexcept
+		{
+			Move(other);
+		};
+		auto operator=(Label&& other) noexcept -> Label &
+		{
+			return Move(other);
+		}
 
         Label(
             unsigned controlId,

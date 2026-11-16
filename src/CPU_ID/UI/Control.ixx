@@ -19,22 +19,8 @@ export namespace UI
 		Control(const Control&) = delete;
 		auto operator=(const Control&) -> Control & = delete;
 
-		Control(Control&& other) noexcept
-			: m_hwnd{ other.m_hwnd }
-		{
-			other.m_hwnd = nullptr;
-			if (m_hwnd)
-				Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(this));
-		}
-		auto operator=(Control&& other) noexcept -> Control&
-		{
-			if (this == &other)
-				return *this;
-			Destroy();
-			m_hwnd = std::exchange(other.m_hwnd, nullptr);
-			Win32::SetWindowSubclass(m_hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(this));
-			return *this;
-		}
+        Control(Control&& other) noexcept = default;
+        auto operator=(Control&& other) noexcept -> Control & = default;
 
         void Destroy()
         {
@@ -62,6 +48,18 @@ export namespace UI
         }
 
     protected:
+        auto Move(this auto&& self, Control& other) noexcept -> decltype(self)
+        {
+            if (&self == &other)
+                return self;
+
+            self.Destroy();
+            self.m_hwnd = std::exchange(other.m_hwnd, nullptr);
+            if (self.m_hwnd)
+                Win32::SetWindowSubclass(self.m_hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(&self));
+            return self;
+        }
+
         static auto SubclassProc(
             Win32::HWND hwnd,
             unsigned uMsg,

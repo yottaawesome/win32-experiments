@@ -8,28 +8,18 @@ export namespace UI
 	class CustomWindow
 	{
 	public:
+        ~CustomWindow()
+        {
+            Destroy();
+        }
+
 		CustomWindow() = default;
 
         CustomWindow(const CustomWindow&) = delete;
         auto operator=(const CustomWindow&) -> CustomWindow & = delete;
 
-        CustomWindow(CustomWindow&& other) noexcept
-        {
-            m_hwnd = other.m_hwnd;
-            other.m_hwnd = nullptr;
-            if (m_hwnd)
-                Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(this));
-        }
-        auto operator=(CustomWindow&& other) noexcept -> CustomWindow&
-        {
-            if (this == &other)
-                return *this;
-            Destroy();
-            m_hwnd = std::exchange(other.m_hwnd, nullptr);
-            if (m_hwnd)
-                Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(this));
-            return *this;
-        }
+		CustomWindow(CustomWindow&& other) noexcept = default;
+		auto operator=(CustomWindow&& other) noexcept -> CustomWindow & = default;
 
         void Destroy()
         {
@@ -39,6 +29,18 @@ export namespace UI
                 release();
                 Win32::DestroyWindow(tmp);
             }
+        }
+
+        auto Show() const -> void
+        {
+            if (m_hwnd)
+                Win32::ShowWindow(m_hwnd, Win32::ShowWindowFlags::Show);
+        }
+
+        auto Hide() const -> void
+        {
+            if (m_hwnd)
+                Win32::ShowWindow(m_hwnd, Win32::ShowWindowFlags::Hide);
         }
 
         void release()
@@ -65,6 +67,17 @@ export namespace UI
         }
 
 	protected:
+        auto Move(this auto&& self, CustomWindow& other) -> decltype(self)
+        {
+            if (&self == &other)
+                return self;
+            self.Destroy();
+            self.m_hwnd = std::exchange(other.m_hwnd, nullptr);
+            if (self.m_hwnd)
+                Win32::SetWindowLongPtrW(self.m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(&self));
+            return self;
+        }
+
 		auto LinkHwndToThis() -> void
 		{
 			if (not m_hwnd)
