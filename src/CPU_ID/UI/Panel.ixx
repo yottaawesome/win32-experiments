@@ -3,10 +3,11 @@ import std;
 import Win32;
 import :UI.WindowClass;
 import :UI.Common;
+import :UI.CustomWindow;
 
 export namespace UI
 {
-    class Panel
+    class Panel : public CustomWindow
     {
     public:
 		~Panel()
@@ -15,38 +16,9 @@ export namespace UI
 		}
 
         Panel(Win32::HWND hwnd)
-            : m_hwnd(hwnd)
-        {}
-
-		Panel(const Panel&) = delete;
-		auto operator=(const Panel&) -> Panel & = delete;
-
-        Panel(Panel&& other) noexcept
-            : m_hwnd{ other.m_hwnd }
         {
-            other.m_hwnd = nullptr;
-            if (m_hwnd)
-                Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(this));
-        }
-        auto operator=(Panel&& other) noexcept -> Panel&
-        {
-            if (this == &other)
-                return *this;
-            Destroy();
-            m_hwnd = std::exchange(other.m_hwnd, nullptr);
-            if (m_hwnd)
-                Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(this));
-            return *this;
-        }
-
-        void Destroy()
-        {
-            if (m_hwnd)
-            {
-                auto tmp = m_hwnd;
-                release();
-                Win32::DestroyWindow(tmp);
-            }
+			m_hwnd = hwnd;
+			LinkHwndToThis();
         }
 
         auto HandleMessage(
@@ -73,23 +45,10 @@ export namespace UI
                 {
                     return reinterpret_cast<Win32::LRESULT>(Win32::GetStockObject(Win32::Brushes::White));
                 }
+
                 default:
                     return std::nullopt;
             }
-        }
-
-        void release()
-        {
-            if (m_hwnd)
-            {
-                Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, 0);
-                m_hwnd = nullptr;
-            }
-        }
-
-        auto GetHwnd() const noexcept -> Win32::HWND
-        {
-            return m_hwnd;
         }
 
         auto SetFontOnChildren(Win32::HFONT font)
@@ -109,18 +68,6 @@ export namespace UI
                 reinterpret_cast<Win32::LPARAM>(font)
             );
         }
-
-        auto GetClientDimensions() const -> Dimensions
-        {
-            if (not m_hwnd)
-                return {};
-            auto rect = Win32::RECT{};
-            Win32::GetClientRect(GetHwnd(), &rect);
-            return { static_cast<unsigned>(rect.right - rect.left), static_cast<unsigned>(rect.bottom - rect.top) };
-        }
-
-    protected:
-        Win32::HWND m_hwnd = nullptr;
     };
 
 	using PanelWindowClass = WindowClass<"PanelWindowClass", Panel, false>;

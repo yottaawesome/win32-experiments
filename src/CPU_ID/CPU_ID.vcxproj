@@ -162,6 +162,7 @@
     <ClCompile Include="UI\CaptionedLabel.ixx" />
     <ClCompile Include="UI\Common.ixx" />
     <ClCompile Include="UI\Control.ixx" />
+    <ClCompile Include="UI\CustomWindow.ixx" />
     <ClCompile Include="UI\Font.ixx" />
     <ClCompile Include="UI\Functions.ixx" />
     <ClCompile Include="UI\Label.ixx" />
