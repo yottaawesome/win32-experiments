@@ -9,40 +9,11 @@ export namespace UI
     class Label : public Control<Label>
     {
     public:
-        ~Label()
-        {
-            Destroy();
-        }
-
-		void Destroy()
-		{
-            if (not m_hwnd)
-                return;
-			auto tmp = m_hwnd;
-			m_hwnd = nullptr;
-			Win32::RemoveWindowSubclass(tmp, &Control<Label>::SubclassProc, 0);
-			Win32::DestroyWindow(tmp);
-		}
-
         Label(const Label&) = delete;
         auto operator=(const Label&) -> Label & = delete;
 
-        Label(Label&& other) noexcept
-            : m_hwnd{ other.m_hwnd }
-        {
-            other.m_hwnd = nullptr;
-            if (not Win32::SetWindowSubclass(m_hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(this)))
-                throw std::runtime_error{ "Failed to track control window destruction" };
-        }
-		auto operator=(Label&& other) noexcept -> Label&
-		{
-			if (this == &other)
-				return *this;
-			Destroy();
-			m_hwnd = std::exchange(other.m_hwnd, nullptr);
-			Win32::SetWindowSubclass(m_hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(this));
-			return *this;
-		}
+        Label(Label&& other) noexcept = default;
+        auto operator=(Label&& other) noexcept -> Label & = default;
 
         Label(
             unsigned controlId,
@@ -57,7 +28,15 @@ export namespace UI
         {
             if (not parent)
                 throw std::invalid_argument{ "parent window handle is null" };
-            Create(controlId, text, parent, x, y, width, height, additionalStyles);
+            Create(
+                controlId, 
+                L"STATIC", 
+                text, 
+                Win32::WindowStyles::Child | Win32::WindowStyles::Visible | additionalStyles, 
+                parent, 
+                x, y, 
+                width, height, 
+                additionalStyles);
         }
 
         auto HandleMessage(Win32::HWND hwnd, unsigned uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> std::optional<Win32::LRESULT>
@@ -68,12 +47,6 @@ export namespace UI
                 m_hwnd = nullptr;
             }
             return std::nullopt;
-        }
-
-        [[nodiscard]]
-        auto GetHwnd() const noexcept -> Win32::HWND
-        {
-            return m_hwnd;
         }
 
         auto SetText(const std::wstring& text)
@@ -89,36 +62,5 @@ export namespace UI
                 throw std::runtime_error{ "Label window handle is null" };
             Win32::SetWindowTextW(m_hwnd, value ? L"True" : L"False");
         }
-
-    protected:
-        void Create(
-            unsigned controlId,
-            const std::wstring& text,
-            Win32::HWND parent,
-            unsigned x,
-            unsigned y,
-            unsigned width,
-            unsigned height,
-            Win32::DWORD additionalStyles = 0
-        )
-        {
-            m_hwnd = Win32::CreateWindowExW(
-                0,
-                L"STATIC",
-                text.c_str(),
-                Win32::WindowStyles::Child | Win32::WindowStyles::Visible | additionalStyles,
-                x, y,
-                width, height,
-                parent,
-                reinterpret_cast<Win32::HMENU>(static_cast<Win32::ULONG_PTR>(controlId)),
-                Win32::GetModuleHandleW(nullptr),
-                nullptr);
-            if (not hwnd)
-                throw Error::Win32Error{ Win32::GetLastError(), "CreateWindowExW failed" };
-            if (not Win32::SetWindowSubclass(hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(this)))
-                throw std::runtime_error{ "Failed to track control window destruction" };
-        }
-
-        Win32::HWND m_hwnd = nullptr;
     };
 }

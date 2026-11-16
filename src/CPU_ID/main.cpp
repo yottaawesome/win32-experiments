@@ -43,14 +43,14 @@ private:
         }
         layout.Apply();
 
-		auto anchoredLayout = UI::AnchorLayout{ m_panel->GetHwnd() };
-        anchoredLayout.Add(
-            UI::AnchorLayout::Entry{
-                m_closeButton.GetHwnd(),
-                UI::AnchorLayout::Anchor::BottomRight,
-                10,
-                10
-            })
+        UI::AnchorLayout{ m_panel->GetHwnd() }
+            .Add(
+                UI::AnchorLayout::Entry{
+                    m_closeButton.GetHwnd(),
+                    UI::AnchorLayout::Anchor::BottomRight,
+                    10,
+                    10
+                })
             .Apply();
     }
 
@@ -93,6 +93,7 @@ private:
         m_panel->GetHwnd(),
 		0, 0,
 		100, 30,
+		[this] { Win32::PostQuitMessage(0); },
 		Win32::WindowStyles::Visible | Win32::WindowStyles::Child
 	};
 
