@@ -88,13 +88,16 @@ private:
         }();
 
 	UI::Button m_closeButton = UI::Button{
-		UI::NextControlId(),
-		L"Close",
-        m_panel->GetHwnd(),
-		0, 0,
-		100, 30,
-		[this] { Win32::PostMessageW(m_window->GetHwnd(), Win32::Messages::Close, 0, 0); },
-		Win32::WindowStyles::Visible | Win32::WindowStyles::Child
+        UI::ButtonArgs{
+            .Control{
+				.ControlId = UI::NextControlId(),
+				.Text = L"Close",
+				.Parent = m_panel->GetHwnd(),
+				.Width = 100,
+				.Height = 30,
+            },
+            .OnClick = [this] { Win32::PostMessageW(m_window->GetHwnd(), Win32::Messages::Close, 0, 0); },
+        }
 	};
 
     // Create the labels for each instruction set feature

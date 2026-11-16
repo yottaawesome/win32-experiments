@@ -2,9 +2,22 @@ export module CpuId:UI.Control;
 import std;
 import Win32;
 import :Error;
+import :UI.Functions;
 
 export namespace UI
 {
+	struct ControlArgs
+	{
+		unsigned ControlId = NextControlId();
+		std::wstring Text;
+		Win32::HWND Parent = nullptr;
+		unsigned X = 0;
+		unsigned Y = 0;
+		unsigned Width = 0;
+		unsigned Height = 0;
+		Win32::DWORD WindowStyles = 0;
+	};
+
     template<typename TImplementation>
     class Control
     {
@@ -60,28 +73,17 @@ export namespace UI
             return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
         }
 
-        void Create(
-            unsigned controlId,
-            std::wstring_view className,
-            const std::wstring& text,
-            Win32::DWORD styles,
-            Win32::HWND parent,
-            unsigned x,
-            unsigned y,
-            unsigned width,
-            unsigned height,
-            Win32::DWORD additionalStyles = 0
-        )
+        void Create(std::wstring_view className, ControlArgs args)
         {
             m_hwnd = Win32::CreateWindowExW(
                 0,
                 className.data(),
-                text.c_str(),
-                styles,
-                x, y,
-                width, height,
-                parent,
-                reinterpret_cast<Win32::HMENU>(static_cast<Win32::ULONG_PTR>(controlId)),
+                args.Text.c_str(),
+                Win32::WindowStyles::Child | Win32::WindowStyles::Visible | args.WindowStyles,
+                args.X, args.Y,
+                args.Width, args.Height,
+                args.Parent,
+                reinterpret_cast<Win32::HMENU>(static_cast<Win32::ULONG_PTR>(args.ControlId)),
                 Win32::GetModuleHandleW(nullptr),
                 nullptr);
             if (not m_hwnd)

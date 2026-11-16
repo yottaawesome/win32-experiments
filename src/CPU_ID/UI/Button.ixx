@@ -3,9 +3,16 @@ import std;
 import Win32;
 import :Error;
 import :UI.Control;
+import :UI.Functions;
 
 export namespace UI
 {
+	struct ButtonArgs
+	{
+		ControlArgs Control{};
+		std::move_only_function<auto()-> void> OnClick;
+	};
+
 	class Button : public Control<Button>
 	{
 	public:
@@ -14,30 +21,12 @@ export namespace UI
 			Destroy();
 		}
 
-		Button(
-			unsigned controlId,
-			const std::wstring& text,
-			Win32::HWND parent,
-			unsigned x,
-			unsigned y,
-			unsigned width,
-			unsigned height,
-			std::move_only_function<auto()-> void> onClick,
-			Win32::DWORD additionalStyles = 0
-		) : OnClick{ std::move(onClick) }
+		Button(ButtonArgs args) 
+			: OnClick{ std::move(args.OnClick) }
 		{
-			if (not parent)
+			if (not args.Control.Parent)
 				throw std::invalid_argument{ "parent window handle is null" };
-			Create(
-				controlId, 
-				L"BUTTON",
-				text,
-				Win32::WindowStyles::Child | Win32::WindowStyles::Visible | additionalStyles,
-				parent, 
-				x, y, 
-				width, height, 
-				additionalStyles
-			);
+			Create(L"BUTTON", args.Control);
 		}
 
 		//

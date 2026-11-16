@@ -6,31 +6,19 @@ import :UI.Control;
 
 export namespace UI
 {
+	struct LabelArgs
+	{
+		ControlArgs Control{};
+	};
+
     class Label : public Control<Label>
     {
     public:
-        Label(
-            unsigned controlId,
-            const std::wstring& text,
-            Win32::HWND parent,
-            unsigned x,
-            unsigned y,
-            unsigned width,
-            unsigned height,
-            Win32::DWORD additionalStyles = 0
-        )
+        Label(LabelArgs args)
         {
-            if (not parent)
+            if (not args.Control.Parent)
                 throw std::invalid_argument{ "parent window handle is null" };
-            Create(
-                controlId, 
-                L"STATIC", 
-                text, 
-                Win32::WindowStyles::Child | Win32::WindowStyles::Visible | additionalStyles, 
-                parent, 
-                x, y, 
-                width, height, 
-                additionalStyles);
+            Create(L"STATIC", args.Control);
         }
 
         auto HandleMessage(Win32::HWND hwnd, unsigned uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> std::optional<Win32::LRESULT>
