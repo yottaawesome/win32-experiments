@@ -46,6 +46,9 @@ export namespace Win32
 		::HFONT,
 		::NONCLIENTMETRICS,
 		::BOOL,
+		::ATOM,
+		::GetWindowRect,
+		::ShowWindow,
 		::MultiByteToWideChar,
 		::WideCharToMultiByte,
 		::SetWindowTextW,
@@ -106,6 +109,18 @@ export namespace Win32
 		};
 	}
 
+	namespace ShowWindowFlags
+	{
+		enum
+		{
+			Show = SW_SHOW,
+			Hide = SW_HIDE,
+			ShowDefault = SW_SHOWNORMAL,
+			ShowMinimized = SW_SHOWMINIMIZED,
+			ShowMaximized = SW_SHOWMAXIMIZED
+		};
+	}
+
 	namespace WindowStyles
 	{
 		enum
@@ -116,6 +131,8 @@ export namespace Win32
 			Border = WS_BORDER,
 			ThickFrame = WS_THICKFRAME,
 			MaximizeBox = WS_MAXIMIZEBOX,
+			ClipSiblings = WS_CLIPSIBLINGS,
+			ClipChildren = WS_CLIPCHILDREN
 		};
 	}
 
@@ -157,6 +174,17 @@ export namespace Win32
 		};
 	}
 
+	[[nodiscard]]
+	constexpr auto HiWord(auto value) noexcept -> auto
+	{
+		return HIWORD(value);
+	}
+	[[nodiscard]]
+	constexpr auto LoWord(auto value) noexcept -> auto
+	{
+		return LOWORD(value);
+	}
+
 	namespace Messages
 	{
 		enum
@@ -166,6 +194,16 @@ export namespace Win32
 			Destroy = WM_DESTROY,
 			CtlColorStatic = WM_CTLCOLORSTATIC,
 			SetFont = WM_SETFONT,
+			Command = WM_COMMAND,
+			ReflectedCommand = WM_APP + 1
+		};
+	}
+
+	namespace BN
+	{
+		enum
+		{
+			Clicked = BN_CLICKED
 		};
 	}
 }

@@ -158,8 +158,19 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Raii\Raii.ixx" />
     <ClCompile Include="Strings\Strings.ixx" />
+    <ClCompile Include="UI\Button.ixx" />
+    <ClCompile Include="UI\CaptionedLabel.ixx" />
+    <ClCompile Include="UI\Common.ixx" />
+    <ClCompile Include="UI\Control.ixx" />
+    <ClCompile Include="UI\Font.ixx" />
+    <ClCompile Include="UI\Functions.ixx" />
+    <ClCompile Include="UI\Label.ixx" />
+    <ClCompile Include="UI\Layout.ixx" />
+    <ClCompile Include="UI\Panel.ixx" />
+    <ClCompile Include="UI\TopLevelWindow.ixx" />
     <ClCompile Include="UI\UI.ixx" />
     <ClCompile Include="Platform\Win32.ixx" />
+    <ClCompile Include="UI\WindowClass.ixx" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="App.manifest" />
