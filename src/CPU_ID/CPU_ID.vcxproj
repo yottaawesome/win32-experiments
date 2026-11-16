@@ -151,9 +151,15 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Intrinsics.ixx" />
+    <ClCompile Include="CpuId.ixx" />
+    <ClCompile Include="Error\Error.ixx" />
+    <ClCompile Include="InstructionSet\InstructionSet.ixx" />
+    <ClCompile Include="Platform\Intrinsics.ixx" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Win32.ixx" />
+    <ClCompile Include="Raii\Raii.ixx" />
+    <ClCompile Include="Strings\Strings.ixx" />
+    <ClCompile Include="UI\UI.ixx" />
+    <ClCompile Include="Platform\Win32.ixx" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="App.manifest" />
