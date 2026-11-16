@@ -24,6 +24,9 @@ export namespace UI
             Register();
         }
 
+		WindowClass(const WindowClass&) = delete;
+        auto operator=(const WindowClass&) -> WindowClass& = delete;
+
         auto CreateWindow(
 			this auto&& self,
             const std::wstring& title,
@@ -40,6 +43,7 @@ export namespace UI
             if (not hInstance)
                 throw Error::Win32Error{ Win32::GetLastError(), "GetModuleHandleW failed" };
 
+            auto window = std::make_unique<TWindow>();
             auto hwnd = Win32::CreateWindowExW(
                 exStyles,
                 ClassName.ToView().data(),
@@ -50,10 +54,13 @@ export namespace UI
                 parent,
                 nullptr,
                 hInstance,
-                nullptr);
+                window.get());
             if (not hwnd)
+            {
+                window->Detach();
                 throw Error::Win32Error{ Win32::GetLastError(), "CreateWindowExW failed" };
-            return std::unique_ptr<TWindow>(reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData)));
+            }
+            return window;
         }
 
     private:
@@ -105,18 +112,18 @@ export namespace UI
             if (uMsg == Win32::Messages::NonClientCreate)
             {
                 auto* pCreate = reinterpret_cast<Win32::CREATESTRUCT*>(lParam);
-                pThis = reinterpret_cast<TWindow*>(pCreate->lpCreateParams);
+                pThis = static_cast<TWindow*>(pCreate->lpCreateParams);
                 if (not pThis)
-                    pThis = new TWindow{ hwnd };
-                Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::LONG_PTR>(pThis));
+                    return 0;
+                pThis->Attach(hwnd);
             }
             else
             {
                 pThis = reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData));
                 if (pThis and uMsg == Win32::Messages::NonClientDestroy)
                 {
-                    pThis->release();
                     Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, 0);
+                    pThis->Detach();
                 }
             }
 

@@ -78,6 +78,7 @@ export namespace Win32
 		::RegisterClassExW,
 		::CreateWindowExW,
 		::GetLastError,
+		::SetLastError,
 		::SetEvent,
 		::FormatMessageW,
 		::GetModuleHandleW,

@@ -15,11 +15,7 @@ export namespace UI
             Destroy();
 		}
 
-        Panel(Win32::HWND hwnd)
-        {
-			m_hwnd = hwnd;
-			LinkHwndToThis();
-        }
+        Panel() = default;
 
         auto HandleMessage(
             Win32::HWND hwnd,

@@ -1,6 +1,7 @@
 export module CpuId:UI.CustomWindow;
 import std;
 import Win32;
+import :Error;
 import :UI.Common;
 
 export namespace UI
@@ -20,6 +21,24 @@ export namespace UI
 
         CustomWindow(CustomWindow&&) = delete;
         auto operator=(CustomWindow&&) -> CustomWindow& = delete;
+
+        auto Attach(this auto&& self, Win32::HWND hwnd) -> void
+        {
+            if (not hwnd)
+                throw std::invalid_argument{ "window handle is null" };
+            if (self.m_hwnd)
+                throw std::logic_error{ "window handle is already attached" };
+            Win32::SetLastError(0);
+            if (not Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::LONG_PTR>(&self)))
+                if (auto error = Win32::GetLastError(); error)
+                    throw Error::Win32Error{ error, "SetWindowLongPtrW failed" };
+            self.m_hwnd = hwnd;
+        }
+
+        auto Detach() noexcept -> void
+        {
+            m_hwnd = nullptr;
+        }
 
         void Destroy()
         {
@@ -67,13 +86,6 @@ export namespace UI
         }
 
 	protected:
-		auto LinkHwndToThis(this auto&& self) -> void
-		{
-			if (not self.m_hwnd)
-				throw std::invalid_argument{ "window handle is null" };
-			Win32::SetWindowLongPtrW(self.m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(&self));
-		}
-
 		Win32::HWND m_hwnd = nullptr;
 	};
 }

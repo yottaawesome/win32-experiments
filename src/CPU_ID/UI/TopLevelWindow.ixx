@@ -9,11 +9,7 @@ export namespace UI
     class TopLevelWindow : public CustomWindow
     {
     public:
-        TopLevelWindow(Win32::HWND hwnd)
-        {
-			m_hwnd = hwnd;
-            LinkHwndToThis();
-        }
+        TopLevelWindow() = default;
 
 		[[nodiscard]]
         auto HandleMessage(
