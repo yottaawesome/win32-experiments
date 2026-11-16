@@ -19,8 +19,10 @@ export namespace UI
 		Control(const Control&) = delete;
 		auto operator=(const Control&) -> Control & = delete;
 
-        Control(Control&& other) noexcept = default;
-        auto operator=(Control&& other) noexcept -> Control & = default;
+		// Move semantics are expected to be implemented in derived classes,
+		// this is deliberately left empty.
+        Control(Control&& other) noexcept {};
+        auto operator=(Control&& other) noexcept -> Control & { return *this; };
 
         void Destroy()
         {

@@ -18,8 +18,10 @@ export namespace UI
         CustomWindow(const CustomWindow&) = delete;
         auto operator=(const CustomWindow&) -> CustomWindow & = delete;
 
-		CustomWindow(CustomWindow&& other) noexcept = default;
-		auto operator=(CustomWindow&& other) noexcept -> CustomWindow & = default;
+		// Move semantics are expected to be implemented in derived classes, 
+        // this is deliberately left empty.
+        CustomWindow(CustomWindow&& other) noexcept {};
+        auto operator=(CustomWindow&& other) noexcept -> CustomWindow& { return *this; };
 
         void Destroy()
         {
@@ -78,11 +80,11 @@ export namespace UI
             return self;
         }
 
-		auto LinkHwndToThis() -> void
+		auto LinkHwndToThis(this auto&& self) -> void
 		{
-			if (not m_hwnd)
+			if (not self.m_hwnd)
 				throw std::invalid_argument{ "window handle is null" };
-			Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(this));
+			Win32::SetWindowLongPtrW(self.m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::DWORD_PTR>(&self));
 		}
 
 		Win32::HWND m_hwnd = nullptr;
