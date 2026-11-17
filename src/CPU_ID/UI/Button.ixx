@@ -48,9 +48,8 @@ export namespace UI
 			{
 				case Win32::Messages::ReflectedCommand:
 				{
-					if (Win32::HiWord(wParam) == Win32::BN::Clicked)
-						if (OnClick)
-							OnClick();
+					if (Win32::HiWord(wParam) == Win32::BN::Clicked and OnClick)
+						OnClick();
 					return 0;
 				}
 

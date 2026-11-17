@@ -3,6 +3,7 @@ import std;
 import Win32;
 import :Error;
 import :UI.Functions;
+import :UI.Common;
 
 export namespace UI
 {
@@ -15,7 +16,7 @@ export namespace UI
 		unsigned Y = 0;
 		unsigned Width = 0;
 		unsigned Height = 0;
-		Win32::DWORD WindowStyles = 0;
+		Win32::DWORD WindowStyles = Win32::WindowStyles::Visible;
 	};
 
     template<typename TImplementation>
@@ -57,6 +58,25 @@ export namespace UI
             return m_hwnd;
         }
 
+        auto GetClientRect() const -> Win32::RECT
+        {
+            if (not m_hwnd)
+                return {};
+            auto rect = Win32::RECT{};
+            if (not Win32::GetClientRect(GetHwnd(), &rect))
+                throw Error::Win32Error{ Win32::GetLastError(), "GetClientRect failed" };
+            return rect;
+        }
+
+        auto GetClientDimensions() const -> Dimensions
+        {
+            if (not m_hwnd)
+                return {};
+            auto rect = Win32::RECT{};
+            Win32::GetClientRect(GetHwnd(), &rect);
+            return { static_cast<unsigned>(rect.right - rect.left), static_cast<unsigned>(rect.bottom - rect.top) };
+        }
+
     protected:
         static auto SubclassProc(
             Win32::HWND hwnd,
@@ -88,7 +108,8 @@ export namespace UI
                 0,
                 className.data(),
                 args.Text.c_str(),
-                Win32::WindowStyles::Child | Win32::WindowStyles::Visible | args.WindowStyles,
+                // TODO: the Visible style here is inflexible and should be removed.
+                Win32::WindowStyles::Child | args.WindowStyles,
                 args.X, args.Y,
                 args.Width, args.Height,
                 args.Parent,

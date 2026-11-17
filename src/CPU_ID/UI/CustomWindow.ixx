@@ -50,16 +50,18 @@ export namespace UI
             }
         }
 
-        auto Show() const -> void
+        auto Show(this auto&& self) -> decltype(self)
         {
-            if (m_hwnd)
-                Win32::ShowWindow(m_hwnd, Win32::ShowWindowFlags::Show);
+            if (self.m_hwnd)
+                Win32::ShowWindow(self.m_hwnd, Win32::ShowWindowFlags::Show);
+			return self;
         }
 
-        auto Hide() const -> void
+        auto Hide(this auto&& self) -> decltype(self)
         {
-            if (m_hwnd)
-                Win32::ShowWindow(m_hwnd, Win32::ShowWindowFlags::Hide);
+            if (self.m_hwnd)
+                Win32::ShowWindow(self.m_hwnd, Win32::ShowWindowFlags::Hide);
+			return self;
         }
 
         void release()
@@ -75,6 +77,16 @@ export namespace UI
         {
             return m_hwnd;
         }
+
+		auto GetClientRect() const -> Win32::RECT
+		{
+			if (not m_hwnd)
+				return {};
+			auto rect = Win32::RECT{};
+			if (not Win32::GetClientRect(GetHwnd(), &rect))
+                throw Error::Win32Error{Win32::GetLastError(), "GetClientRect failed"};
+			return rect;
+		}
 
         auto GetClientDimensions() const -> Dimensions
         {

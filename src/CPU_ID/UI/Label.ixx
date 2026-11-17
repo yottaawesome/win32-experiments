@@ -8,7 +8,7 @@ export namespace UI
 {
 	struct LabelArgs
 	{
-		ControlArgs Control{};
+        ControlArgs Control{};
 	};
 
     class Label : public Control<Label>

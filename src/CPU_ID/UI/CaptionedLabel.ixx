@@ -19,7 +19,7 @@ export namespace UI
                         .Parent = parent, 
                         .X = 0, .Y = 0, 
                         .Width = 100, .Height = 30, 
-                        .WindowStyles = Win32::SS::Right 
+                        .WindowStyles = Win32::WindowStyles::Visible | Win32::SS::Right 
                     } 
                 } }
             , Value{ 
@@ -29,14 +29,28 @@ export namespace UI
                         .Parent = parent, 
                         .X = 0, .Y = 0, 
                         .Width = 100, .Height = 30, 
-                        .WindowStyles = Win32::SS::Left 
+                        .WindowStyles = Win32::WindowStyles::Visible | Win32::SS::Left 
                     } 
                 } }
         {}
 
         CaptionedLabel(const std::wstring& caption, bool value, Win32::HWND parent)
-            : Caption{ LabelArgs{ .Control = ControlArgs{ .Text = caption, .Parent = parent, .X = 0, .Y = 0, .Width = 100, .Height = 30, .WindowStyles = Win32::SS::Right } } }
-            , Value{ LabelArgs{ .Control = ControlArgs{ .Text = value ? L"true" : L"false", .Parent = parent, .X = 0, .Y = 0, .Width = 100, .Height = 30, .WindowStyles = Win32::SS::Left } } }
+            : Caption{ 
+                LabelArgs{ 
+                    .Control = ControlArgs{ 
+                        .Text = caption, 
+                        .Parent = parent, 
+                        .X = 0, .Y = 0, 
+                        .Width = 100, .Height = 30, 
+                        .WindowStyles = Win32::WindowStyles::Visible | Win32::SS::Right } } }
+            , Value{ 
+                LabelArgs{ 
+                    .Control = ControlArgs{ 
+                        .Text = value ? L"true" : L"false", 
+                        .Parent = parent, 
+                        .X = 0, .Y = 0, 
+                        .Width = 100, .Height = 30, 
+                        .WindowStyles = Win32::WindowStyles::Visible | Win32::SS::Left } } }
         {}
     };
 }

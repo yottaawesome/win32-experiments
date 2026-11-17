@@ -90,11 +90,9 @@ export namespace UI
     class GridLayout
     {
     public:
-        GridLayout(Win32::HWND reference, unsigned rows, unsigned columns, auto rowGap, auto columnGap)
-            : m_reference(reference), m_rows(rows), m_columns(columns), m_rowGap(rowGap), m_columnGap(columnGap)
+        GridLayout(unsigned rows, unsigned columns, auto rowGap, auto columnGap)
+            : m_rows(rows), m_columns(columns), m_rowGap(rowGap), m_columnGap(columnGap)
         {
-            if (not reference)
-                throw std::invalid_argument{ "reference window handle is null" };
             if (rows == 0 or columns == 0)
                 throw std::invalid_argument{ "rows and columns must be greater than zero" };
         }
@@ -114,11 +112,15 @@ export namespace UI
             return self;
         }
 
-        auto Apply(this auto&& self) -> decltype(self)
+        auto Apply(this auto&& self, Win32::HWND reference) -> decltype(self)
         {
             auto referenceRect = Win32::RECT{};
-            Win32::GetClientRect(self.m_reference, &referenceRect);
+            Win32::GetClientRect(reference, &referenceRect);
+			return self.Apply(referenceRect);
+        }
 
+        auto Apply(this auto&& self, const Win32::RECT& referenceRect) -> decltype(self)
+        {
             auto height = static_cast<std::uint64_t>(referenceRect.bottom - referenceRect.top);
             auto width = static_cast<std::uint64_t>(referenceRect.right - referenceRect.left);
             auto totalRowGap = std::uint64_t{ self.m_rowGap } * (self.m_rows - 1);
@@ -144,7 +146,6 @@ export namespace UI
         unsigned m_columns = 1;
         unsigned m_rowGap = 0;
         unsigned m_columnGap = 0;
-        Win32::HWND m_reference = nullptr;
         struct Position
         {
             Win32::HWND hwnd = nullptr;

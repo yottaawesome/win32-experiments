@@ -54,7 +54,7 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <MSVCPreviewEnabled>true</MSVCPreviewEnabled>
-    <EnableASAN>true</EnableASAN>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -157,6 +157,7 @@
     <ClCompile Include="Platform\Intrinsics.ixx" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Raii\Raii.ixx" />
+    <ClCompile Include="stdx\stdx.ixx" />
     <ClCompile Include="Strings\Strings.ixx" />
     <ClCompile Include="UI\Button.ixx" />
     <ClCompile Include="UI\CaptionedLabel.ixx" />
