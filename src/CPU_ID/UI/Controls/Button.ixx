@@ -38,6 +38,7 @@ export namespace UI
 
 		[[nodiscard]]
 		auto HandleMessage(
+			this auto&& self,
 			Win32::HWND hwnd,
 			unsigned uMsg,
 			Win32::WPARAM wParam,
@@ -48,8 +49,8 @@ export namespace UI
 			{
 				case Win32::Messages::ReflectedCommand:
 				{
-					if (Win32::HiWord(wParam) == Win32::BN::Clicked and OnClick)
-						OnClick();
+					if (Win32::HiWord(wParam) == Win32::BN::Clicked and self.OnClick)
+						self.OnClick();
 					return 0;
 				}
 

@@ -71,6 +71,40 @@ export namespace UI
         }
 
     protected:
+        [[nodiscard]]
+        auto HandleMessage(
+			this auto&& self,
+            Win32::HWND hwnd,
+            unsigned uMsg,
+            Win32::WPARAM wParam,
+            Win32::LPARAM lParam
+        ) -> std::optional<Win32::LRESULT>
+        {
+            return std::nullopt;
+        }
+
+        void Create(this auto&& self, std::wstring_view className, ControlArgs args)
+        {
+            self.m_hwnd = Win32::CreateWindowExW(
+                0,
+                className.data(),
+                args.Text.c_str(),
+                Win32::WindowStyles::Child | args.WindowStyles,
+                args.X, args.Y,
+                args.Width, args.Height,
+                args.Parent,
+                reinterpret_cast<Win32::HMENU>(static_cast<Win32::ULONG_PTR>(args.ControlId)),
+                Win32::GetModuleHandleW(nullptr),
+                nullptr);
+            if (not self.m_hwnd)
+                throw Error::Win32Error{ Win32::GetLastError(), "CreateWindowExW failed" };
+            if (not Win32::SetWindowSubclass(self.m_hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(&self)))
+                throw std::runtime_error{ "Failed to track control window destruction" };
+        }
+
+        //
+		// Core subclass procedure, passes messages to the derived class for handling.
+		// Detaches the instance from the window when the window is destroyed.
         static auto SubclassProc(
             Win32::HWND hwnd,
             unsigned uMsg,
@@ -84,13 +118,9 @@ export namespace UI
             auto pThis = reinterpret_cast<TImplementation*>(dwRefData);
 
             if (uMsg == Win32::Messages::NonClientDestroy)
-            {
                 pThis->Detach();
-            }
             else if (auto result = pThis->HandleMessage(hwnd, uMsg, wParam, lParam); result)
-            {
                 return *result;
-            }
                 
             return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
         }
@@ -103,26 +133,9 @@ export namespace UI
             Error::ErrorExit(1, "Unknown exception in control subclass procedure");
         }
 
-        void Create(std::wstring_view className, ControlArgs args)
-        {
-            m_hwnd = Win32::CreateWindowExW(
-                0,
-                className.data(),
-                args.Text.c_str(),
-                // TODO: the Visible style here is inflexible and should be removed.
-                Win32::WindowStyles::Child | args.WindowStyles,
-                args.X, args.Y,
-                args.Width, args.Height,
-                args.Parent,
-                reinterpret_cast<Win32::HMENU>(static_cast<Win32::ULONG_PTR>(args.ControlId)),
-                Win32::GetModuleHandleW(nullptr),
-                nullptr);
-            if (not m_hwnd)
-                throw Error::Win32Error{ Win32::GetLastError(), "CreateWindowExW failed" };
-            if (not Win32::SetWindowSubclass(m_hwnd, &SubclassProc, 0, reinterpret_cast<Win32::DWORD_PTR>(this)))
-                throw std::runtime_error{ "Failed to track control window destruction" };
-        }
-
+    //
+	// Protected members   
+    protected:
         Win32::HWND m_hwnd = nullptr;
     };
 }

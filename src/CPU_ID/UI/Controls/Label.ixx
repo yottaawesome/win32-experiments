@@ -21,11 +21,6 @@ export namespace UI
             Create(L"STATIC", args.Control);
         }
 
-        auto HandleMessage(Win32::HWND hwnd, unsigned uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> std::optional<Win32::LRESULT>
-        {
-            return std::nullopt;
-        }
-
         auto SetText(const std::wstring& text)
         {
             if (not m_hwnd)
