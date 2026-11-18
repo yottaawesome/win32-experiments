@@ -137,6 +137,19 @@ export namespace Win32
 		};
 	}
 
+	namespace ExtendedWindowStyles
+	{
+		enum
+		{
+			TopMost = WS_EX_TOPMOST,
+			NoActivate = WS_EX_NOACTIVATE,
+			ToolWindow = WS_EX_TOOLWINDOW,
+			AppWindow = WS_EX_APPWINDOW,
+			Transparent = WS_EX_TRANSPARENT,
+			Composited = WS_EX_COMPOSITED,
+		};
+	}
+
 	namespace WindowStyles
 	{
 		enum
@@ -150,6 +163,16 @@ export namespace Win32
 			ClipSiblings = WS_CLIPSIBLINGS,
 			ClipChildren = WS_CLIPCHILDREN
 		};
+	}
+
+	namespace WindowClasses
+	{
+		constexpr auto Button = WC_BUTTON;
+		constexpr auto Edit = WC_EDIT;
+		constexpr auto ListBox = WC_LISTBOX;
+		constexpr auto ScrollBar = WC_SCROLLBAR;
+		constexpr auto Tab = WC_TABCONTROL;
+		constexpr auto Static = WC_STATIC;
 	}
 
 	namespace FormatMessageFlags

@@ -14,6 +14,7 @@ export namespace Application
 		Win32::WindowStyles::OverlappedWindow 
 			& ~Win32::WindowStyles::ThickFrame 
 			& ~Win32::WindowStyles::MaximizeBox
-			| Win32::WindowStyles::Visible
+			| Win32::WindowStyles::Visible,
+		Win32::ExtendedWindowStyles::Composited
 	>;
 }

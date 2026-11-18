@@ -8,7 +8,13 @@ export namespace UI
 {
 	struct NoOperation {} constexpr NoOp{};
 
-    template<Strings::FixedString ClassName, typename TWindow, bool HandleDestroy, Win32::DWORD ClassAdditionalStyles = 0>
+    template<
+        Strings::FixedString ClassName, 
+        typename TWindow, 
+        bool HandleDestroy, 
+        Win32::DWORD ClassAdditionalStyles = 0,
+		Win32::DWORD ClassAdditionalExStyles = 0
+    >
     struct WindowClass
     {
     public:
@@ -45,7 +51,7 @@ export namespace UI
 
             auto window = std::make_unique<TWindow>();
             auto hwnd = Win32::CreateWindowExW(
-                exStyles,
+                exStyles | ClassAdditionalExStyles,
                 ClassName.ToView().data(),
                 title.c_str(),
                 styles | ClassAdditionalStyles,

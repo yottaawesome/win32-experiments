@@ -70,5 +70,6 @@ export namespace UI
         L"PanelWindowClass", 
         Panel, 
         false, 
-        Win32::WindowStyles::Child | Win32::WindowStyles::ClipChildren>;
+        Win32::WindowStyles::Child | Win32::WindowStyles::ClipChildren,
+        0>;
 }

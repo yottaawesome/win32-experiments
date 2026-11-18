@@ -26,7 +26,7 @@ export namespace UI
 		{
 			if (not args.Control.Parent)
 				throw std::invalid_argument{ "parent window handle is null" };
-			Create(L"BUTTON", args.Control);
+			Create(Win32::WindowClasses::Button, args.Control);
 		}
 
 		//
