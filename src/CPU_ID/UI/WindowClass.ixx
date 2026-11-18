@@ -121,10 +121,7 @@ export namespace UI
             {
                 pThis = reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData));
                 if (pThis and uMsg == Win32::Messages::NonClientDestroy)
-                {
-                    Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, 0);
                     pThis->Detach();
-                }
             }
 
             if (pThis)

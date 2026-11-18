@@ -33,49 +33,40 @@ export namespace UI
 		Control(const Control&) = delete;
 		auto operator=(const Control&) -> Control & = delete;
 
-        void Destroy()
+        void Destroy(this auto&& self)
         {
-            if (not m_hwnd)
-                return;
-            auto tmp = m_hwnd;
-            m_hwnd = nullptr;
-            Win32::RemoveWindowSubclass(tmp, &Control::SubclassProc, 0);
-            Win32::DestroyWindow(tmp);
+            if (self.m_hwnd)
+                Win32::DestroyWindow(self.Detach());
         }
 
-		auto release() -> void
+		auto Detach(this auto&& self) -> Win32::HWND
 		{
-			if (m_hwnd)
-			{
-				Win32::RemoveWindowSubclass(m_hwnd, &Control::SubclassProc, 0);
-				m_hwnd = nullptr;
-			}
+			if (self.m_hwnd)
+				Win32::RemoveWindowSubclass(self.m_hwnd, &Control::SubclassProc, 0);
+			return std::exchange(self.m_hwnd, nullptr);
 		}
 
         [[nodiscard]]
-        auto GetHwnd() const noexcept -> Win32::HWND
+        auto GetHwnd(this auto&& self) noexcept -> Win32::HWND
         {
-            return m_hwnd;
+            return self.m_hwnd;
         }
 
         [[nodiscard]]
-        auto GetClientRect() const -> Win32::RECT
+        auto GetClientRect(this auto&& self) -> Win32::RECT
         {
-            if (not m_hwnd)
+            if (not self.m_hwnd)
                 return {};
             auto rect = Win32::RECT{};
-            if (not Win32::GetClientRect(GetHwnd(), &rect))
+            if (not Win32::GetClientRect(self.GetHwnd(), &rect))
                 throw Error::Win32Error{ Win32::GetLastError(), "GetClientRect failed" };
             return rect;
         }
 
         [[nodiscard]]
-        auto GetClientDimensions() const -> Dimensions
+        auto GetClientDimensions(this auto&& self) -> Dimensions
         {
-            if (not m_hwnd)
-                return {};
-            auto rect = Win32::RECT{};
-            Win32::GetClientRect(GetHwnd(), &rect);
+            auto rect = self.GetClientRect();
             return { static_cast<unsigned>(rect.right - rect.left), static_cast<unsigned>(rect.bottom - rect.top) };
         }
 
@@ -90,9 +81,17 @@ export namespace UI
         ) noexcept -> Win32::LRESULT
         try
         {
-            if (auto pThis = reinterpret_cast<TImplementation*>(dwRefData); pThis)
-                if (auto result = pThis->HandleMessage(hwnd, uMsg, wParam, lParam); result)
-                    return *result;
+            auto pThis = reinterpret_cast<TImplementation*>(dwRefData);
+
+            if (uMsg == Win32::Messages::NonClientDestroy)
+            {
+                pThis->Detach();
+            }
+            else if (auto result = pThis->HandleMessage(hwnd, uMsg, wParam, lParam); result)
+            {
+                return *result;
+            }
+                
             return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
         }
         catch (const std::exception& error)

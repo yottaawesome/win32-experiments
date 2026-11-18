@@ -23,11 +23,6 @@ export namespace UI
 
         auto HandleMessage(Win32::HWND hwnd, unsigned uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> std::optional<Win32::LRESULT>
         {
-            if (uMsg == Win32::Messages::NonClientDestroy)
-            {
-                Win32::RemoveWindowSubclass(hwnd, &Control<Label>::SubclassProc, 0);
-                m_hwnd = nullptr;
-            }
             return std::nullopt;
         }
 

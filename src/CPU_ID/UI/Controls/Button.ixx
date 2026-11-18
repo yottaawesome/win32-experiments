@@ -53,12 +53,6 @@ export namespace UI
 					return 0;
 				}
 
-				case Win32::Messages::Destroy:
-				{
-					release();
-					return 0;
-				}
-
 				default:
 					return std::nullopt;
 			}

@@ -39,19 +39,17 @@ export namespace UI
             self.m_hwnd = hwnd;
         }
 
-        auto Detach() noexcept -> void
+        auto Detach(this auto&& self) noexcept -> Win32::HWND
         {
-            m_hwnd = nullptr;
+            if (self.m_hwnd)
+                Win32::SetWindowLongPtrW(self.m_hwnd, Win32::Gwlp::UserData, 0);
+			return std::exchange(self.m_hwnd, nullptr);
         }
 
-        void Destroy()
+        void Destroy(this auto&& self)
         {
-            if (m_hwnd)
-            {
-                auto tmp = m_hwnd;
-                release();
-                Win32::DestroyWindow(tmp);
-            }
+            if (self.m_hwnd)
+                Win32::DestroyWindow(self.Detach());
         }
 
         auto Show(this auto&& self) -> decltype(self)
@@ -68,36 +66,24 @@ export namespace UI
 			return self;
         }
 
-        void release()
+        auto GetHwnd(this auto&& self) noexcept -> Win32::HWND
         {
-            if (m_hwnd)
-            {
-                Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, 0);
-                m_hwnd = nullptr;
-            }
+            return self.m_hwnd;
         }
 
-        auto GetHwnd() const noexcept -> Win32::HWND
-        {
-            return m_hwnd;
-        }
-
-		auto GetClientRect() const -> Win32::RECT
+		auto GetClientRect(this auto&& self) -> Win32::RECT
 		{
-			if (not m_hwnd)
+			if (not self.m_hwnd)
 				return {};
 			auto rect = Win32::RECT{};
-			if (not Win32::GetClientRect(GetHwnd(), &rect))
+			if (not Win32::GetClientRect(self.GetHwnd(), &rect))
                 throw Error::Win32Error{Win32::GetLastError(), "GetClientRect failed"};
 			return rect;
 		}
 
-        auto GetClientDimensions() const -> Dimensions
+        auto GetClientDimensions(this auto&& self) -> Dimensions
         {
-            if (not m_hwnd)
-                return {};
-            auto rect = Win32::RECT{};
-            Win32::GetClientRect(GetHwnd(), &rect);
+            auto rect = self.GetClientRect();
             return { static_cast<unsigned>(rect.right - rect.left), static_cast<unsigned>(rect.bottom - rect.top) };
         }
 
