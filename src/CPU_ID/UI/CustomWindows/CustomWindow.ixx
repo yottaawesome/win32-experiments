@@ -8,6 +8,7 @@ export namespace UI
 {
 	class CustomWindow
 	{
+		// Special member functions
 	public:
         ~CustomWindow()
         {
@@ -22,6 +23,9 @@ export namespace UI
         CustomWindow(CustomWindow&&) = delete;
         auto operator=(CustomWindow&&) -> CustomWindow& = delete;
 
+        //
+		// Public methods
+    public:
         auto Attach(this auto&& self, Win32::HWND hwnd) -> void
         {
             if (not hwnd)
@@ -97,6 +101,8 @@ export namespace UI
             return { static_cast<unsigned>(rect.right - rect.left), static_cast<unsigned>(rect.bottom - rect.top) };
         }
 
+        //
+		// Protected members
 	protected:
 		Win32::HWND m_hwnd = nullptr;
 	};

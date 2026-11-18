@@ -58,6 +58,7 @@ export namespace UI
             return m_hwnd;
         }
 
+        [[nodiscard]]
         auto GetClientRect() const -> Win32::RECT
         {
             if (not m_hwnd)
@@ -68,6 +69,7 @@ export namespace UI
             return rect;
         }
 
+        [[nodiscard]]
         auto GetClientDimensions() const -> Dimensions
         {
             if (not m_hwnd)

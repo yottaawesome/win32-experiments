@@ -1,8 +1,10 @@
 export module CpuId;
 export import Win32;
-export import :stdx;
-export import :InstructionSet;
+export import Intrinsics;
+export import :Application;
 export import :Error;
-export import :Strings;
+export import :InstructionSet;
 export import :Raii;
+export import :stdx;
+export import :Strings;
 export import :UI;

@@ -151,25 +151,30 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application\App.ixx" />
+    <ClCompile Include="Application\Common.ixx" />
+    <ClCompile Include="Application\CpuPerformancePanel.ixx" />
+    <ClCompile Include="Application\InstructionSetPanel.ixx" />
     <ClCompile Include="CpuId.ixx" />
     <ClCompile Include="Error\Error.ixx" />
     <ClCompile Include="InstructionSet\InstructionSet.ixx" />
     <ClCompile Include="Platform\Intrinsics.ixx" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Raii\Raii.ixx" />
+    <ClCompile Include="Application\Application.ixx" />
     <ClCompile Include="stdx\stdx.ixx" />
     <ClCompile Include="Strings\Strings.ixx" />
-    <ClCompile Include="UI\Button.ixx" />
-    <ClCompile Include="UI\CaptionedLabel.ixx" />
+    <ClCompile Include="UI\Controls\Button.ixx" />
+    <ClCompile Include="UI\Controls\CaptionedLabel.ixx" />
     <ClCompile Include="UI\Common.ixx" />
-    <ClCompile Include="UI\Control.ixx" />
-    <ClCompile Include="UI\CustomWindow.ixx" />
+    <ClCompile Include="UI\Controls\Control.ixx" />
+    <ClCompile Include="UI\CustomWindows\CustomWindow.ixx" />
     <ClCompile Include="UI\Font.ixx" />
     <ClCompile Include="UI\Functions.ixx" />
-    <ClCompile Include="UI\Label.ixx" />
+    <ClCompile Include="UI\Controls\Label.ixx" />
     <ClCompile Include="UI\Layout.ixx" />
-    <ClCompile Include="UI\Panel.ixx" />
-    <ClCompile Include="UI\TopLevelWindow.ixx" />
+    <ClCompile Include="UI\CustomWindows\Panel.ixx" />
+    <ClCompile Include="UI\CustomWindows\TopLevelWindow.ixx" />
     <ClCompile Include="UI\UI.ixx" />
     <ClCompile Include="Platform\Win32.ixx" />
     <ClCompile Include="UI\WindowClass.ixx" />

@@ -8,7 +8,7 @@ export namespace UI
 {
 	struct NoOperation {} constexpr NoOp{};
 
-    template<Strings::FixedString ClassName, typename TWindow, bool HandleDestroy>
+    template<Strings::FixedString ClassName, typename TWindow, bool HandleDestroy, Win32::DWORD ClassAdditionalStyles = 0>
     struct WindowClass
     {
     public:
@@ -48,7 +48,7 @@ export namespace UI
                 exStyles,
                 ClassName.ToView().data(),
                 title.c_str(),
-                styles,
+                styles | ClassAdditionalStyles,
                 x, y,
                 width, height,
                 parent,

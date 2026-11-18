@@ -1,22 +1,18 @@
-export module CpuId:UI.Panel;
+export module CpuId:UI.TopLevelWindow;
 import std;
 import Win32;
-import :UI.WindowClass;
 import :UI.Common;
 import :UI.CustomWindow;
+import :UI.WindowClass;
 
 export namespace UI
 {
-    class Panel : public CustomWindow
+    class TopLevelWindow : public CustomWindow
     {
     public:
-		~Panel()
-		{
-            Destroy();
-		}
+        TopLevelWindow() = default;
 
-        Panel() = default;
-
+		[[nodiscard]]
         auto HandleMessage(
             Win32::HWND hwnd,
             unsigned uMsg,
@@ -26,22 +22,10 @@ export namespace UI
         {
             switch (uMsg)
             {
-			    case Win32::Messages::Command:
-			    {
-					auto originalHwnd = reinterpret_cast<Win32::HWND>(lParam);
-					return Win32::SendMessageW(
-						originalHwnd,
-						Win32::Messages::ReflectedCommand,
-						wParam,
-						lParam
-					);
-			    }
-
                 case Win32::Messages::CtlColorStatic:
                 {
                     return reinterpret_cast<Win32::LRESULT>(Win32::GetStockObject(Win32::Brushes::White));
                 }
-
                 default:
                     return std::nullopt;
             }
@@ -66,5 +50,10 @@ export namespace UI
         }
     };
 
-	using PanelWindowClass = WindowClass<"PanelWindowClass", Panel, false>;
+    using TopLevelWindowClass = UI::WindowClass<
+        L"CpuViewer",
+        UI::TopLevelWindow,
+        true,
+        Win32::WindowStyles::OverlappedWindow | Win32::WindowStyles::Visible
+    >;
 }
