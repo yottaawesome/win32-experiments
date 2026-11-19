@@ -6,6 +6,9 @@ import :Strings;
 
 export namespace UI
 {
+    template<typename T>
+	struct AlwaysFalse : std::false_type {};
+
 	struct NoOperation {} constexpr NoOp{};
 
     template<
@@ -114,35 +117,72 @@ export namespace UI
         ) noexcept -> Win32::LRESULT
         try
         {
-            auto pThis = static_cast<TWindow*>(nullptr);
-            if (uMsg == Win32::Messages::NonClientCreate)
-            {
-                auto* pCreate = reinterpret_cast<Win32::CREATESTRUCT*>(lParam);
-                pThis = static_cast<TWindow*>(pCreate->lpCreateParams);
-                if (not pThis)
-                    return 0;
-                pThis->Attach(hwnd);
-            }
-            else
-            {
-                pThis = reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData));
-                if (pThis and uMsg == Win32::Messages::NonClientDestroy)
-                    pThis->Detach();
-            }
+			constexpr auto GetUserData = 
+                []<typename TArg>(TArg arg) static noexcept -> TWindow*
+				{
+                    if (not arg)
+                        return nullptr;
 
-            if (pThis)
+                    if constexpr (std::same_as<TArg, Win32::HWND>)
+                        return reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(arg, Win32::Gwlp::UserData));
+					else if constexpr (std::same_as<TArg, Win32::CREATESTRUCT*>)
+                        return static_cast<TWindow*>(arg->lpCreateParams);
+                    else
+						static_assert(AlwaysFalse<TArg>::value, "GetUserData: Unsupported argument type");
+				};
+
+            switch (uMsg)
             {
-                auto result = pThis->HandleMessage(hwnd, uMsg, wParam, lParam);
-                if (result and uMsg != Win32::Messages::NonClientDestroy)
+                case Win32::Messages::NonClientCreate:
                 {
-                    return *result;
+                    if (auto wndImpl = GetUserData(reinterpret_cast<Win32::CREATESTRUCT*>(lParam)); wndImpl)
+                    {
+                        Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::LONG_PTR>(wndImpl));
+                        wndImpl->Attach(hwnd);
+                    }
+                    return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+                }
+
+                // Destroy is sent to the window before NonClientDestroy
+                case Win32::Messages::Destroy:
+                {
+                    if constexpr (HandleDestroy)
+                    {
+                        Win32::PostQuitMessage(0);
+                        return 0;
+                    }
+                    else if (auto wndImpl = GetUserData(hwnd); wndImpl)
+                    {
+                        auto result = wndImpl->HandleMessage(hwnd, uMsg, wParam, lParam);
+                        return result ? *result : Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+                    }
+                    else
+                    {
+                        return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+                    }
+                }
+
+				case Win32::Messages::NonClientDestroy:
+				{
+					if (auto wndImpl = GetUserData(hwnd); wndImpl)
+						wndImpl->Detach();
+					Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, 0);
+					return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+				}
+
+                default:
+                {
+                    if (auto wndImpl = GetUserData(hwnd); wndImpl)
+                    {
+                        auto result = wndImpl->HandleMessage(hwnd, uMsg, wParam, lParam);
+                        return result ? *result : Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+                    }
+					else
+					{
+						return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+					}
                 }
             }
-
-			if constexpr (HandleDestroy)
-				if (uMsg == Win32::Messages::Destroy)
-					return (Win32::PostQuitMessage(0), 0);
-            return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
         }
         catch (const std::exception& error)
         {

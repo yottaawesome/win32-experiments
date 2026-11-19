@@ -32,17 +32,11 @@ export namespace UI
                 throw std::invalid_argument{ "window handle is null" };
             if (self.m_hwnd)
                 throw std::logic_error{ "window handle is already attached" };
-            Win32::SetLastError(0);
-            if (not Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::LONG_PTR>(&self)))
-                if (auto error = Win32::GetLastError(); error)
-                    throw Error::Win32Error{ error, "SetWindowLongPtrW failed" };
             self.m_hwnd = hwnd;
         }
 
         auto Detach(this auto&& self) noexcept -> Win32::HWND
         {
-            if (self.m_hwnd)
-                Win32::SetWindowLongPtrW(self.m_hwnd, Win32::Gwlp::UserData, 0);
 			return std::exchange(self.m_hwnd, nullptr);
         }
 
