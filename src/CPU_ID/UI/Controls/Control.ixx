@@ -116,6 +116,8 @@ export namespace UI
         try
         {
             auto pThis = reinterpret_cast<TImplementation*>(dwRefData);
+            if (not pThis)
+                return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
 
             if (uMsg == Win32::Messages::NonClientDestroy)
                 pThis->Detach();
