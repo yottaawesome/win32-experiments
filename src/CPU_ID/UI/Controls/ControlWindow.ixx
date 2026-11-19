@@ -20,18 +20,18 @@ export namespace UI
 	};
 
     template<typename TImplementation>
-    class Control
+    class ControlWindow
     {
     public:
-		~Control()
+		~ControlWindow()
 		{
 			Destroy();
 		}
 
-		Control() = default;
+		ControlWindow() = default;
 
-		Control(const Control&) = delete;
-		auto operator=(const Control&) -> Control & = delete;
+		ControlWindow(const ControlWindow&) = delete;
+		auto operator=(const ControlWindow&) -> ControlWindow & = delete;
 
         void Destroy(this auto&& self)
         {
@@ -42,7 +42,7 @@ export namespace UI
 		auto Detach(this auto&& self) -> Win32::HWND
 		{
 			if (self.m_hwnd)
-				Win32::RemoveWindowSubclass(self.m_hwnd, &Control::SubclassProc, 0);
+				Win32::RemoveWindowSubclass(self.m_hwnd, &ControlWindow::SubclassProc, 0);
 			return std::exchange(self.m_hwnd, nullptr);
 		}
 
@@ -115,16 +115,20 @@ export namespace UI
         ) noexcept -> Win32::LRESULT
         try
         {
-            auto pThis = reinterpret_cast<TImplementation*>(dwRefData);
-            if (not pThis)
+            if (auto pThis = reinterpret_cast<TImplementation*>(dwRefData); not pThis)
+            {
                 return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
-
-            if (uMsg == Win32::Messages::NonClientDestroy)
+            }
+            else if (uMsg == Win32::Messages::NonClientDestroy)
+            {
                 pThis->Detach();
-            else if (auto result = pThis->HandleMessage(hwnd, uMsg, wParam, lParam); result)
-                return *result;
-                
-            return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
+                return Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
+            }
+            else
+            {
+                auto result = pThis->HandleMessage(hwnd, uMsg, wParam, lParam);
+				return result ? *result : Win32::DefSubclassProc(hwnd, uMsg, wParam, lParam);
+            }
         }
         catch (const std::exception& error)
         {

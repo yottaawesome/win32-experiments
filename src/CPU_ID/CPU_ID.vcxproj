@@ -167,7 +167,7 @@
     <ClCompile Include="UI\Controls\Button.ixx" />
     <ClCompile Include="UI\Controls\CaptionedLabel.ixx" />
     <ClCompile Include="UI\Common.ixx" />
-    <ClCompile Include="UI\Controls\Control.ixx" />
+    <ClCompile Include="UI\Controls\ControlWindow.ixx" />
     <ClCompile Include="UI\CustomWindows\CustomWindow.ixx" />
     <ClCompile Include="UI\Font.ixx" />
     <ClCompile Include="UI\Functions.ixx" />

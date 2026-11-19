@@ -11,9 +11,8 @@ export namespace UI
         ControlArgs Control{};
 	};
 
-    class Label : public Control<Label>
+    struct Label : public ControlWindow<Label>
     {
-    public:
         Label(LabelArgs args)
         {
             if (not args.Control.Parent)

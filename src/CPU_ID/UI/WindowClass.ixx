@@ -13,10 +13,10 @@ export namespace UI
 
     template<
         Strings::FixedString ClassName, 
-        typename TWindow, 
+        typename TWindowImplementation, 
         bool HandleDestroy, 
-        Win32::DWORD ClassAdditionalStyles = 0,
-		Win32::DWORD ClassAdditionalExStyles = 0
+        Win32::DWORD CreateWithAdditionalStyles = 0,
+		Win32::DWORD CreateWithAdditionalStylesEx = 0
     >
     struct WindowClass
     {
@@ -46,18 +46,18 @@ export namespace UI
             unsigned width,
             unsigned height,
 			Win32::HWND parent
-        ) -> std::unique_ptr<TWindow>
+        ) -> std::unique_ptr<TWindowImplementation>
         {
             auto hInstance = Win32::GetModuleHandleW(nullptr);
             if (not hInstance)
                 throw Error::Win32Error{ Win32::GetLastError(), "GetModuleHandleW failed" };
 
-            auto window = std::make_unique<TWindow>();
+            auto window = std::make_unique<TWindowImplementation>();
             auto hwnd = Win32::CreateWindowExW(
-                exStyles | ClassAdditionalExStyles,
+                exStyles | CreateWithAdditionalStylesEx,
                 ClassName.ToView().data(),
                 title.c_str(),
-                styles | ClassAdditionalStyles,
+                styles | CreateWithAdditionalStyles,
                 x, y,
                 width, height,
                 parent,
@@ -118,15 +118,15 @@ export namespace UI
         try
         {
 			constexpr auto GetUserData = 
-                []<typename TArg>(TArg arg) static noexcept -> TWindow*
+                []<typename TArg>(TArg arg) static noexcept -> TWindowImplementation*
 				{
                     if (not arg)
                         return nullptr;
 
                     if constexpr (std::same_as<TArg, Win32::HWND>)
-                        return reinterpret_cast<TWindow*>(Win32::GetWindowLongPtrW(arg, Win32::Gwlp::UserData));
+                        return reinterpret_cast<TWindowImplementation*>(Win32::GetWindowLongPtrW(arg, Win32::Gwlp::UserData));
 					else if constexpr (std::same_as<TArg, Win32::CREATESTRUCT*>)
-                        return static_cast<TWindow*>(arg->lpCreateParams);
+                        return static_cast<TWindowImplementation*>(arg->lpCreateParams);
                     else
 						static_assert(AlwaysFalse<TArg>::value, "GetUserData: Unsupported argument type");
 				};

@@ -13,7 +13,7 @@ export namespace UI
 		std::move_only_function<auto()-> void> OnClick;
 	};
 
-	class Button : public Control<Button>
+	class Button : public ControlWindow<Button>
 	{
 	public:
 		~Button()
