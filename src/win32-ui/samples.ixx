@@ -3,10 +3,6 @@ import shared;
 import util;
 export import :more;
 
-#pragma comment(lib, "Comctl32.lib")
-// See https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
-//#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
 namespace BasicWindow
 {
     // Adapted from https://learn.microsoft.com/en-us/windows/win32/controls/create-a-tab-control-in-the-main-window

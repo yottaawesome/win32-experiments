@@ -1,3 +1,7 @@
+#pragma comment(lib, "Comctl32.lib")
+// See https://stackoverflow.com/questions/4308503/how-to-enable-visual-styles-without-a-manifest
+//#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
 import std;
 import samples;
 
