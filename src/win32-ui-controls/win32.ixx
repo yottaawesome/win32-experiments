@@ -341,6 +341,7 @@ export namespace Win32
 			LeftButtonDown = WM_LBUTTONDOWN,
 			LeftButtonUp = WM_LBUTTONUP,
 			NonClientCreate = WM_NCCREATE,
+			NonClientDestroy = WM_NCDESTROY,
 			Paint = WM_PAINT,
 			KeyUp = WM_KEYUP,
 			Create = WM_CREATE,

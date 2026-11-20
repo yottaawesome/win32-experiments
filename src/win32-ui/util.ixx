@@ -1,6 +1,6 @@
-export module util;
+export module Util;
 import std;
-import shared;
+import Shared;
 
 export namespace Util
 {

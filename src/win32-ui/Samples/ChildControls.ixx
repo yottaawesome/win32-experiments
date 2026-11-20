@@ -1,7 +1,7 @@
-export module samples:more;
+export module Samples:ChildControls;
 import std;
-import shared;
-import util;
+import Shared;
+import Util;
 
 export namespace ChildControls
 {
@@ -57,7 +57,7 @@ export namespace ChildControls
 	void Run()
 	{
 		using MainWindowReg = WindowRegistration<
-			L"A", 
+			L"A",
 			[](Win32::HWND, unsigned, Win32::WPARAM, Win32::LPARAM) -> Win32::LPARAM { return 0; }
 		>;
 

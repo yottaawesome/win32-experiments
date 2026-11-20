@@ -66,12 +66,25 @@ export namespace UI
 				Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, (Win32::LONG_PTR)pThis);
 				return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
 			}
-			else
+			else if (uMsg == Win32::Messages::NonClientDestroy)
 			{
 				auto pThis = reinterpret_cast<TWindow*>(GetWindowLongPtrW(hwnd, Win32::Gwlp_UserData));
-				return pThis
-					? pThis->HandleMessage(hwnd, uMsg, wParam, lParam)
-					: Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+				if (pThis)
+					pThis->m_window.release();
+				Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, 0);
+				return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
+			}
+			else if (uMsg == Win32::Messages::Destroy)
+			{
+				return (Win32::PostQuitMessage(0), 0);
+			}
+			else if (auto pThis = reinterpret_cast<TWindow*>(GetWindowLongPtrW(hwnd, Win32::Gwlp_UserData)); pThis)
+			{
+				return pThis->HandleMessage(hwnd, uMsg, wParam, lParam);
+			}
+			else
+			{
+				return Win32::DefWindowProcW(hwnd, uMsg, wParam, lParam);
 			}
 		}
 
@@ -93,7 +106,7 @@ export namespace UI
 			Win32::LPARAM lParam
 		) -> Win32::LRESULT
 		{
-			return[&self, hwnd, msgType, wParam, lParam]<size_t...Is>(std::index_sequence<Is...>)
+			return [&self, hwnd, msgType, wParam, lParam]<size_t...Is>(std::index_sequence<Is...>)
 			{
 				auto result = Win32::LRESULT{};
 				auto handled = (... or 
@@ -114,9 +127,7 @@ export namespace UI
 					}());
 				if (handled)
 					return result;
-				return msgType == Win32::Messages::Destroy
-					? (Win32::PostQuitMessage(0), 0)
-					: Win32::DefWindowProcW(hwnd, msgType, wParam, lParam);
+				return Win32::DefWindowProcW(hwnd, msgType, wParam, lParam);
 			}(std::make_index_sequence<KnownMessages.size()>());
 		}
 	};

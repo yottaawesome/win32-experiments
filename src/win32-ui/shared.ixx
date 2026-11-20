@@ -5,7 +5,7 @@ module;
 #include <wingdi.h>
 #include <CommCtrl.h>
 
-export module shared;
+export module Shared;
 import std;
 
 export namespace Win32
