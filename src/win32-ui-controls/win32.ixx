@@ -158,6 +158,8 @@ export namespace Win32
 		::GetClassInfoExW,
 		::UnregisterClassW,
 		::GetStockObject,
+		::OutputDebugStringA,
+		::OutputDebugStringW,
 		::SetBkMode,
 		::SetTextColor,
 		::CreateSolidBrush

@@ -34,7 +34,7 @@ export namespace UI
 
 		void Create(this auto&& self)
 		{
-			Win32::COLORREF color = Win32::RGB(R, G, B);
+			auto color = Win32::COLORREF{Win32::RGB(R, G, B)};
 			self.Brush = BrushUniquePtr{ Win32::CreateSolidBrush(color) };
 		}
 
@@ -53,9 +53,9 @@ export namespace UI
 		mutable BrushUniquePtr Brush;
 	};
 
-	constexpr ColoredBrush<255, 0, 0> RedBrush;
-	constexpr ColoredBrush<0, 255, 0> GreenBrush;
-	constexpr ColoredBrush<0, 0, 255> BlueBrush;
+	constexpr auto RedBrush = ColoredBrush<255, 0, 0>{};
+	constexpr auto GreenBrush = ColoredBrush<0, 255, 0>{};
+	constexpr auto BlueBrush = ColoredBrush<0, 0, 255>{};
 
 	using PenDeleter = Raii::IndirectUniquePtr<Win32::HPEN, Win32::DeleteObject>;
 
@@ -73,7 +73,7 @@ export namespace UI
 
 		void Create(this auto&& self) 
 		{
-			Win32::COLORREF color = Win32::RGB(R, G, B);
+			auto color = Win32::COLORREF{Win32::RGB(R, G, B)};
 			self.Pen = PenDeleter{ Win32::CreatePen(Win32::PsInsideFrame, 0, color) };
 		}
 
@@ -97,9 +97,9 @@ export namespace UI
 		mutable PenDeleter Pen;
 	};
 
-	constexpr ColoredPen<255, 0, 0> RedPen;
-	constexpr ColoredPen<0, 255, 0> GreenPen;
-	constexpr ColoredPen<0, 0, 255> BluePen;
+	constexpr auto RedPen = ColoredPen<255, 0, 0>{};
+	constexpr auto GreenPen = ColoredPen<0, 255, 0>{};
+	constexpr auto BluePen = ColoredPen<0, 0, 255>{};
 
 	template<int VStockObject, typename TDummy, typename TConvertible = void>
 	struct StockObject
@@ -117,10 +117,10 @@ export namespace UI
 	template<int VStockObject>
 	using StockPen = StockObject<VStockObject, struct DummyPen, Win32::HPEN>;
 
-	constexpr StockBrush<Win32::Brushes::Black> BlackBrush;
-	constexpr StockBrush<Win32::Brushes::White> WhiteBrush;
-	constexpr StockPen<Win32::Pens::White> WhitePen;
-	constexpr StockPen<Win32::Pens::Black> BlackPen;
+	constexpr auto BlackBrush = StockBrush<Win32::Brushes::Black>{};
+	constexpr auto WhiteBrush = StockBrush<Win32::Brushes::White>{};
+	constexpr auto WhitePen = StockPen<Win32::Pens::White>{};
+	constexpr auto BlackPen = StockPen<Win32::Pens::Black>{};
 }
 
 namespace UI
@@ -173,7 +173,7 @@ namespace UI
 
 		auto Select(this auto&& self, PenOrBrush auto&& obj) -> decltype(auto)
 		{
-			Win32::HGDIOBJ previous = Win32::SelectObject(self.HDC, obj.Get());
+			auto previous = Win32::SelectObject(self.HDC, obj.Get());
 			if constexpr (AnyBrush<decltype(obj)>)
 				if (not self.DefaultBrush)
 					self.DefaultBrush = previous;

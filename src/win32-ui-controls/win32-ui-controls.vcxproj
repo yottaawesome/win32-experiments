@@ -107,6 +107,9 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ModuleOutputFile>$(IntDir)%(RelativeDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)%(RelativeDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -131,12 +134,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="app-controls.ixx" />
-    <ClCompile Include="app-mainwindow.ixx" />
-    <ClCompile Include="app-painting.ixx" />
-    <ClCompile Include="app-toplevelwindow.ixx" />
-    <ClCompile Include="app-common.ixx" />
-    <ClCompile Include="app-win32.ixx" />
+    <ClCompile Include="controls.ixx" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mainwindow.ixx" />
+    <ClCompile Include="painting.ixx" />
+    <ClCompile Include="toplevelwindow.ixx" />
+    <ClCompile Include="common.ixx" />
+    <ClCompile Include="win32.ixx" />
     <ClCompile Include="app.ixx" />
   </ItemGroup>
   <ItemGroup>

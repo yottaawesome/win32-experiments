@@ -48,14 +48,11 @@ export namespace Error
 				auto lastError = Win32::GetLastError();
 				return std::format("Failed formatting code {} with error {}.", errorCode, lastError);
 			}
-			Raii::LocalHeapUniquePtr ptr(messageBuffer);
-			std::string_view msg(static_cast<char*>(messageBuffer));
-			// This should never happen
-			// See also https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-raisefailfastexception
-			if (Win32::LocalFree(messageBuffer))
-				Win32::__fastfail(Win32::FailFast::Fatal);
-
-			return msg | std::ranges::views::filter([](auto c) { return c != '\n' and c != '\r'; }) | std::ranges::to<std::string>();
+			auto ptr = Raii::LocalHeapUniquePtr(messageBuffer);
+			auto msg = std::string(static_cast<char*>(messageBuffer));
+			while (not msg.empty() and (msg.back() == '\n' or msg.back() == '\r'))
+				msg.pop_back();
+			return msg;
 		}
 
 		std::string Message;
@@ -71,11 +68,13 @@ export namespace Error
 		Win32Error(Win32::DWORD errorCode = Win32::GetLastError(), std::source_location loc = std::source_location::current())
 			: Error(Format(errorCode, "An error occurred", loc))
 		{
+			Win32::OutputDebugStringA(std::format("Win32Error: {}: {}\n", errorCode, SystemMessage::Format(errorCode)).c_str());
 		}
 
 		Win32Error(Win32::DWORD errorCode, std::string_view message, std::source_location loc = std::source_location::current())
 			: Error(Format(errorCode, message, loc))
 		{
+			Win32::OutputDebugStringA(std::format("Win32Error: {}: {}\n", errorCode, SystemMessage::Format(errorCode)).c_str());
 		}
 
 		auto Format(
