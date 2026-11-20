@@ -21,8 +21,8 @@ export namespace ChildControls
 
 		void Register()
 		{
-			Win32::WNDCLASSEX wc{
-				.cbSize = sizeof(wc),
+			auto wc = Win32::WNDCLASSEX{
+				.cbSize = sizeof(Win32::WNDCLASSEX),
 				.lpfnWndProc = VProc,
 				.hInstance = m_instance,
 				.lpszClassName = VRegistrationName.Data()
@@ -61,6 +61,6 @@ export namespace ChildControls
 			[](Win32::HWND, unsigned, Win32::WPARAM, Win32::LPARAM) -> Win32::LPARAM { return 0; }
 		>;
 
-		MainWindowReg registration(false);
+		auto registration = MainWindowReg{ false };
 	}
 }

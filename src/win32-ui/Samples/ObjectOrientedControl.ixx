@@ -53,16 +53,16 @@ export namespace ObjectOrientedControl
             }
         }
 
-        static Win32::LRESULT __stdcall SubclassProc(
+        static auto __stdcall SubclassProc(
             Win32::HWND hwnd,
             Win32::UINT msg,
             Win32::WPARAM wParam,
             Win32::LPARAM lParam,
             Win32::UINT_PTR idSubclass,
             Win32::DWORD_PTR refData
-        )
+        ) -> Win32::LRESULT
         {
-            Control<TType>* pThis = reinterpret_cast<Control<TType>*>(refData);
+            auto pThis = reinterpret_cast<Control<TType>*>(refData);
             return pThis
                 ? pThis->m_control.Process(msg, wParam, lParam, idSubclass, refData)
                 : Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
@@ -88,7 +88,7 @@ export namespace ObjectOrientedControl
     struct ControlTraits
     {
         virtual ~ControlTraits() = default;
-        static constexpr std::wstring_view Class = VClassName.View();
+        static constexpr auto Class = std::wstring_view{ VClassName.View() };
         Win32::DWORD Styles = VStyles;
         std::wstring_view Text = VText.View();
         Win32::DWORD Id = VControlId;
@@ -101,7 +101,7 @@ export namespace ObjectOrientedControl
         void Reposition(const long deltaLeft, const long deltaTop)
         {
             // https://stackoverflow.com/questions/18034975/how-do-i-find-position-of-a-win32-control-window-relative-to-its-parent-window
-            Win32::RECT rc;
+            auto rc = Win32::RECT{};
             Win32::GetClientRect(Handle, &rc);
             Win32::MapWindowPoints(Handle, Win32::GetParent(Handle), (Win32::LPPOINT)&rc, 2);
 
@@ -111,13 +111,13 @@ export namespace ObjectOrientedControl
             Win32::SetWindowPos(Handle, nullptr, rc.left, rc.top, 0, 0, Win32::NoSize);
         }
 
-        virtual Win32::LRESULT Process(
+        virtual auto Process(
             Win32::UINT msg,
             Win32::WPARAM wParam,
             Win32::LPARAM lParam,
             Win32::UINT_PTR uIdSubclass,
             Win32::DWORD_PTR dwRefData
-        )
+        ) -> Win32::LRESULT
         {
             return Win32::DefSubclassProc(this->Handle, msg, wParam, lParam);
         }
@@ -165,13 +165,13 @@ export namespace ObjectOrientedControl
             }
         }
 
-        Win32::LRESULT Process(
+        auto Process(
             Win32::UINT msg,
             Win32::WPARAM wParam,
             Win32::LPARAM lParam,
             Win32::UINT_PTR uIdSubclass,
             Win32::DWORD_PTR dwRefData
-        ) override
+        ) -> Win32::LRESULT override
         {
             switch (msg)
             {
@@ -201,10 +201,10 @@ export namespace ObjectOrientedControl
     {
         TType m_window = Init();
 
-        Win32::HWND Init()
+        auto Init() -> Win32::HWND
         {
-            Win32::WNDCLASSEX wc{
-                .cbSize = sizeof(wc),
+            auto wc = Win32::WNDCLASSEX{
+                .cbSize = sizeof(Win32::WNDCLASSEX),
                 .lpfnWndProc = WindowProc,
                 .hInstance = Win32::GetModuleHandleW(nullptr),
                 .hbrBackground = (Win32::HBRUSH)Win32::GetStockObject(Win32::White_Brush),   // white background brush
@@ -213,7 +213,7 @@ export namespace ObjectOrientedControl
             if (not Win32::RegisterClassExW(&wc))
                 throw Error::Win32Error(Win32::GetLastError(), "Failed registering class");
 
-            Win32::HWND hwnd = Win32::CreateWindowExW(
+            auto hwnd = Win32::CreateWindowExW(
                 0,
                 TType::ClassName.data(),
                 TType::WindowName.data(),
@@ -235,13 +235,13 @@ export namespace ObjectOrientedControl
             return hwnd;
         }
 
-        static Win32::LRESULT __stdcall WindowProc(Win32::HWND hwnd, Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam)
+        static auto __stdcall WindowProc(Win32::HWND hwnd, Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
         {
-            Window<TType>* pThis = nullptr;
+            auto pThis = static_cast<Window<TType>*>(nullptr);
 
             if (uMsg == Win32::Messages::NonClientCreate)
             {
-                Win32::CREATESTRUCT* pCreate = (Win32::CREATESTRUCT*)lParam;
+                auto pCreate = reinterpret_cast<Win32::CREATESTRUCT*>(lParam);
                 pThis = (Window<TType>*)pCreate->lpCreateParams;
                 Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, (Win32::LONG_PTR)pThis);
 
@@ -262,14 +262,14 @@ export namespace ObjectOrientedControl
     {
         MainWindowType(Win32::HWND handle) : WindowHandle(handle) {}
 
-        static constexpr std::wstring_view ClassName = L"MainWindow";
-        static constexpr std::wstring_view WindowName = L"MainWindow";
+        static constexpr auto ClassName = std::wstring_view{ L"MainWindow" };
+        static constexpr auto WindowName = std::wstring_view{ L"MainWindow" };
 
         Win32::HWND WindowHandle = nullptr;
         ButtonA m_buttonA{ WindowHandle };
         ButtonB m_buttonB{ WindowHandle };
 
-        Win32::LRESULT HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam)
+        auto HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
         {
             switch (uMsg)
             {
@@ -287,12 +287,12 @@ export namespace ObjectOrientedControl
 
     using MainWindow = Window<MainWindowType>;
 
-    int MessageLoop()
+    auto MessageLoop() -> int
     {
-        Win32::MSG msg;
+        auto msg = Win32::MSG{};
         while (true)
         {
-            int gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
+            auto gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
             if (gotMessage == 0) // WM_QUIT received
                 break;
             if (gotMessage == -1) // error
@@ -304,9 +304,9 @@ export namespace ObjectOrientedControl
         return static_cast<int>(msg.wParam);
     }
 
-    int Run() try
+    auto Run() -> int try
     {
-        MainWindow m;
+        auto m = MainWindow{};
         return MessageLoop();
     }
     catch (const std::exception& ex)

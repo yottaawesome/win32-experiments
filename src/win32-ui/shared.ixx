@@ -143,27 +143,27 @@ export namespace Win32
 		};
 	}
 
-	COLORREF GetRGB(DWORD r, DWORD g, DWORD b)
+	auto GetRGB(DWORD r, DWORD g, DWORD b) -> COLORREF
 	{
 		return RGB(r, g, b);
 	}
 
-	BYTE GetRedValue(DWORD rgb)
+	auto GetRedValue(DWORD rgb) -> BYTE
 	{
 		return GetRValue(rgb);
 	}
 
-	BYTE GetGreenValue(DWORD rgb)
+	auto GetGreenValue(DWORD rgb) -> BYTE
 	{
 		return GetGValue(rgb);
 	}
 
-	BYTE GetBlueValue(DWORD rgb)
+	auto GetBlueValue(DWORD rgb) -> BYTE
 	{
 		return GetBValue(rgb);
 	}
 
-	LPWSTR IdiApplication() noexcept
+	auto IdiApplication() noexcept -> LPWSTR
 	{
 		return IDI_APPLICATION;
 	}

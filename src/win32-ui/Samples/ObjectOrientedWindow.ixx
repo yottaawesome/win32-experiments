@@ -7,16 +7,16 @@ export namespace ObjectOrientedWindow // Approach 1
     struct BaseWindow
     {
         virtual ~BaseWindow() = default;
-        virtual std::wstring_view GetClassName() = 0;
-        virtual std::wstring_view GetWindowName() = 0;
+        virtual auto GetClassName() -> std::wstring_view = 0;
+        virtual auto GetWindowName() -> std::wstring_view = 0;
 
-        static Win32::LRESULT __stdcall MainWndProc(Win32::HWND hwnd, Win32::UINT type, Win32::WPARAM wParam, Win32::LPARAM lParam)
+        static auto __stdcall MainWndProc(Win32::HWND hwnd, Win32::UINT type, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
         {
-            BaseWindow* pThis = nullptr;
+            auto pThis = static_cast<BaseWindow*>(nullptr);
 
             if (type == Win32::Messages::NonClientCreate)
             {
-                Win32::CREATESTRUCT* pCreate = (Win32::CREATESTRUCT*)lParam;
+                auto pCreate = reinterpret_cast<Win32::CREATESTRUCT*>(lParam);
                 pThis = (BaseWindow*)pCreate->lpCreateParams;
                 Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, (Win32::LONG_PTR)pThis);
                 pThis->m_window = hwnd;
@@ -32,22 +32,22 @@ export namespace ObjectOrientedWindow // Approach 1
             return Win32::DefWindowProcW(hwnd, type, wParam, lParam);
         }
 
-        virtual Win32::LRESULT HandleMessage(Win32::UINT type, Win32::WPARAM wParam, Win32::LPARAM lParam) = 0;
+        virtual auto HandleMessage(Win32::UINT type, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT = 0;
 
         void Init()
         {
             m_class =
-                [](std::wstring_view className)
+                [](std::wstring_view className) -> Win32::ATOM
                 {
-                    Win32::WNDCLASSEX wcx{
-                        .cbSize = sizeof(wcx),              // size of structure
+                    auto wcx = Win32::WNDCLASSEX{
+                        .cbSize = sizeof(Win32::WNDCLASSEX), // size of structure
                         .style = Win32::Cs_HRedraw | Win32::Cs_VRedraw,   // redraw if size changes
                         .lpfnWndProc = MainWndProc,         // points to window procedure
                         .hInstance = Win32::GetModuleHandleW(nullptr),             // handle to instance
                         .hbrBackground = (Win32::HBRUSH)Win32::GetStockObject(Win32::White_Brush),   // white background brush
                         .lpszClassName = className.data(),  // name of window class
                     };
-                    Win32::ATOM returnValue = Win32::RegisterClassExW(&wcx);
+                    auto returnValue = Win32::RegisterClassExW(&wcx);
                     if (not returnValue)
                     {
                         std::println("Failed registering window class: {}", Win32::GetLastError());
@@ -58,9 +58,9 @@ export namespace ObjectOrientedWindow // Approach 1
                 }(this->GetClassName());
 
             m_window =
-                [](auto self)
+                [](auto self) -> Win32::HWND
                 {
-                    Win32::HWND window = Win32::CreateWindowExW(
+                    auto window = Win32::CreateWindowExW(
                         0,                          // no extended styles
                         self->GetClassName().data(),           // class name
                         self->GetWindowName().data(),          // window name
@@ -97,18 +97,18 @@ export namespace ObjectOrientedWindow // Approach 1
             Init();
         }
 
-        std::wstring_view GetClassName() override
+        auto GetClassName() -> std::wstring_view override
         {
             return L"ObjectOrientedWindowTest";
         }
 
-        std::wstring_view GetWindowName() override
+        auto GetWindowName() -> std::wstring_view override
         {
             return L"SubclassTestWindow";
         }
 
     protected:
-        Win32::LRESULT HandleMessage(Win32::UINT type, Win32::WPARAM wParam, Win32::LPARAM lParam) override
+        auto HandleMessage(Win32::UINT type, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT override
         {
             switch (type)
             {
@@ -121,12 +121,12 @@ export namespace ObjectOrientedWindow // Approach 1
         }
     };
 
-    int MessageLoop()
+    auto MessageLoop() -> int
     {
-        Win32::MSG msg;
+        auto msg = Win32::MSG{};
         while (true)
         {
-            int gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
+            auto gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
             if (gotMessage == 0) // WM_QUIT received
                 break;
             if (gotMessage == -1) // error
@@ -138,9 +138,9 @@ export namespace ObjectOrientedWindow // Approach 1
         return static_cast<int>(msg.wParam);
     }
 
-    int Run()
+    auto Run() -> int
     {
-        MainWindow window;
+        auto window = MainWindow{};
         return MessageLoop();
     }
 }

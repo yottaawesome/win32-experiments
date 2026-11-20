@@ -81,7 +81,7 @@ namespace BasicWindow
         };
 
         auto name = std::wstring{};
-        for (int i = 0; i < daysInWeek; i++)
+        for (auto i = 0; i < daysInWeek; i++)
         {
             switch (i)
             {
@@ -199,7 +199,7 @@ namespace BasicWindow
         auto msg = MSG{};
         while (true)
         {
-            int fGotMessage = GetMessageW(&msg, (HWND)nullptr, 0, 0);
+            auto fGotMessage = GetMessageW(&msg, (HWND)nullptr, 0, 0);
             if (fGotMessage == 0) // WM_QUIT received
                 break;
             if (fGotMessage == -1) // error

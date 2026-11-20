@@ -17,17 +17,17 @@ export namespace Util
 			std::copy_n(args, N, Buffer);
 		}
 
-		constexpr auto View() const noexcept
+		constexpr auto View() const noexcept -> std::basic_string_view<TChar>
 		{
 			return std::basic_string_view<TChar, std::char_traits<TChar>>(Buffer);
 		}
 
-		constexpr auto String() const noexcept
+		constexpr auto String() const noexcept -> std::basic_string<TChar>
 		{
 			return std::basic_string<TChar, std::char_traits<TChar>>(Buffer);
 		}
 
-		constexpr auto Data() const noexcept
+		constexpr auto Data() const noexcept -> const TChar*
 		{
 			return Buffer;
 		}
@@ -37,14 +37,14 @@ export namespace Util
 	template<size_t N>
 	FixedString(wchar_t buffer[N]) -> FixedString<N, wchar_t>;
 
-	std::string ConvertString(std::wstring_view wstr)
+	auto ConvertString(std::wstring_view wstr) -> std::string
 	{
 		if (wstr.empty())
 			return {};
 
 		// https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-widechartomultibyte
 		// Returns the size in bytes, this differs from MultiByteToWideChar, which returns the size in characters
-		const int sizeInBytes = Win32::WideCharToMultiByte(
+		const auto sizeInBytes = Win32::WideCharToMultiByte(
 			Win32::CpUtf8,										// CodePage
 			Win32::WcNoBestFitChars,							// dwFlags 
 			&wstr[0],										// lpWideCharStr
@@ -57,8 +57,8 @@ export namespace Util
 		if (sizeInBytes == 0)
 			throw std::runtime_error(std::format("WideCharToMultiByte() [1] failed", Win32::GetLastError()));
 
-		std::string strTo(sizeInBytes / sizeof(char), '\0');
-		const int status = WideCharToMultiByte(
+		auto strTo = std::string(sizeInBytes / sizeof(char), '\0');
+		const auto status = WideCharToMultiByte(
 			Win32::CpUtf8,										// CodePage
 			Win32::WcNoBestFitChars,							// dwFlags 
 			&wstr[0],										// lpWideCharStr
@@ -74,14 +74,14 @@ export namespace Util
 		return strTo;
 	}
 
-	std::wstring ConvertString(std::string_view str)
+	auto ConvertString(std::string_view str) -> std::wstring
 	{
 		if (str.empty())
 			return {};
 
 		// https://docs.microsoft.com/en-us/windows/win32/api/stringapiset/nf-stringapiset-multibytetowidechar
 		// Returns the size in characters, this differs from WideCharToMultiByte, which returns the size in bytes
-		int sizeInCharacters = Win32::MultiByteToWideChar(
+		auto sizeInCharacters = Win32::MultiByteToWideChar(
 			Win32::CpUtf8,									// CodePage
 			0,											// dwFlags
 			&str[0],									// lpMultiByteStr
@@ -92,8 +92,8 @@ export namespace Util
 		if (sizeInCharacters == 0)
 			throw std::runtime_error(std::format("MultiByteToWideChar() [1] failed", Win32::GetLastError()));
 
-		std::wstring wstrTo(sizeInCharacters, '\0');
-		int status = Win32::MultiByteToWideChar(
+		auto wstrTo = std::wstring(sizeInCharacters, '\0');
+		auto status = Win32::MultiByteToWideChar(
 			Win32::CpUtf8,									// CodePage
 			0,											// dwFlags
 			&str[0],									// lpMultiByteStr
@@ -111,21 +111,22 @@ export namespace Util
 export namespace Error
 {
 	template<Util::FixedString VModule = L"">
-	std::string TranslateErrorCode(Win32::DWORD errorCode)
+	auto TranslateErrorCode(Win32::DWORD errorCode) -> std::string
 	{
-		std::wstring_view moduleName = VModule.View();
-		Win32::HMODULE moduleToSearch =
+		auto moduleName = std::wstring_view{ VModule.View() };
+		auto moduleToSearch =
 			moduleName.empty()
 			? nullptr
 			: Win32::GetModuleHandleW(moduleName.data());
 
-		const Win32::DWORD flags =
+		const auto flags = static_cast<Win32::DWORD>(
 			Win32::FormatMessageFlags::AllocateBuffer
 			| Win32::FormatMessageFlags::FromSystem
 			| Win32::FormatMessageFlags::IgnoreInserts
-			| (moduleToSearch ? Win32::FormatMessageFlags::FromHModule : 0);
+			| (moduleToSearch ? Win32::FormatMessageFlags::FromHModule : 0)
+		);
 
-		void* messageBuffer = nullptr;
+		auto messageBuffer = static_cast<void*>(nullptr);
 		Win32::FormatMessageA(
 			flags,
 			moduleToSearch,
@@ -141,13 +142,13 @@ export namespace Error
 			return std::format("FormatMessageA() failed on code {} with error {}", errorCode, lastError);
 		}
 
-		std::string msg(static_cast<char*>(messageBuffer));
+		auto msg = std::string(static_cast<char*>(messageBuffer));
 		// This should never happen
 		// See also https://learn.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-raisefailfastexception
 		if (Win32::LocalFree(messageBuffer))
 			Win32::__fastfail(Win32::FailFast::FatalExit);
 
-		std::erase_if(msg, [](const char x) { return x == '\n' || x == '\r'; });
+		std::erase_if(msg, [](const char x) -> bool { return x == '\n' || x == '\r'; });
 		return msg;
 	}
 
@@ -176,12 +177,12 @@ export namespace Error
 					loc.line()))
 		{}
 
-		bool operator==(const Win32::DWORD code) const noexcept
+		auto operator==(const Win32::DWORD code) const noexcept -> bool
 		{
 			return m_code == code;
 		}
 
-		Win32::DWORD Code() const noexcept
+		auto Code() const noexcept -> Win32::DWORD
 		{
 			return m_code;
 		}
@@ -200,7 +201,7 @@ export namespace Error
 
 	struct TestTranslator
 	{
-		static std::string Translate(DWORD x)
+		static auto Translate(DWORD x) -> std::string
 		{
 			return "some error";
 		}
@@ -208,7 +209,7 @@ export namespace Error
 
 	struct Win32Translator
 	{
-		static std::string Translate(DWORD x)
+		static auto Translate(DWORD x) -> std::string
 		{
 			return TranslateErrorCode(x);
 		}
@@ -285,16 +286,16 @@ export namespace Error
 	{
 		try
 		{
-			Win32Error b(0, "a {}", 1);
-			Win32Error a(0, "a");
-			WinSockError c(0, "a {}", 1);
-			WinSockError d(0, "a");
-			WinSockError e("a");
-			WinSockError f("a {}", 1);
-			WinSockError2 g(0, "a {}", 1);
-			WinSockError2 h(0, "a");
-			WinSockError2 i("a");
-			WinSockError2 j("a {}", 1);
+			auto b = Win32Error(0, "a {}", 1);
+			auto a = Win32Error(0, "a");
+			auto c = WinSockError(0, "a {}", 1);
+			auto d = WinSockError(0, "a");
+			auto e = WinSockError("a");
+			auto f = WinSockError("a {}", 1);
+			auto g = WinSockError2(0, "a {}", 1);
+			auto h = WinSockError2(0, "a");
+			auto i = WinSockError2("a");
+			auto j = WinSockError2("a {}", 1);
 		}
 		catch (...)
 		{

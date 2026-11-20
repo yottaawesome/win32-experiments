@@ -8,26 +8,25 @@ namespace Gradient
     constexpr auto IDC_EXIT_BUTTON = 101;
     constexpr auto IDC_PUSHLIKE_BUTTON = 102;
 
-    Win32::HBRUSH CreateGradientBrush(Win32::COLORREF top, Win32::COLORREF bottom, Win32::LPNMCUSTOMDRAW item)
+    auto CreateGradientBrush(Win32::COLORREF top, Win32::COLORREF bottom, Win32::LPNMCUSTOMDRAW item) -> Win32::HBRUSH
     {
-        Win32::HBRUSH Brush = nullptr;
-        Win32::HDC hdcmem = Win32::CreateCompatibleDC(item->hdc);
-        Win32::HBITMAP hbitmap = Win32::CreateCompatibleBitmap(item->hdc, item->rc.right - item->rc.left, item->rc.bottom - item->rc.top);
+        auto Brush = Win32::HBRUSH{ nullptr };
+        auto hdcmem = Win32::CreateCompatibleDC(item->hdc);
+        auto hbitmap = Win32::CreateCompatibleBitmap(item->hdc, item->rc.right - item->rc.left, item->rc.bottom - item->rc.top);
         Win32::SelectObject(hdcmem, hbitmap);
 
-        int r1 = Win32::GetRedValue(top),
-            r2 = Win32::GetRedValue(bottom),
-            g1 = Win32::GetGreenValue(top),
-            g2 = Win32::GetGreenValue(bottom),
-            b1 = Win32::GetBlueValue(top),
-            b2 = Win32::GetBlueValue(bottom);
-        for (int i = 0; i < item->rc.bottom - item->rc.top; i++)
+        auto r1 = int{ Win32::GetRedValue(top) };
+        auto r2 = int{ Win32::GetRedValue(bottom) };
+        auto g1 = int{ Win32::GetGreenValue(top) };
+        auto g2 = int{ Win32::GetGreenValue(bottom) };
+        auto b1 = int{ Win32::GetBlueValue(top) };
+        auto b2 = int{ Win32::GetBlueValue(bottom) };
+        for (auto i = 0; i < item->rc.bottom - item->rc.top; i++)
         {
-            Win32::RECT temp;
-            int r, g, b;
-            r = int(r1 + double(i * (r2 - r1) / item->rc.bottom - item->rc.top));
-            g = int(g1 + double(i * (g2 - g1) / item->rc.bottom - item->rc.top));
-            b = int(b1 + double(i * (b2 - b1) / item->rc.bottom - item->rc.top));
+            auto temp = Win32::RECT{};
+            auto r = int(r1 + double(i * (r2 - r1) / item->rc.bottom - item->rc.top));
+            auto g = int(g1 + double(i * (g2 - g1) / item->rc.bottom - item->rc.top));
+            auto b = int(b1 + double(i * (b2 - b1) / item->rc.bottom - item->rc.top));
             Brush = Win32::CreateSolidBrush(Win32::GetRGB(r, g, b));
             temp.left = 0;
             temp.top = i;
@@ -36,7 +35,7 @@ namespace Gradient
             Win32::FillRect(hdcmem, &temp, Brush);
             Win32::DeleteObject(Brush);
         }
-        Win32::HBRUSH pattern = Win32::CreatePatternBrush(hbitmap);
+        auto pattern = Win32::CreatePatternBrush(hbitmap);
 
         Win32::DeleteDC(hdcmem);
         Win32::DeleteObject(Brush);
@@ -47,7 +46,7 @@ namespace Gradient
 
     void CreateButtons(Win32::HWND hwnd)
     {
-        Win32::HWND Exit_Button = Win32::CreateWindowExW(
+        auto Exit_Button = Win32::CreateWindowExW(
             0,
             L"BUTTON",
             L"EXIT",
@@ -67,7 +66,7 @@ namespace Gradient
             std::terminate();
         }
 
-        Win32::HWND Pushlike_Button = Win32::CreateWindowExW(
+        auto Pushlike_Button = Win32::CreateWindowExW(
             0,
             L"BUTTON",
             L"PUSH ME!",
@@ -88,15 +87,15 @@ namespace Gradient
         }
     }
 
-    Win32::LRESULT __stdcall MainWindow(Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam)
+    auto __stdcall MainWindow(Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
     {
-        static Win32::HBRUSH defaultbrush = nullptr;
-        static Win32::HBRUSH hotbrush = nullptr;
-        static Win32::HBRUSH selectbrush = nullptr;
-        static Win32::HBRUSH push_uncheckedbrush = nullptr;
-        static Win32::HBRUSH push_checkedbrush = nullptr;
-        static Win32::HBRUSH push_hotbrush1 = nullptr;
-        static Win32::HBRUSH push_hotbrush2 = nullptr;
+        static auto defaultbrush = Win32::HBRUSH{ nullptr };
+        static auto hotbrush = Win32::HBRUSH{ nullptr };
+        static auto selectbrush = Win32::HBRUSH{ nullptr };
+        static auto push_uncheckedbrush = Win32::HBRUSH{ nullptr };
+        static auto push_checkedbrush = Win32::HBRUSH{ nullptr };
+        static auto push_hotbrush1 = Win32::HBRUSH{ nullptr };
+        static auto push_hotbrush2 = Win32::HBRUSH{ nullptr };
 
         switch (msg)
         {
@@ -126,11 +125,11 @@ namespace Gradient
 
             case Win32::Messages::Notify:
             {
-                Win32::LPNMHDR some_item = (Win32::LPNMHDR)lParam;
+                auto some_item = reinterpret_cast<Win32::LPNMHDR>(lParam);
 
                 if (some_item->idFrom == IDC_EXIT_BUTTON && some_item->code == Win32::Messages::CustomDraw)
                 {
-                    Win32::LPNMCUSTOMDRAW item = (Win32::LPNMCUSTOMDRAW)some_item;
+                    auto item = reinterpret_cast<Win32::LPNMCUSTOMDRAW>(some_item);
 
                     if (item->uItemState & Win32::CdisSelected)
                     {
@@ -139,11 +138,11 @@ namespace Gradient
                             selectbrush = CreateGradientBrush(Win32::GetRGB(180, 0, 0), Win32::GetRGB(255, 180, 0), item);
 
                         //Create pen for button border
-                        Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+                        auto pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
 
                         //Select our brush into hDC
-                        Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
-                        Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, selectbrush);
+                        auto old_pen = Win32::SelectObject(item->hdc, pen);
+                        auto old_brush = Win32::SelectObject(item->hdc, selectbrush);
 
                         //If you want rounded button, then use this, otherwise use FillRect().
                         Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 5, 5);
@@ -166,10 +165,10 @@ namespace Gradient
                             if (hotbrush == nullptr)
                                 hotbrush = CreateGradientBrush(Win32::GetRGB(255, 230, 0), Win32::GetRGB(245, 0, 0), item);
 
-                            Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+                            auto pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
 
-                            Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
-                            Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, hotbrush);
+                            auto old_pen = Win32::SelectObject(item->hdc, pen);
+                            auto old_brush = Win32::SelectObject(item->hdc, hotbrush);
 
                             Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 5, 5);
 
@@ -184,10 +183,10 @@ namespace Gradient
                         if (defaultbrush == nullptr)
                             defaultbrush = CreateGradientBrush(Win32::GetRGB(255, 180, 0), Win32::GetRGB(180, 0, 0), item);
 
-                        Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+                        auto pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
 
-                        Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
-                        Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, defaultbrush);
+                        auto old_pen = Win32::SelectObject(item->hdc, pen);
+                        auto old_brush = Win32::SelectObject(item->hdc, defaultbrush);
 
                         Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 5, 5);
 
@@ -200,7 +199,7 @@ namespace Gradient
                 }
                 else if (some_item->idFrom == IDC_PUSHLIKE_BUTTON && some_item->code == Win32::Messages::CustomDraw)
                 {
-                    Win32::LPNMCUSTOMDRAW item = (Win32::LPNMCUSTOMDRAW)some_item;
+                    auto item = reinterpret_cast<Win32::LPNMCUSTOMDRAW>(some_item);
 
                     if (Win32::IsDlgButtonChecked(hwnd, some_item->idFrom))
                     {
@@ -210,10 +209,10 @@ namespace Gradient
                             if (push_hotbrush1 == nullptr)
                                 push_hotbrush1 = CreateGradientBrush(Win32::GetRGB(0, 0, 245), Win32::GetRGB(0, 230, 255), item);
 
-                            Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+                            auto pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
 
-                            Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
-                            Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, push_hotbrush1);
+                            auto old_pen = Win32::SelectObject(item->hdc, pen);
+                            auto old_brush = Win32::SelectObject(item->hdc, push_hotbrush1);
 
                             Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 10, 10);
 
@@ -227,9 +226,10 @@ namespace Gradient
                         if (push_checkedbrush == nullptr)
                             push_checkedbrush = CreateGradientBrush(Win32::GetRGB(0, 0, 180), Win32::GetRGB(0, 222, 200), item);
 
-                        Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
-                        Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
-                        Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, push_checkedbrush);
+                        auto pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+
+                        auto old_pen = Win32::SelectObject(item->hdc, pen);
+                        auto old_brush = Win32::SelectObject(item->hdc, push_checkedbrush);
 
                         Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 10, 10);
 
@@ -246,10 +246,10 @@ namespace Gradient
                             if (push_hotbrush2 == nullptr)
                                 push_hotbrush2 = CreateGradientBrush(Win32::GetRGB(255, 230, 0), Win32::GetRGB(245, 0, 0), item);
 
-                            Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+                            auto pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
 
-                            Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
-                            Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, push_hotbrush2);
+                            auto old_pen = Win32::SelectObject(item->hdc, pen);
+                            auto old_brush = Win32::SelectObject(item->hdc, push_hotbrush2);
 
                             Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 10, 10);
 
@@ -263,10 +263,10 @@ namespace Gradient
                         if (push_uncheckedbrush == nullptr)
                             push_uncheckedbrush = CreateGradientBrush(Win32::GetRGB(255, 180, 0), Win32::GetRGB(180, 0, 0), item);
 
-                        Win32::HPEN pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
+                        auto pen = Win32::CreatePen(Win32::PsInsideFrame, 0, Win32::GetRGB(0, 0, 0));
 
-                        Win32::HGDIOBJ old_pen = Win32::SelectObject(item->hdc, pen);
-                        Win32::HGDIOBJ old_brush = Win32::SelectObject(item->hdc, defaultbrush);
+                        auto old_pen = Win32::SelectObject(item->hdc, pen);
+                        auto old_brush = Win32::SelectObject(item->hdc, defaultbrush);
 
                         Win32::RoundRect(item->hdc, item->rc.left, item->rc.top, item->rc.right, item->rc.bottom, 10, 10);
 
@@ -313,10 +313,10 @@ namespace Gradient
         return 0;
     }
 
-    export int Run()
+    export auto Run() -> int
     {
         const wchar_t ClassName[] = L"Main_Window";
-        Win32::WNDCLASSEXW wc{
+        auto wc = Win32::WNDCLASSEXW{
             .cbSize = sizeof(Win32::WNDCLASSEX),
             .lpfnWndProc =
                 MainWindow,
@@ -347,7 +347,7 @@ namespace Gradient
             std::terminate();
         }
 
-        Win32::HWND hwnd = Win32::CreateWindowExW(
+        auto hwnd = Win32::CreateWindowExW(
             Win32::ExtendedStyles::ClientEdge,
             ClassName,
             L"Window",
@@ -372,7 +372,7 @@ namespace Gradient
         Win32::UpdateWindow(hwnd);
 
 
-        Win32::MSG msg;
+        auto msg = Win32::MSG{};
         while (Win32::GetMessageW(&msg, nullptr, 0, 0) > 0)
         {
             Win32::TranslateMessage(&msg);

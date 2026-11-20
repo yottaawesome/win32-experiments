@@ -21,8 +21,8 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
             Win32::HMENU hMenu = 0
         )
         {
-            Win32::WNDCLASSEX wc{
-                .cbSize = sizeof(wc),
+            auto wc = Win32::WNDCLASSEX{
+                .cbSize = sizeof(Win32::WNDCLASSEX),
                 .lpfnWndProc = WindowProc,
                 .hInstance = Win32::GetModuleHandleW(nullptr),
                 .lpszClassName = TDerived::ClassName.data()
@@ -57,18 +57,18 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
             Win32::UpdateWindow(m_hwnd);
         }
 
-        virtual Win32::HWND Window() const noexcept final { return m_hwnd; }
+        virtual auto Window() const noexcept -> Win32::HWND final { return m_hwnd; }
 
     protected:
-        virtual Win32::LRESULT HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) = 0;
+        virtual auto HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT = 0;
 
-        static Win32::LRESULT __stdcall WindowProc(Win32::HWND hwnd, Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam)
+        static auto __stdcall WindowProc(Win32::HWND hwnd, Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
         {
-            TDerived* pThis = nullptr;
+            auto pThis = static_cast<TDerived*>(nullptr);
 
             if (uMsg == Win32::Messages::NonClientCreate)
             {
-                Win32::CREATESTRUCT* pCreate = (Win32::CREATESTRUCT*)lParam;
+                auto pCreate = reinterpret_cast<Win32::CREATESTRUCT*>(lParam);
                 pThis = (TDerived*)pCreate->lpCreateParams;
                 Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, (Win32::LONG_PTR)pThis);
 
@@ -91,9 +91,9 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
 
     struct MainWindow final : BaseWindow<MainWindow>
     {
-        static constexpr std::wstring_view ClassName = L"Sample Window Class";
+        static constexpr auto ClassName = std::wstring_view{ L"Sample Window Class" };
 
-        Win32::LRESULT HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) override
+        auto HandleMessage(Win32::UINT uMsg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT override
         {
             switch (uMsg)
             {
@@ -109,12 +109,12 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
         }
     };
 
-    int MessageLoop()
+    auto MessageLoop() -> int
     {
-        Win32::MSG msg;
+        auto msg = Win32::MSG{};
         while (true)
         {
-            int gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
+            auto gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
             if (gotMessage == 0) // WM_QUIT received
                 break;
             if (gotMessage == -1) // error
@@ -126,9 +126,9 @@ export namespace ObjectOrientedWindowTemplate // Approach 2
         return static_cast<int>(msg.wParam);
     }
 
-    int Run()
+    auto Run() -> int
     {
-        MainWindow window;
+        auto window = MainWindow{};
         window.Create(L"Blah", Win32::Styles::OverlappedWindow);
         return MessageLoop();
     }

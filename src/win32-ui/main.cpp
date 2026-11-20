@@ -34,16 +34,16 @@ void TestException()
 
     try
     {
-        int* x = nullptr;
-        int y = *x;
+        auto x = static_cast<int*>(nullptr);
+        auto y = *x;
     }
     catch (...)
     {
-        int y = 10;
+        auto y = 10;
     }
 }
 
-int main()
+auto main() -> int
 {
 	return LatestSample::Run();
     //return BasicWindow::Run();

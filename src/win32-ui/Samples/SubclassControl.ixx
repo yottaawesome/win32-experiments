@@ -7,7 +7,7 @@ export namespace SubclassControl
 {
     namespace Messages = Win32::Messages;
 
-    Win32::LRESULT __stdcall MainWndProc(Win32::HWND hwnd, Win32::UINT type, Win32::WPARAM wParam, Win32::LPARAM lParam)
+    auto __stdcall MainWndProc(Win32::HWND hwnd, Win32::UINT type, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
     {
         switch (type)
         {
@@ -22,14 +22,14 @@ export namespace SubclassControl
         }
     }
 
-    Win32::LRESULT __stdcall SubclassProc(
+    auto __stdcall SubclassProc(
         Win32::HWND hWnd,
         Win32::UINT msg,
         Win32::WPARAM wParam,
         Win32::LPARAM lParam,
         Win32::UINT_PTR uIdSubclass,
         Win32::DWORD_PTR dwRefData
-    )
+    ) -> Win32::LRESULT
     {
         switch (msg)
         {
@@ -39,12 +39,12 @@ export namespace SubclassControl
         return Win32::DefSubclassProc(hWnd, msg, wParam, lParam);
     }
 
-    int MessageLoop()
+    auto MessageLoop() -> int
     {
-        Win32::MSG msg;
+        auto msg = Win32::MSG{};
         while (true)
         {
-            int gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
+            auto gotMessage = Win32::GetMessageW(&msg, static_cast<Win32::HWND>(nullptr), 0, 0);
             if (gotMessage == 0) // WM_QUIT received
                 break;
             if (gotMessage == -1) // error
@@ -56,14 +56,14 @@ export namespace SubclassControl
         return static_cast<int>(msg.wParam);
     }
 
-    int Run()
+    auto Run() -> int
     {
-        constexpr std::wstring_view ClassName = L"SubclassTest";
-        Win32::ATOM Class =
-            []()
+        constexpr auto ClassName = std::wstring_view{ L"SubclassTest" };
+        auto Class =
+            []() -> Win32::ATOM
             {
-                Win32::WNDCLASSEX wcx{
-                    .cbSize = sizeof(wcx),              // size of structure
+                auto wcx = Win32::WNDCLASSEX{
+                    .cbSize = sizeof(Win32::WNDCLASSEX), // size of structure
                     .style = Win32::Cs_HRedraw | Win32::Cs_VRedraw,   // redraw if size changes
                     .lpfnWndProc = MainWndProc,         // points to window procedure
                     .cbClsExtra = 0,                    // no extra class memory
@@ -75,7 +75,7 @@ export namespace SubclassControl
                     .lpszClassName = ClassName.data(),  // name of window class
                     .hIconSm = nullptr
                 };
-                Win32::ATOM returnValue = Win32::RegisterClassExW(&wcx);
+                auto returnValue = Win32::RegisterClassExW(&wcx);
                 if (not returnValue)
                 {
                     std::println("Failed registering window class.");
@@ -85,11 +85,11 @@ export namespace SubclassControl
                 return returnValue;
             }();
 
-        constexpr std::wstring_view WindowName = L"SubclassTestWindow";
-        Win32::HWND MainWindow =
-            []()
+        constexpr auto WindowName = std::wstring_view{ L"SubclassTestWindow" };
+        auto MainWindow =
+            []() -> Win32::HWND
             {
-                Win32::HWND window = Win32::CreateWindowExW(
+                auto window = Win32::CreateWindowExW(
                     0,                          // no extended styles
                     ClassName.data(),           // class name
                     WindowName.data(),          // window name
@@ -114,10 +114,10 @@ export namespace SubclassControl
                 return window;
             }();
 
-        Win32::HWND Button =
-            [](Win32::HWND parent)
+        auto Button =
+            [](Win32::HWND parent) -> Win32::HWND
             {
-                Win32::HWND button = Win32::CreateWindowExW(
+                auto button = Win32::CreateWindowExW(
                     0,
                     Win32::Controls::Button,
                     L"OK",

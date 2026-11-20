@@ -50,7 +50,7 @@ export namespace LatestSample
         }
 
         MainWindow(const MainWindow&) = delete;
-        MainWindow& operator=(const MainWindow&) = delete;
+        auto operator=(const MainWindow&) -> MainWindow& = delete;
 
         MainWindow(MainWindow&& other) noexcept
             : WindowHandle(std::move(other.WindowHandle))
@@ -59,7 +59,7 @@ export namespace LatestSample
                 Win32::SetWindowLongPtrW(WindowHandle.get(), Win32::Gwlp_UserData, reinterpret_cast<Win32::LONG_PTR>(this));
         }
 
-        MainWindow& operator=(MainWindow&& other) noexcept
+        auto operator=(MainWindow&& other) noexcept -> MainWindow&
         {
             if (this != &other)
             {
@@ -97,7 +97,7 @@ export namespace LatestSample
     }
 
 	template<typename TWindow>
-    auto RegisterWindowClass()
+    auto RegisterWindowClass() -> Win32::ATOM
     {
         auto windowClass = Win32::WNDCLASSEXW{
             .cbSize = sizeof(Win32::WNDCLASSEXW),
@@ -130,7 +130,7 @@ export namespace LatestSample
             : Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
     }
 
-    auto Run()
+    auto Run() -> int
     {
 		RegisterWindowClass<MainWindow>();
 
