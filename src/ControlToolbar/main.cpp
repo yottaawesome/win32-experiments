@@ -50,11 +50,15 @@ auto WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 						switch (pCS->dwFlag) 
 						{
 							case PGF_CALCHEIGHT:
+							{
 								pCS->iHeight = tbSize.cy;
 								break;
+							}
 							case PGF_CALCWIDTH:
+							{
 								pCS->iWidth = tbSize.cx;
 								break;
+							}
 						}
 					}
 					return 0;
