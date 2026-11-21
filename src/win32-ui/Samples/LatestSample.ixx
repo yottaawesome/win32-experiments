@@ -78,22 +78,34 @@ export namespace LatestSample
         if (not pThis)
             return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
 
-        if (msg == Win32::Messages::NonClientDestroy and pThis->WindowHandle.get() == hwnd)
+        switch (msg)
         {
-            Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, 0);
-            pThis->WindowHandle.release();
-            return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
-        }
+            case Win32::Messages::NonClientDestroy:
+            {
+                pThis->WindowHandle.release();
+                Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp_UserData, 0);
+                return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+            }
 
-        if constexpr (requires(SizeMessage m) { pThis->OnSize(m); })
-        {
-            if (msg == Win32::Messages::Size)
-                return pThis->OnSize(SizeMessage::From(wParam, lParam));
-        }
+            case Win32::Messages::Destroy:
+            {
+                Win32::PostQuitMessage(0);
+                return 0;
+            }
 
-        return msg == Win32::Messages::Destroy
-            ? (Win32::PostQuitMessage(0), 0)
-            : Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+            case Win32::Messages::Size:
+            {
+                if constexpr (requires(SizeMessage m) { pThis->OnSize(m); })
+                    return pThis->OnSize(SizeMessage::From(wParam, lParam));
+                else 
+                    return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+            }
+
+            default:
+            {
+                return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+            }
+        }
     }
 
 	template<typename TWindow>
