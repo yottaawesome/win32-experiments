@@ -1,6 +1,6 @@
 // Cleaned up version of the code described here: http://pididu.com/wordpress/blog/winapi-example-common-control-toolbar-in-a-pager/
-// Converted to last C++ standard, removed MFC, applied AAA idiom,
-// made casts explicit, moved variabled to where they are used,
+// Converted to latest C++ standard, removed MFC, applied AAA idiom,
+// made casts explicit, moved variables to where they are used,
 // used explicit typed functions instead of macros, used std::array 
 // instead of C-style arrays, added braces around switch statements,
 // improved error handling, added comments, removed unused code, and 
