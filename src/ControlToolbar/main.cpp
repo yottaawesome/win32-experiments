@@ -22,13 +22,47 @@ auto hWndToolbar = HWND{};
 // if compiled as non-unicode
 // Arbitrary command 100-104 assigned to buttons, will never be processed
 const auto tbButtonsAdd = std::array{
-	TBBUTTON{ MAKELONG(HIST_BACK,0), 100, TBSTATE_ENABLED, BTNS_AUTOSIZE,{ 0 }, 0, (INT_PTR)L"one" },
-	TBBUTTON{ MAKELONG(HIST_FORWARD,0), 101, TBSTATE_ENABLED, BTNS_AUTOSIZE,{ 0 }, 0, (INT_PTR)L"two" },
-	TBBUTTON{ MAKELONG(HIST_VIEWTREE,0), 102, TBSTATE_ENABLED, BTNS_AUTOSIZE,{ 0 }, 0, (INT_PTR)L"three" },
-	TBBUTTON{ MAKELONG(HIST_ADDTOFAVORITES,0), 103, TBSTATE_ENABLED, BTNS_AUTOSIZE,{ 0 }, 0, (INT_PTR)L"four" },
-	TBBUTTON{ MAKELONG(HIST_FAVORITES,0), 104, TBSTATE_ENABLED, BTNS_AUTOSIZE,{ 0 }, 0, (INT_PTR)L"five" }
+	TBBUTTON{ 
+		.iBitmap = MAKELONG(HIST_BACK,0),
+		.idCommand = 100, 
+		.fsState = TBSTATE_ENABLED, 
+		.fsStyle = BTNS_AUTOSIZE, 
+		.dwData = 0, 
+		.iString = reinterpret_cast<INT_PTR>(L"one") 
+	},
+	TBBUTTON{ 
+		.iBitmap = MAKELONG(HIST_FORWARD,0), 
+		.idCommand = 101, 
+		.fsState = TBSTATE_ENABLED, 
+		.fsStyle = BTNS_AUTOSIZE, 
+		.dwData = 0, 
+		.iString = reinterpret_cast<INT_PTR>(L"two") 
+	},
+	TBBUTTON{ 
+		.iBitmap = MAKELONG(HIST_VIEWTREE,0), 
+		.idCommand = 102, 
+		.fsState = TBSTATE_ENABLED, 
+		.fsStyle = BTNS_AUTOSIZE, 
+		.dwData = 0, 
+		.iString = reinterpret_cast<INT_PTR>(L"three") 
+	},
+	TBBUTTON{ 
+		.iBitmap = MAKELONG(HIST_ADDTOFAVORITES,0), 
+		.idCommand = 103, 
+		.fsState = TBSTATE_ENABLED, 
+		.fsStyle = BTNS_AUTOSIZE, 
+		.dwData = 0, 
+		.iString = reinterpret_cast<INT_PTR>(L"four") 
+	},
+	TBBUTTON{ 
+		.iBitmap = MAKELONG(HIST_FAVORITES,0), 
+		.idCommand = 104, 
+		.fsState = TBSTATE_ENABLED, 
+		.fsStyle = BTNS_AUTOSIZE, 
+		.dwData = 0, 
+		.iString = reinterpret_cast<INT_PTR>(L"five") 
+	}
 };
-const auto numButtons = tbButtonsAdd.size();
 
 auto WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 {
@@ -42,23 +76,22 @@ auto WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 				{
 					// If more than one pager in the program
 					// may need to check which one sent message
-					auto pCS = LPNMPGCALCSIZE{};
 					auto tbSize = SIZE{};
-					if (SendMessageW(hWndToolbar, TB_GETIDEALSIZE, 0,reinterpret_cast<LPARAM>(&tbSize)))
+					if (not SendMessageW(hWndToolbar, TB_GETIDEALSIZE, 0,reinterpret_cast<LPARAM>(&tbSize)))
+						return 0;
+
+					auto pCS = reinterpret_cast<LPNMPGCALCSIZE>(lParam);
+					switch (pCS->dwFlag) 
 					{
-						pCS = reinterpret_cast<LPNMPGCALCSIZE>(lParam);
-						switch (pCS->dwFlag) 
+						case PGF_CALCHEIGHT:
 						{
-							case PGF_CALCHEIGHT:
-							{
-								pCS->iHeight = tbSize.cy;
-								break;
-							}
-							case PGF_CALCWIDTH:
-							{
-								pCS->iWidth = tbSize.cx;
-								break;
-							}
+							pCS->iHeight = tbSize.cy;
+							break;
+						}
+						case PGF_CALCWIDTH:
+						{
+							pCS->iWidth = tbSize.cx;
+							break;
 						}
 					}
 					return 0;
@@ -76,7 +109,7 @@ auto WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) -> LRESULT
 
 					// Pass the next button from the array. There is no need to filter out buttons
 					// that are already used—they will be ignored.
-					if (lpTbNotify->iItem < numButtons) 
+					if (lpTbNotify->iItem < tbButtonsAdd.size()) 
 					{
 						lpTbNotify->tbButton = tbButtonsAdd[lpTbNotify->iItem];
 						return 1;
@@ -194,7 +227,7 @@ try
 	SendMessageW(hWndToolbar, TB_SETBITMAPSIZE, static_cast<WPARAM>(0), (LPARAM)MAKELONG(24, 24));
 	SendMessageW(hWndToolbar, TB_LOADIMAGES, static_cast<WPARAM>(IDB_HIST_LARGE_COLOR), reinterpret_cast<LPARAM>(HINST_COMMCTRL));
 	SendMessageW(hWndToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
-	SendMessageW(hWndToolbar, TB_ADDBUTTONS, numButtons, reinterpret_cast<LPARAM>(tbButtonsAdd.data()));
+	SendMessageW(hWndToolbar, TB_ADDBUTTONS, static_cast<WPARAM>(tbButtonsAdd.size()), reinterpret_cast<LPARAM>(tbButtonsAdd.data()));
 	SendMessageW(hWndToolbar, TB_AUTOSIZE, 0, 0);
 
 	// Notify the pager that it contains the toolbar
