@@ -144,9 +144,9 @@
     <ClCompile Include="Samples\ObjectOrientedWindow.ixx" />
     <ClCompile Include="Samples\ObjectOrientedWindowTemplate.ixx" />
     <ClCompile Include="Samples\SubclassControl.ixx" />
-    <ClCompile Include="Samples.ixx" />
-    <ClCompile Include="Shared.ixx" />
-    <ClCompile Include="Util.ixx" />
+    <ClCompile Include="Samples\Samples.ixx" />
+    <ClCompile Include="Shared\Shared.ixx" />
+    <ClCompile Include="Util\Util.ixx" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="win32-ui.exe.manifest" />
