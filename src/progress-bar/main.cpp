@@ -17,7 +17,7 @@ import progressbar;
 int main() 
 {
 	// create progress window
-	SimpleProgressWindow::ProgressWindow progress(
+	auto progress = SimpleProgressWindow::ProgressWindow(
 		L"Microsoft Windows",
 		SimpleProgressWindow::ProgressStatus(
 			L"Please wait while the features are configured",
@@ -45,8 +45,9 @@ int main()
 		WS_CAPTION | WS_SYSMENU
 	);
 
-	std::thread task = std::thread(
-		[&]{
+	std::thread(
+		[&] -> void
+		{
 			Sleep(2000);
 			// Do not use the Status object as a reference variable or change its value!!
 			SimpleProgressWindow::ProgressStatus status = progress.Status; // copy
@@ -57,7 +58,8 @@ int main()
 			status.Text = L"This might take several minutes.";
 			progress.SetStatus(status);
 
-			for (int i = 0; i <= 100; i += 20) {
+			for (int i = 0; i <= 100; i += 20) 
+			{
 				progress.SetText(std::format(L"About {} seconds left.", (100 - i) / 20));
 				progress.SetValue(i);
 				// or
@@ -70,8 +72,7 @@ int main()
 			progress.SetMarquee(true);
 			Sleep(5000);
 			progress.Close();
-		});
-	task.detach();
+		}).detach();
 
 	// Returns true if not canceled.
 	auto result = progress.Join();

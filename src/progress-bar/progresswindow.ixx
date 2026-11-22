@@ -38,27 +38,27 @@ export namespace SimpleProgressWindow
 			DWORD dwStyle = WS_CAPTION
 		) : Status(status)
 		{
-			const int SizeWidth = 360;
-			const int SizeHeight = 158;
-			const int Padding = 12;
-			const int TitleX = Padding;
-			const int TitleY = Padding;
-			const int TitleWidth = SizeWidth - Padding * 2;
-			const int TitleHeight = 22;
-			const int TextX = Padding;
-			const int TextY = TitleY + TitleHeight + Padding;
-			const int TextWidth = SizeWidth - Padding * 2;
-			const int TextHeight = 16;
-			const int ProgressX = Padding;
-			const int ProgressY = TextY + TextHeight + Padding + 6;
-			const int ProgressWidth = SizeWidth - Padding * 2;
-			const int ProgressHeight = 16;
-			const int ButtonWidth = 80;
-			const int ButtonHeight = 24;
-			const int FocusX = 0;
-			const int FocusY = 0;
-			const int FocusWidth = SizeWidth;
-			const int FocusHeight = SizeHeight - ButtonHeight - Padding * 2;
+			constexpr int SizeWidth = 360;
+			constexpr int SizeHeight = 158;
+			constexpr int Padding = 12;
+			constexpr int TitleX = Padding;
+			constexpr int TitleY = Padding;
+			constexpr int TitleWidth = SizeWidth - Padding * 2;
+			constexpr int TitleHeight = 22;
+			constexpr int TextX = Padding;
+			constexpr int TextY = TitleY + TitleHeight + Padding;
+			constexpr int TextWidth = SizeWidth - Padding * 2;
+			constexpr int TextHeight = 16;
+			constexpr int ProgressX = Padding;
+			constexpr int ProgressY = TextY + TextHeight + Padding + 6;
+			constexpr int ProgressWidth = SizeWidth - Padding * 2;
+			constexpr int ProgressHeight = 16;
+			constexpr int ButtonWidth = 80;
+			constexpr int ButtonHeight = 24;
+			constexpr int FocusX = 0;
+			constexpr int FocusY = 0;
+			constexpr int FocusWidth = SizeWidth;
+			constexpr int FocusHeight = SizeHeight - ButtonHeight - Padding * 2;
 			OnCancel = onCancel;
 
 			// create class
@@ -80,10 +80,10 @@ export namespace SimpleProgressWindow
 			RegisterClassEx(&wcex);
 
 			// create window
-			RECT rect{
+			auto rect = RECT{
 				0, 0,
-				rect.left + SizeWidth,
-				rect.top + SizeHeight
+				SizeWidth,
+				SizeHeight
 			};
 			AdjustWindowRectEx(&rect, dwStyle, false, 0);
 
@@ -352,7 +352,7 @@ export namespace SimpleProgressWindow
 
 		inline bool Join()
 		{
-			MSG msg{};
+			auto msg = MSG{};
 
 			while (!Closed && GetMessageA(&msg, Handle, 0, 0))
 			{
@@ -384,44 +384,58 @@ export namespace SimpleProgressWindow
 			}
 		}
 
-		LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+		auto WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT
 		{
 			switch (message)
 			{
-			case WM_DESTROY:
-				// If you are using a global message loop, modify it for your situation.
-				//PostQuitMessage(0);
-				Closed = true;
-				return 0;
-			case WM_COMMAND:
-				if (LOWORD(wParam) != IDCANCEL)
-					break;
-				// goto WM_CLOSE:
-			case WM_CLOSE:
-				if (UserClose || (OnCancel && OnCancel(this)))
+				case WM_DESTROY:
 				{
-					Canceled = !UserClose;
+					// If you are using a global message loop, modify it for your situation.
+					//PostQuitMessage(0);
 					Closed = true;
-					DestroyWindow(hWnd);
+					return 0;
 				}
-				break;
-			case WM_CTLCOLORSTATIC:
-				if ((HWND)lParam == TitleHandle)
+
+				case WM_COMMAND:
 				{
-					SetBkMode((HDC)wParam, TRANSPARENT);
-					SetTextColor((HDC)wParam, RGB(0x1a, 0x48, 0xa3));
-					return (LRESULT)GetStockObject(NULL_BRUSH);
+					if (LOWORD(wParam) != IDCANCEL)
+						break;
+					// goto WM_CLOSE:
 				}
-				break;
-			default:
-				return DefWindowProc(hWnd, message, wParam, lParam);
+
+				case WM_CLOSE:
+				{
+					if (UserClose || (OnCancel && OnCancel(this)))
+					{
+						Canceled = !UserClose;
+						Closed = true;
+						DestroyWindow(hWnd);
+					}
+					return 0;
+				}
+
+				case WM_CTLCOLORSTATIC:
+				{
+					if ((HWND)lParam == TitleHandle)
+					{
+						SetBkMode((HDC)wParam, TRANSPARENT);
+						SetTextColor((HDC)wParam, RGB(0x1a, 0x48, 0xa3));
+						return (LRESULT)GetStockObject(NULL_BRUSH);
+					}
+					return 0;
+				}
+
+				default:
+				{
+					return DefWindowProc(hWnd, message, wParam, lParam);
+				}
 			}
 			return 0;
 		}
 
-		inline static LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+		inline static auto StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) -> LRESULT
 		{
-			ProgressWindow* window = (ProgressWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			auto window = reinterpret_cast<ProgressWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 			if (window)
 				return window->WndProc(hWnd, message, wParam, lParam);
 			return DefWindowProc(hWnd, message, wParam, lParam);
