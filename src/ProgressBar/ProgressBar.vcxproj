@@ -155,8 +155,10 @@
     <ClCompile Include="ControlWindow.ixx" />
     <ClCompile Include="CustomWindow.ixx" />
     <ClCompile Include="Error.ixx" />
+    <ClCompile Include="Font.ixx" />
     <ClCompile Include="ListView.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Raii.ixx" />
     <ClCompile Include="RichEdit.ixx" />
     <ClCompile Include="StatusBar.ixx" />
     <ClCompile Include="TopLevelWindow.ixx" />

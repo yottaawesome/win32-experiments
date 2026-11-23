@@ -28,11 +28,39 @@ export namespace Error
 		return message;
 	}
 
-	class Win32Error : public std::runtime_error
+	struct ExactMessage
+	{
+		std::string Message;
+	};
+
+	class RuntimeError : public std::runtime_error
+	{
+	public:
+		RuntimeError(const ExactMessage& exactMessage)
+			: std::runtime_error{ exactMessage.Message }
+		{
+			Win32::OutputDebugStringA(what());
+		}
+
+		RuntimeError(const std::string& message, std::source_location location = std::source_location::current())
+			: std::runtime_error{ FormatErrorMessage(message, location) }
+		{
+			Win32::OutputDebugStringA(what());
+		}
+
+	protected:
+		[[nodiscard]]
+		static auto FormatErrorMessage(const std::string& message, std::source_location location) -> std::string
+		{
+			return std::format("{} at {}:{}:{}", message, location.file_name(), location.line(), location.column());
+		}
+	};
+
+	class Win32Error : public RuntimeError
 	{
 	public:
 		Win32Error(Win32::DWORD errorCode, const std::string& message, std::source_location location = std::source_location::current())
-			: std::runtime_error{ FormatErrorMessage(errorCode, message, location) }
+			: RuntimeError{ ExactMessage{ FormatErrorMessage(errorCode, message, location) } }
 			, m_errorCode{ errorCode }
 		{ 
 			Win32::OutputDebugStringA(what());

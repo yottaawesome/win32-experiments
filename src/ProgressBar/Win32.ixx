@@ -64,6 +64,16 @@ export namespace Win32
 		::DWORD_PTR,
 		::ULONG_PTR,
 		::UINT_PTR,
+		::RECT,
+		::HFONT,
+		::NONCLIENTMETRICS,
+		::BOOL,
+		::EnumChildWindows,
+		::SystemParametersInfoW,
+		::CreateFontW,
+		::CreateFontIndirectW,
+		::DeleteObject,
+		::GetClientRect,
 		::DefSubclassProc,
 		::SetWindowSubclass,
 		::InitCommonControls,
@@ -89,10 +99,88 @@ export namespace Win32
 		::DispatchMessageW
 		;
 	
+	constexpr auto DefaultCharset = DEFAULT_CHARSET;
+	constexpr auto SpiGetNonClientMetrics = SPI_GETNONCLIENTMETRICS;
+
+	namespace StatusBar
+	{
+		enum Styles
+		{
+			SizeGrip = SBARS_SIZEGRIP,
+			ToolTips = SBARS_TOOLTIPS,
+		};
+
+		enum Messages
+		{
+			SetParts = SB_SETPARTS,
+			GetParts = SB_GETPARTS,
+			SetText = SB_SETTEXTW,
+			GetText = SB_GETTEXTW,
+			SetTextLength = SB_GETTEXTLENGTHW,
+			GetTextLength = SB_GETTEXTLENGTHW,
+			SetIcon = SB_SETICON,
+			GetIcon = SB_GETICON,
+			SetTipText = SB_SETTIPTEXTW,
+			GetTipText = SB_GETTIPTEXTW,
+		};
+	}
+
+	namespace OutPrecision
+	{
+		enum
+		{
+			OutOutlinePrecision = OUT_OUTLINE_PRECIS
+		};
+	}
+
+	namespace ClipPrecision
+	{
+		enum
+		{
+			DefaultPrecision = CLIP_DEFAULT_PRECIS
+		};
+	}
+
+	namespace FontQuality
+	{
+		enum
+		{
+			ClearType = CLEARTYPE_QUALITY
+		};
+	}
+
+	namespace Pitch
+	{
+		enum
+		{
+			Variable = VARIABLE_PITCH
+		};
+	}
+
+	namespace FontFamily
+	{
+		enum
+		{
+			Swiss = FF_SWISS
+		};
+	}
+
+	namespace FontWeight
+	{
+		enum
+		{
+			Normal = FW_NORMAL
+		};
+	}
+
 	namespace WindowClasses
 	{
 		constexpr auto ProgressBar = PROGRESS_CLASS;
 		constexpr auto Button = WC_BUTTON;
+		constexpr auto Static = WC_STATIC;
+		constexpr auto ListView = WC_LISTVIEW;
+		constexpr auto StatusBar = STATUSCLASSNAMEW;
+		constexpr auto TrackBar = TRACKBAR_CLASS;
 	}
 
 	namespace Button
@@ -163,6 +251,9 @@ export namespace Win32
 			StaticControlColor = WM_CTLCOLORSTATIC,
 			NonClientCreate = WM_NCCREATE,
 			NonClientDestroy = WM_NCDESTROY,
+			ExitSizeMove = WM_EXITSIZEMOVE,
+			Size = WM_SIZE,
+			SetFont = WM_SETFONT,
 
 			ReflectedCommand = WM_APP + 1,
 			ReflectedNotify = WM_APP + 2,

@@ -16,7 +16,8 @@ export namespace MultiControlSamples
 				Win32::DestroyWindow(m_hwnd);
 		}
 
-		CustomWindow(int x, int y, unsigned width, unsigned height, HWND parent)
+		CustomWindow(int x, int y, unsigned width, unsigned height, Win32::HWND parent, auto&&...additionalArgs)
+			: TWindow{ std::forward<decltype(additionalArgs)>(additionalArgs)... }
 		{
 			Initialize({
 				.ClassName = std::wstring{ this->GetWindowClassName() },
