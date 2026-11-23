@@ -28,29 +28,11 @@ export namespace MultiControlSamples
 				Win32::DestroyWindow(m_hwnd);
 		}
 
-		// No copy semantics
+		// The subclass callback retains this object's address.
 		ControlWindow(const ControlWindow&) = delete;
-		auto operator=(const ControlWindow&) -> ControlWindow & = delete;
-
-		// Move semantics
-		ControlWindow(ControlWindow&& other) noexcept
-			: m_hwnd{ std::exchange(other.m_hwnd, nullptr) }
-		{
-			// other m_hwnd could be nullptr
-			if (m_hwnd)
-				SetSubclassProc();
-		}
-		auto operator=(ControlWindow&& other) noexcept -> ControlWindow&
-		{
-			if (this == &other)
-				return *this;
-			if (m_hwnd)
-				Win32::DestroyWindow(m_hwnd);
-			// other m_hwnd could be nullptr
-			if (m_hwnd = std::exchange(other.m_hwnd, nullptr); m_hwnd)
-				SetSubclassProc();
-			return *this;
-		}
+		auto operator=(const ControlWindow&) -> ControlWindow& = delete;
+		ControlWindow(ControlWindow&&) = delete;
+		auto operator=(ControlWindow&&) -> ControlWindow& = delete;
 
 		ControlWindow(
 			Win32::HWND parent, 
@@ -102,43 +84,35 @@ export namespace MultiControlSamples
 			);
 			if (not self.m_hwnd)
 				throw Error::Win32Error{ Win32::GetLastError(), "Failed to create window" };
-			self.SetSubclassProc();
+			if (not Win32::SetWindowSubclass(self.m_hwnd, ControlProc, 0, reinterpret_cast<Win32::DWORD_PTR>(&self)))
+			{
+				Win32::DestroyWindow(std::exchange(self.m_hwnd, nullptr));
+				throw Error::RuntimeError{ "Failed to subclass control window" };
+			}
 			return self;
 		}
 
-		auto SetSubclassProc(this auto&& self)
+	private:
+		static auto __stdcall ControlProc(
+			Win32::HWND hwnd,
+			Win32::UINT msg,
+			Win32::WPARAM wParam,
+			Win32::LPARAM lParam,
+			Win32::UINT_PTR subclassId,
+			Win32::DWORD_PTR dwRefData
+		) -> Win32::LRESULT
 		{
-			constexpr auto ControlProc =
-				[](
-					Win32::HWND hwnd,
-					Win32::UINT msg,
-					Win32::WPARAM wParam,
-					Win32::LPARAM lParam,
-					Win32::UINT_PTR,
-					Win32::DWORD_PTR dwRefData
-				) -> Win32::LRESULT
-				{
-					auto ptr = reinterpret_cast<ControlWindow*>(dwRefData);
-					if (not ptr)
-						return Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
-
-					switch (msg)
-					{
-						case Win32::WindowMessages::NonClientDestroy:
-						{
-							ptr->m_hwnd = nullptr;
-							Win32::SetWindowSubclass(hwnd, nullptr, 0, 0);
-							return Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
-						}
-
-						default:
-						{
-							return ptr->HandleMessage(hwnd, msg, wParam, lParam);
-						}
-					}
-				};
-
-			Win32::SetWindowSubclass(self.m_hwnd, ControlProc, 0, reinterpret_cast<Win32::DWORD_PTR>(&self));
+			auto ptr = reinterpret_cast<ControlWindow*>(dwRefData);
+			if (msg == Win32::WindowMessages::NonClientDestroy)
+			{
+				if (ptr)
+					ptr->m_hwnd = nullptr;
+				Win32::RemoveWindowSubclass(hwnd, ControlProc, subclassId);
+				return Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
+			}
+			return ptr
+				? ptr->HandleMessage(hwnd, msg, wParam, lParam)
+				: Win32::DefSubclassProc(hwnd, msg, wParam, lParam);
 		}
 
 	protected:

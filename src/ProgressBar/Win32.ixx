@@ -78,6 +78,7 @@ export namespace Win32
 		::GetClientRect,
 		::DefSubclassProc,
 		::SetWindowSubclass,
+		::RemoveWindowSubclass,
 		::InitCommonControls,
 		::OutputDebugStringA,
 		::OutputDebugStringW,

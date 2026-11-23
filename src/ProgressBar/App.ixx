@@ -15,15 +15,26 @@ export namespace MultiControlSamples
 	public:
 		using MainWindow = CustomWindow<TopLevelWindow>;
 
-		App() = default;
+		App()
+		{
+			m_progressBar
+				.SetRange(0, 100)
+				.SetPosition(0)
+				.SetIncrement(10);
+			m_statusBar
+				.Split(400, -1)
+				.SetText(0, L"Ready")
+				.SetText(1, L"Not connected");
+			m_mainWindow
+				.SetFontOnHierarchy(SystemFont);
+		}
+
 		App(const App&) = delete;
 		App& operator=(const App&) = delete;
 
 	public:
 		auto Run() -> int
 		{
-			m_mainWindow.SetFontOnHierarchy(SystemFont);
-
 			auto msg = Win32::MSG{};
 			while (Win32::GetMessageW(&msg, nullptr, 0, 0))
 			{
@@ -57,14 +68,7 @@ export namespace MultiControlSamples
 			}
 		};
 
-		ProgressBarControl m_progressBar =
-			[this] -> ProgressBarControl
-			{
-				return ProgressBarControl{ m_mainWindow.GetHwnd(), L"", 10, 10, 300, 30 }
-					.SetRange(0, 100)
-					.SetPosition(0)
-					.SetIncrement(10);
-			}();
+		ProgressBarControl m_progressBar{ m_mainWindow.GetHwnd(), L"", 10, 10, 300, 30 };
 
 		ButtonControl m_button{ 
 			m_mainWindow.GetHwnd(), 
@@ -74,13 +78,6 @@ export namespace MultiControlSamples
 			[this] { m_progressBar.AdvanceIncrement(); } 
 		};
 		
-		StatusBarControl m_statusBar =
-			[this] -> StatusBarControl
-			{
-				return StatusBarControl{ m_mainWindow.GetHwnd(), L"", 0, 0, 800, 20 }
-					.Split(400, -1)
-					.SetText(0, L"Ready")
-					.SetText(1, L"Not connected");
-			}();
+		StatusBarControl m_statusBar{ m_mainWindow.GetHwnd(), L"", 0, 0, 800, 20 };
 	};
 }

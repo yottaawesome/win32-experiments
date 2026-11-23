@@ -33,31 +33,11 @@ export namespace MultiControlSamples
 			});
 		}
 
-		//
-		// No copy semantics
+		// The window procedure retains this object's address in GWLP_USERDATA.
 		CustomWindow(const CustomWindow&) = delete;
-		auto operator=(const CustomWindow&) -> CustomWindow & = delete;
-
-		//
-		// Move semantics
-		CustomWindow(CustomWindow&& other) noexcept
-			: m_hwnd{ std::exchange(other.m_hwnd, nullptr) }
-		{
-			// other m_hwnd could be nullptr
-			if (m_hwnd)
-				Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::LONG_PTR>(static_cast<TWindow*>(this)));
-		}
-		auto operator=(CustomWindow&& other) noexcept -> CustomWindow&
-		{
-			if (this == &other)
-				return *this;
-			if (m_hwnd)
-				Win32::DestroyWindow(m_hwnd);
-			// other m_hwnd could be nullptr
-			if (m_hwnd = std::exchange(other.m_hwnd, nullptr); m_hwnd)
-				Win32::SetWindowLongPtrW(m_hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::LONG_PTR>(static_cast<TWindow*>(this)));
-			return *this;
-		}
+		auto operator=(const CustomWindow&) -> CustomWindow& = delete;
+		CustomWindow(CustomWindow&&) = delete;
+		auto operator=(CustomWindow&&) -> CustomWindow& = delete;
 
 		//
 		// Public methods
