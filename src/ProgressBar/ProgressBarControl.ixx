@@ -10,12 +10,13 @@ export namespace ProgressBarSamples
 	class ProgressBarBase
 	{
 	public:
-		auto GetCreateControlArgs(this auto&& self) -> CreateControlArgs
+		[[nodiscard]]
+		constexpr auto GetDefaultParams(this auto&&) noexcept -> ControlParams
 		{
-			return CreateControlArgs{
-				.ControlId = NextControlId(),
+			return ControlParams{
 				.ClassName = Win32::WindowClasses::ProgressBar,
-				.Style = Win32::WindowStyles::WsChild | Win32::WindowStyles::WsVisible | Win32::ProgressBar::Styles::Smooth,
+				.Style = Win32::ProgressBar::Styles::Smooth,
+				.ExtendedStyle = 0
 			};
 		}
 

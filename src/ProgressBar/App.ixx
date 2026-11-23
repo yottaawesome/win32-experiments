@@ -1,7 +1,8 @@
 export module ProgressBarSamples:App;
 import std;
 import Win32;
-import :MainWindow;
+import :CustomWindow;
+import :TopLevelWindow;
 import :ProgressBarControl;
 
 export namespace ProgressBarSamples
@@ -9,6 +10,8 @@ export namespace ProgressBarSamples
 	class App
 	{
 	public:
+		using MainWindow = CustomWindow<TopLevelWindow>;
+
 		auto Run() -> int
 		{
 			m_progressBar.SetRange(0, 100);
@@ -37,7 +40,13 @@ export namespace ProgressBarSamples
 		}
 
 	private:
-		MainWindow m_mainWindow;
-		ProgressBarControl m_progressBar{ m_mainWindow.GetHwnd(), 10, 10, 300, 30 };
+		MainWindow m_mainWindow{ 
+			Win32::CreateWindowConstants::UseDefault, 
+			Win32::CreateWindowConstants::UseDefault,
+			800,
+			600,
+			nullptr
+		};
+		ProgressBarControl m_progressBar{ m_mainWindow.GetHwnd(), L"", 10, 10, 300, 30 };
 	};
 }

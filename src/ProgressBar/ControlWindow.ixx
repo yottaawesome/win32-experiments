@@ -6,7 +6,13 @@ import :Error;
 
 export namespace ProgressBarSamples
 {
-	template<typename TDerived>
+	template<typename T>
+	concept HasDefaultParams = requires(T t)
+	{
+		{ t.GetDefaultParams() } -> std::same_as<ControlParams>;
+	};
+
+	template<HasDefaultParams TDerived>
 	class ControlWindow : public TDerived
 	{
 	public:
@@ -40,20 +46,27 @@ export namespace ProgressBarSamples
 			return *this;
 		}
 
-		ControlWindow(Win32::HWND parent, int x, int y, int width, int height)
+		ControlWindow(Win32::HWND parent, const std::wstring& title, int x, int y, unsigned width, unsigned height)
 		{
-			auto args = this->GetCreateControlArgs();
-			args.Parent = parent;
-			args.X = x;
-			args.Y = y;
-			args.Width = width;
-			args.Height = height;
-			Initialize(args);
+			auto defaultParams = this->GetDefaultParams();
+			Initialize(
+				CreateControlArgs{
+					.ControlId = NextControlId(),
+					.ClassName = defaultParams.ClassName,
+					.Title = title,
+					.ExtendedStyle = defaultParams.ExtendedStyle,
+					.Style = defaultParams.Style,
+					.X = x,
+					.Y = y,
+					.Width = width,
+					.Height = height,
+					.Parent = parent,
+				});
 		}
 
 	public:
 		[[nodiscard]]
-		auto GetHwnd(this auto&& self) -> Win32::HWND
+		auto GetHwnd(this auto&& self) noexcept -> Win32::HWND
 		{
 			return self.m_hwnd;
 		}
@@ -65,7 +78,7 @@ export namespace ProgressBarSamples
 				args.ExtendedStyle,
 				args.ClassName.data(),
 				args.Title.data(),
-				args.Style,
+				Win32::WindowStyles::WsChild | Win32::WindowStyles::WsVisible | args.Style,
 				args.X,
 				args.Y,
 				args.Width,

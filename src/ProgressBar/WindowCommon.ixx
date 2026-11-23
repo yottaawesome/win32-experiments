@@ -36,4 +36,11 @@ export namespace ProgressBarSamples
 		static auto s_nextControlId = 1u;
 		return s_nextControlId++;
 	}
+
+	struct ControlParams
+	{
+		std::wstring ClassName;
+		Win32::DWORD Style = 0;
+		Win32::DWORD ExtendedStyle = 0;
+	};
 }

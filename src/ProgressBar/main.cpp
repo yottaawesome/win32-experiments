@@ -1,3 +1,5 @@
+#pragma comment(lib, "Comctl32.lib")
+
 import std;
 import Win32;
 import ProgressBarSamples;
