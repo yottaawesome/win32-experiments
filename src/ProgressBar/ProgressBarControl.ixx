@@ -96,10 +96,10 @@ export namespace MultiControlSamples
 		[[nodiscard]]
 		auto GetRange(this auto&& self) noexcept -> std::pair<int, int>
 		{
-			auto range = std::pair<int, int>{};
+			auto range = Win32::PBRANGE{};
 			if (auto hwnd = self.GetHwnd(); hwnd)
-				Win32::SendMessageW(hwnd, Win32::ProgressBar::Messages::GetRange, reinterpret_cast<Win32::WPARAM>(&range.first), reinterpret_cast<Win32::LPARAM>(&range.second));
-			return range;
+				Win32::SendMessageW(hwnd, Win32::ProgressBar::Messages::GetRange, 0, reinterpret_cast<Win32::LPARAM>(&range));
+			return { range.iLow, range.iHigh };
 		}
 
 		[[nodiscard]]
