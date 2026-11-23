@@ -1,4 +1,4 @@
-export module ProgressBarSamples:Error;
+export module MultiControlSamples:Error;
 import std;
 import Win32;
 

@@ -1,8 +1,14 @@
-export module ProgressBarSamples;
+export module MultiControlSamples;
 export import :App;
+export import :ButtonControl;
 export import :ControlWindow;
 export import :CustomWindow;
 export import :Error;
+export import :ListView;
 export import :ProgressBarControl;
+export import :RichEdit;
+export import :StatusBar;
 export import :TopLevelWindow;
+export import :TrackBar;
+export import :TreeView;
 export import :WindowCommon;

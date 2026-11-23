@@ -2,9 +2,9 @@
 
 import std;
 import Win32;
-import ProgressBarSamples;
+import MultiControlSamples;
 
 auto wWinMain(Win32::HINSTANCE, Win32::HINSTANCE, Win32::LPWSTR, int) -> int
 {
-	return ProgressBarSamples::App{}.Run();
+	return MultiControlSamples::App{}.Run();
 }

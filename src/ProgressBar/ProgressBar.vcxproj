@@ -151,18 +151,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.ixx" />
+    <ClCompile Include="ButtonControl.ixx" />
     <ClCompile Include="ControlWindow.ixx" />
     <ClCompile Include="CustomWindow.ixx" />
     <ClCompile Include="Error.ixx" />
+    <ClCompile Include="ListView.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="RichEdit.ixx" />
+    <ClCompile Include="StatusBar.ixx" />
     <ClCompile Include="TopLevelWindow.ixx" />
     <ClCompile Include="ProgressBarControl.ixx" />
-    <ClCompile Include="ProgressBarSamples.ixx" />
+    <ClCompile Include="MultiControlSamples.ixx" />
+    <ClCompile Include="TrackBar.ixx" />
+    <ClCompile Include="TreeView.ixx" />
     <ClCompile Include="Win32.ixx" />
     <ClCompile Include="WindowCommon.ixx" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="App.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md">
+      <SubType>
+      </SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,10 +1,10 @@
-export module ProgressBarSamples:ControlWindow;
+export module MultiControlSamples:ControlWindow;
 import std;
 import Win32;
 import :WindowCommon;
 import :Error;
 
-export namespace ProgressBarSamples
+export namespace MultiControlSamples
 {
 	template<typename T>
 	concept HasDefaultParams = requires(T t)
@@ -46,7 +46,13 @@ export namespace ProgressBarSamples
 			return *this;
 		}
 
-		ControlWindow(Win32::HWND parent, const std::wstring& title, int x, int y, unsigned width, unsigned height)
+		ControlWindow(
+			Win32::HWND parent, 
+			const std::wstring& title, 
+			int x, int y, 
+			unsigned width, unsigned height,
+			auto&&... args
+		) : TDerived{ std::forward<decltype(args)>(args)... }
 		{
 			auto defaultParams = this->GetDefaultParams();
 			Initialize(

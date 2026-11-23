@@ -1,11 +1,11 @@
-export module ProgressBarSamples:ProgressBarControl;
+export module MultiControlSamples:ProgressBarControl;
 import std;
 import Win32;
 import :WindowCommon;
 import :Error;
 import :ControlWindow;
 
-export namespace ProgressBarSamples
+export namespace MultiControlSamples
 {
 	class ProgressBarBase
 	{

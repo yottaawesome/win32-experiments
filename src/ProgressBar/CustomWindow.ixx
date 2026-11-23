@@ -1,10 +1,10 @@
-export module ProgressBarSamples:CustomWindow;
+export module MultiControlSamples:CustomWindow;
 import std;
 import Win32;
 import :Error;
 import :WindowCommon;
 
-export namespace ProgressBarSamples
+export namespace MultiControlSamples
 {
 	template<typename TWindow> // GetWindowClassName() must be defined in TWindow
 	class CustomWindow : public TWindow
@@ -28,7 +28,7 @@ export namespace ProgressBarSamples
 				.Width = width,
 				.Height = height,
 				.Parent = parent
-				});
+			});
 		}
 
 		//

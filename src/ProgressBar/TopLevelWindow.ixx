@@ -1,12 +1,12 @@
 
-export module ProgressBarSamples:TopLevelWindow;
+export module MultiControlSamples:TopLevelWindow;
 import std;
 import Win32;
 import :Error;
 import :WindowCommon;
 import :CustomWindow;
 
-export namespace ProgressBarSamples
+export namespace MultiControlSamples
 {
 	class TopLevelWindow
 	{

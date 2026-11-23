@@ -1,11 +1,12 @@
-export module ProgressBarSamples:App;
+export module MultiControlSamples:App;
 import std;
 import Win32;
 import :CustomWindow;
 import :TopLevelWindow;
 import :ProgressBarControl;
+import :ButtonControl;
 
-export namespace ProgressBarSamples
+export namespace MultiControlSamples
 {
 	class App
 	{
@@ -18,18 +19,6 @@ export namespace ProgressBarSamples
 			m_progressBar.SetPosition(0);
 			m_progressBar.SetIncrement(10);
 
-			auto updateThread = std::jthread{ 
-				[this] 
-				{ 
-					std::this_thread::sleep_for(std::chrono::seconds{ 3 });
-					m_progressBar.SetPosition(50);
-					std::this_thread::sleep_for(std::chrono::seconds{ 3 });
-					m_progressBar.AdvanceIncrement();
-					std::this_thread::sleep_for(std::chrono::seconds{ 3 });
-					m_progressBar.SetMarquee(true, 20);
-				}
-			};
-
 			auto msg = Win32::MSG{};
 			while (Win32::GetMessageW(&msg, nullptr, 0, 0))
 			{
@@ -40,6 +29,13 @@ export namespace ProgressBarSamples
 		}
 
 	private:
+		inline static auto CommonControlsInitialized = 
+			[] -> bool
+			{
+				Win32::InitCommonControls();
+				return true;
+			}();
+
 		MainWindow m_mainWindow{ 
 			Win32::CreateWindowConstants::UseDefault, 
 			Win32::CreateWindowConstants::UseDefault,
@@ -48,5 +44,6 @@ export namespace ProgressBarSamples
 			nullptr
 		};
 		ProgressBarControl m_progressBar{ m_mainWindow.GetHwnd(), L"", 10, 10, 300, 30 };
+		ButtonControl m_button{ m_mainWindow.GetHwnd(), L"Click Me", 10, 50, 100, 30, [this] { m_progressBar.AdvanceIncrement(); } };
 	};
 }

@@ -1,8 +1,8 @@
-export module ProgressBarSamples:WindowCommon;
+export module MultiControlSamples:WindowCommon;
 import std;
 import Win32;
 
-export namespace ProgressBarSamples
+export namespace MultiControlSamples
 {
 	struct CreateWindowArgs
 	{

@@ -92,6 +92,16 @@ export namespace Win32
 	namespace WindowClasses
 	{
 		constexpr auto ProgressBar = PROGRESS_CLASS;
+		constexpr auto Button = WC_BUTTON;
+	}
+
+	namespace Button
+	{
+		enum Styles
+		{
+			DefPushButton = BS_DEFPUSHBUTTON,
+			PushButton = BS_PUSHBUTTON,
+		};
 	}
 
 	namespace ProgressBar

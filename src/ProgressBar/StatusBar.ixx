@@ -1,0 +1,2 @@
+export module MultiControlSamples:StatusBar;
+
