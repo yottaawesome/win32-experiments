@@ -10,7 +10,7 @@ export namespace MultiControlSamples
 {
 	struct TopLevelWindowCallbacks
 	{
-		std::move_only_function<auto(unsigned, unsigned)->void> OnResized;
+		CallbackFn<unsigned, unsigned> OnResized;
 	};
 
 	class TopLevelWindow
@@ -107,10 +107,12 @@ export namespace MultiControlSamples
 
 				case Win32::WindowMessages::ExitSizeMove:
 				{
-					auto rect = Win32::RECT{};
-					Win32::GetClientRect(hwnd, &rect);
 					if (self.m_callbacks.OnResized)
+					{
+						auto rect = Win32::RECT{};
+						Win32::GetClientRect(hwnd, &rect);
 						self.m_callbacks.OnResized(static_cast<unsigned>(rect.right - rect.left), static_cast<unsigned>(rect.bottom - rect.top));
+					}
 					return 0;
 				}
 

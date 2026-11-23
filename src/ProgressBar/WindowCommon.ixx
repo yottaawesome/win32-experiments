@@ -50,4 +50,7 @@ export namespace MultiControlSamples
 		Win32::DWORD Style = 0;
 		Win32::DWORD ExtendedStyle = 0;
 	};
+
+	template<typename...TArgs>
+	using CallbackFn = std::move_only_function<auto(TArgs&&...)->void>;
 }
