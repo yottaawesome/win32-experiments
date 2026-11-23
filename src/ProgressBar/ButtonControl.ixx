@@ -24,7 +24,6 @@ export namespace MultiControlSamples
 			};
 		}
 
-	protected:
 		auto HandleMessage(this auto&& self, Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
 		{
 			switch (msg)

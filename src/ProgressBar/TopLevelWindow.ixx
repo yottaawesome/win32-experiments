@@ -57,7 +57,7 @@ export namespace MultiControlSamples
 			return self;
 		}
 
-		auto SetFontOnHierarchy(this auto&& self, Win32::HFONT font) noexcept -> decltype(self)
+		auto SetFontOnHierarchy(this auto&& self, Win32::HFONT font) -> decltype(self)
 		{
 			if (not self.GetHwnd())
 				return self;

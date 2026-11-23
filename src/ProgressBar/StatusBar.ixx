@@ -42,7 +42,6 @@ export namespace MultiControlSamples
 			return self;
 		}
 
-	protected:
 		auto HandleMessage(this auto&& self, Win32::HWND hwnd, Win32::UINT msg, Win32::WPARAM wParam, Win32::LPARAM lParam) -> Win32::LRESULT
 		{
 			return Win32::DefSubclassProc(hwnd, msg, wParam, lParam);

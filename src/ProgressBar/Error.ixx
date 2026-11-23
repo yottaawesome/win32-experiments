@@ -9,7 +9,7 @@ export namespace Error
 		auto buffer = static_cast<void*>(nullptr);
 		auto chars =
 			Win32::FormatMessageA(
-				Win32::FormatMessageFlags::FromSystem | Win32::FormatMessageFlags::AllocateBuffer,
+				Win32::FormatMessageFlags::FromSystem | Win32::FormatMessageFlags::AllocateBuffer | Win32::FormatMessageFlags::IgnoreInserts,
 				nullptr,
 				code,
 				0,
@@ -17,7 +17,7 @@ export namespace Error
 				0,
 				nullptr
 			);
-		if (chars == 0 or not buffer)
+		if (not chars or not buffer)
 			return std::format("Unknown error code: {}", code);
 
 		auto message = std::string{ static_cast<char*>(buffer), chars };

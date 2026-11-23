@@ -7,12 +7,18 @@ import :Error;
 export namespace MultiControlSamples
 {
 	template<typename T>
-	concept HasDefaultParams = requires(T t)
+	concept ControlBaseType = requires(T t)
 	{
 		{ t.GetDefaultParams() } -> std::same_as<ControlParams>;
+		{ t.HandleMessage(
+			std::declval<Win32::HWND>(), 
+			std::declval<Win32::UINT>(), 
+			std::declval<Win32::WPARAM>(), 
+			std::declval<Win32::LPARAM>()) 
+		} -> std::same_as<Win32::LRESULT>;
 	};
 
-	template<HasDefaultParams TDerived>
+	template<ControlBaseType TDerived>
 	class ControlWindow : public TDerived
 	{
 	public:
