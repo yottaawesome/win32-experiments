@@ -96,14 +96,14 @@ export namespace MultiControlSamples
 						Win32::SendMessageW(originatingWindow, Win32::WindowMessages::ReflectedCommand, wParam, lParam);
 						return 0;
 					}
-					Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+					return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
 				}
 
 				case Win32::WindowMessages::Notify:
 				{
 					if (auto notification = reinterpret_cast<const Win32::NMHDR*>(lParam); notification and notification->hwndFrom)
 						return Win32::SendMessageW(notification->hwndFrom, Win32::WindowMessages::ReflectedNotify, wParam, lParam);
-					Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+					return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
 				}
 
 				// End the application when the main window is destroyed
