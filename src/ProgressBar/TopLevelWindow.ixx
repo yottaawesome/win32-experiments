@@ -34,21 +34,13 @@ export namespace MultiControlSamples
 		// Public methods
 	public:
 		[[nodiscard]]
-		consteval auto GetWindowClassName(this auto&&) noexcept -> std::wstring_view
+		constexpr auto GetDefaultParams(this auto&&) noexcept -> CustomWindowParams
 		{
-			return L"ProgressBarSamplesMainWindow";
-		}
-
-		[[nodiscard]]
-		consteval auto GetDefaultStyle(this auto&&) noexcept -> Win32::DWORD
-		{
-			return Win32::WindowStyles::WsOverlappedWindow | Win32::WindowStyles::WsVisible;
-		}
-
-		[[nodiscard]]
-		consteval auto GetDefaultExtendedStyle(this auto&&) noexcept -> Win32::DWORD
-		{
-			return 0;
+			return {
+				.ClassName = std::wstring{ L"ProgressBarSamplesMainWindow" },
+				.Style = Win32::WindowStyles::WsOverlappedWindow | Win32::WindowStyles::WsVisible,
+				.ExtendedStyle = 0
+			};
 		}
 
 		constexpr auto SetCallbacks(this auto&& self, TopLevelWindowCallbacks callbacks) noexcept -> decltype(self)

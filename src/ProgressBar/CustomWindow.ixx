@@ -16,14 +16,15 @@ export namespace MultiControlSamples
 				Win32::DestroyWindow(m_hwnd);
 		}
 
-		CustomWindow(int x, int y, unsigned width, unsigned height, Win32::HWND parent, auto&&...additionalArgs)
+		CustomWindow(const std::wstring& title, int x, int y, unsigned width, unsigned height, Win32::HWND parent, auto&&...additionalArgs)
 			: TWindow{ std::forward<decltype(additionalArgs)>(additionalArgs)... }
 		{
+			auto defaultArgs = this->GetDefaultParams();
 			Initialize({
-				.ClassName = std::wstring{ this->GetWindowClassName() },
-				.Title = L"Progress Bar Samples",
-				.ExtendedStyle = this->GetDefaultExtendedStyle(),
-				.Style = this->GetDefaultStyle(),
+				.ClassName = defaultArgs.ClassName,
+				.Title = title,
+				.ExtendedStyle = defaultArgs.ExtendedStyle,
+				.Style = defaultArgs.Style,
 				.X = x,
 				.Y = y,
 				.Width = width,
@@ -73,11 +74,11 @@ export namespace MultiControlSamples
 			if (self.m_hwnd)
 				return self;
 
-			self.RegisterClass().CreateWindow(args);
+			self.RegisterClass(args.ClassName).CreateWindow(args);
 			return self;
 		}
 
-		auto RegisterClass(this auto&& self) -> decltype(self)
+		auto RegisterClass(this auto&& self, const std::wstring& className) -> decltype(self)
 		{
 			using TWindowInstance = std::remove_cvref_t<decltype(self)>;
 
@@ -87,35 +88,35 @@ export namespace MultiControlSamples
 					switch (msg)
 					{
 						// Attach the window instance to the window handle on creation, and detach it on destruction
-					case Win32::WindowMessages::NonClientCreate:
-					{
-						auto createStruct = reinterpret_cast<Win32::CREATESTRUCTW*>(lParam);
-						if (auto ptr = reinterpret_cast<TWindowInstance*>(createStruct->lpCreateParams); ptr)
+						case Win32::WindowMessages::NonClientCreate:
 						{
-							Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::LONG_PTR>(ptr));
-							ptr->m_hwnd = hwnd;
+							auto createStruct = reinterpret_cast<Win32::CREATESTRUCTW*>(lParam);
+							if (auto ptr = reinterpret_cast<TWindowInstance*>(createStruct->lpCreateParams); ptr)
+							{
+								Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, reinterpret_cast<Win32::LONG_PTR>(ptr));
+								ptr->m_hwnd = hwnd;
+							}
+							return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
 						}
-						return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
-					}
 
-					// Detach the window instance from the window handle when the window is destroyed
-					case Win32::WindowMessages::NonClientDestroy:
-					{
-						if (auto ptr = reinterpret_cast<TWindowInstance*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData)); ptr)
+						// Detach the window instance from the window handle when the window is destroyed
+						case Win32::WindowMessages::NonClientDestroy:
 						{
-							ptr->m_hwnd = nullptr;
-							Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, 0);
+							if (auto ptr = reinterpret_cast<TWindowInstance*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData)); ptr)
+							{
+								ptr->m_hwnd = nullptr;
+								Win32::SetWindowLongPtrW(hwnd, Win32::Gwlp::UserData, 0);
+							}
+							return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
 						}
-						return Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
-					}
 
-					default:
-					{
-						auto ptr = reinterpret_cast<TWindowInstance*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData));
-						return ptr
-							? ptr->HandleMessage(hwnd, msg, wParam, lParam)
-							: Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
-					}
+						default:
+						{
+							auto ptr = reinterpret_cast<TWindowInstance*>(Win32::GetWindowLongPtrW(hwnd, Win32::Gwlp::UserData));
+							return ptr
+								? ptr->HandleMessage(hwnd, msg, wParam, lParam)
+								: Win32::DefWindowProcW(hwnd, msg, wParam, lParam);
+						}
 					}
 				};
 
@@ -125,7 +126,7 @@ export namespace MultiControlSamples
 				.hInstance = Win32::GetModuleHandleW(nullptr),
 				.hCursor = Win32::LoadCursorW(nullptr, Win32::IdcArrow),
 				.hbrBackground = (Win32::HBRUSH)(Win32::ColorWindow + 1),
-				.lpszClassName = self.GetWindowClassName().data()
+				.lpszClassName = className.data()
 			};
 			if (not Win32::RegisterClassExW(&wndclassEx))
 				if (auto errorCode = Win32::GetLastError(); errorCode != Win32::ErrorCodes::ClassAlreadyExists)
@@ -140,7 +141,7 @@ export namespace MultiControlSamples
 				return self;
 			Win32::CreateWindowExW(
 				args.ExtendedStyle,
-				self.GetWindowClassName().data(),
+				args.ClassName.data(),
 				args.Title.data(),
 				args.Style,
 				args.X,

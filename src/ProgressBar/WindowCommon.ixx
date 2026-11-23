@@ -43,4 +43,11 @@ export namespace MultiControlSamples
 		Win32::DWORD Style = 0;
 		Win32::DWORD ExtendedStyle = 0;
 	};
+
+	struct CustomWindowParams
+	{
+		std::wstring ClassName;
+		Win32::DWORD Style = 0;
+		Win32::DWORD ExtendedStyle = 0;
+	};
 }

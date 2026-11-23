@@ -45,6 +45,7 @@ export namespace MultiControlSamples
 			}();
 
 		MainWindow m_mainWindow{ 
+			L"Progress Bar Samples",
 			Win32::CreateWindowConstants::UseDefault, 
 			Win32::CreateWindowConstants::UseDefault,
 			800,
