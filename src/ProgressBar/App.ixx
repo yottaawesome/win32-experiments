@@ -6,6 +6,7 @@ import :TopLevelWindow;
 import :ProgressBarControl;
 import :ButtonControl;
 import :StatusBarControl;
+import :Panel;
 import :Font;
 
 export namespace MultiControlSamples
@@ -21,6 +22,8 @@ export namespace MultiControlSamples
 				.SetRange(0, 100)
 				.SetPosition(0)
 				.SetIncrement(10);
+			m_panel
+				.ResizeToParent(0, 0, 150, 0);
 			m_statusBar
 				.Split(400, -1)
 				.SetText(0, L"Ready")
@@ -53,25 +56,38 @@ export namespace MultiControlSamples
 			}();
 
 		MainWindow m_mainWindow{ 
-			L"Progress Bar Samples",
-			Win32::CreateWindowConstants::UseDefault, 
-			Win32::CreateWindowConstants::UseDefault,
-			800,
-			600,
-			nullptr,
+			CustomWindowArgs{
+				.Title = L"Progress Bar Samples",
+				.X = Win32::CreateWindowConstants::UseDefault,
+				.Y = Win32::CreateWindowConstants::UseDefault,
+				.Width = 800,
+				.Height = 600,
+				.Parent = nullptr
+			},
 			TopLevelWindowCallbacks{
 				.OnResized = 
 					[this](unsigned width, unsigned height)
 					{
+						m_panel.ResizeToParent(0, 0, 150, 0);
 						m_statusBar.Resize();
 					}
 			}
 		};
 
-		ProgressBarControl m_progressBar{ m_mainWindow.GetHwnd(), L"", 10, 10, 300, 30 };
+		PanelWindow m_panel{ 
+			CustomWindowArgs{
+				.X = 0,
+				.Y = 0,
+				.Width = 800,
+				.Height = 500,
+				.Parent = m_mainWindow.GetHwnd()
+			}
+		};
+
+		ProgressBarControl m_progressBar{ m_panel.GetHwnd(), L"", 10, 10, 300, 30 };
 
 		ButtonControl m_button{ 
-			m_mainWindow.GetHwnd(), 
+			m_panel.GetHwnd(),
 			L"Click Me", 
 			10, 50, 
 			100, 30, 

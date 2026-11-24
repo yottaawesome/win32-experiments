@@ -158,6 +158,7 @@
     <ClCompile Include="Font.ixx" />
     <ClCompile Include="ListView.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Panel.ixx" />
     <ClCompile Include="Raii.ixx" />
     <ClCompile Include="RichEdit.ixx" />
     <ClCompile Include="StatusBar.ixx" />

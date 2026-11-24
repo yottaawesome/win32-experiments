@@ -6,6 +6,16 @@ import :WindowCommon;
 
 export namespace MultiControlSamples
 {
+	struct CustomWindowArgs
+	{
+		std::wstring Title;
+		int X;
+		int Y;
+		unsigned Width;
+		unsigned Height;
+		Win32::HWND Parent;
+	};
+
 	template<typename TWindow> // GetWindowClassName() must be defined in TWindow
 	class CustomWindow : public TWindow
 	{
@@ -16,20 +26,20 @@ export namespace MultiControlSamples
 				Win32::DestroyWindow(m_hwnd);
 		}
 
-		CustomWindow(const std::wstring& title, int x, int y, unsigned width, unsigned height, Win32::HWND parent, auto&&...additionalArgs)
+		CustomWindow(const CustomWindowArgs& args, auto&&...additionalArgs)
 			: TWindow{ std::forward<decltype(additionalArgs)>(additionalArgs)... }
 		{
 			auto defaultArgs = this->GetDefaultParams();
 			Initialize({
 				.ClassName = defaultArgs.ClassName,
-				.Title = title,
+				.Title = args.Title,
 				.ExtendedStyle = defaultArgs.ExtendedStyle,
 				.Style = defaultArgs.Style,
-				.X = x,
-				.Y = y,
-				.Width = width,
-				.Height = height,
-				.Parent = parent
+				.X = args.X,
+				.Y = args.Y,
+				.Width = args.Width,
+				.Height = args.Height,
+				.Parent = args.Parent
 			});
 		}
 

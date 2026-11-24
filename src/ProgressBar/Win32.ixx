@@ -70,6 +70,9 @@ export namespace Win32
 		::HFONT,
 		::NONCLIENTMETRICS,
 		::BOOL,
+		::SetWindowPos,
+		::GetParent,
+		::SetParent,
 		::EnumChildWindows,
 		::SystemParametersInfoW,
 		::CreateFontW,
@@ -104,6 +107,15 @@ export namespace Win32
 	
 	constexpr auto DefaultCharset = DEFAULT_CHARSET;
 	constexpr auto SpiGetNonClientMetrics = SPI_GETNONCLIENTMETRICS;
+
+	namespace SetWindowPosFlags
+	{
+		enum
+		{
+			NoZOrder = SWP_NOZORDER,
+			NoActivate = SWP_NOACTIVATE
+		};
+	}
 
 	namespace StatusBar
 	{

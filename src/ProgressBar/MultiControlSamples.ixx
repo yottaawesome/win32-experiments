@@ -6,6 +6,7 @@ export import :CustomWindow;
 export import :Error;
 export import :Font;
 export import :ListView;
+export import :Panel;
 export import :ProgressBarControl;
 export import :Raii;
 export import :RichEdit;
