@@ -28,10 +28,14 @@ export namespace MultiControlSamples
 		[[nodiscard]]
 		constexpr auto GetDefaultParams(this auto&&) noexcept -> CustomWindowParams
 		{
+			constexpr auto Style = 
+				Win32::WindowStyles::Child 
+				| Win32::WindowStyles::Visible 
+				// ClipChildren is important for the panel to avoid drawing over its child controls
+				| Win32::WindowStyles::ClipChildren;
 			return {
-				.ClassName = std::wstring{ L"CustomPanel" },
-				.Style = Win32::WindowStyles::WsChild | Win32::WindowStyles::WsVisible,
-				.ExtendedStyle = 0
+				.ClassName = L"CustomPanel",
+				.Style = Style,
 			};
 		}
 

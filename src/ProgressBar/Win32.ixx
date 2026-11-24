@@ -278,10 +278,11 @@ export namespace Win32
 
 	namespace WindowStyles
 	{
-		constexpr auto WsOverlappedWindow = WS_OVERLAPPEDWINDOW;
-		constexpr auto WsChild = WS_CHILD;
-		constexpr auto WsVisible = WS_VISIBLE;
-		constexpr auto WsDisabled = WS_DISABLED;
+		constexpr auto OverlappedWindow = WS_OVERLAPPEDWINDOW;
+		constexpr auto Child = WS_CHILD;
+		constexpr auto Visible = WS_VISIBLE;
+		constexpr auto Disabled = WS_DISABLED;
+		constexpr auto ClipChildren = WS_CLIPCHILDREN;
 	}
 
 	namespace CreateWindowConstants

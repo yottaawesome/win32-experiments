@@ -23,7 +23,7 @@ export namespace MultiControlSamples
 				.SetPosition(0)
 				.SetIncrement(10);
 			m_panel
-				.ResizeToParent(0, 0, 150, 0);
+				.ResizeToParent(0, 0, 0, 0);
 			m_statusBar
 				.Split(400, -1)
 				.SetText(0, L"Ready")
@@ -68,7 +68,7 @@ export namespace MultiControlSamples
 				.OnResized = 
 					[this](unsigned width, unsigned height)
 					{
-						m_panel.ResizeToParent(0, 0, 150, 0);
+						m_panel.ResizeToParent(0, 0, 0, 0);
 						m_statusBar.Resize();
 					}
 			}
@@ -84,7 +84,14 @@ export namespace MultiControlSamples
 			}
 		};
 
-		ProgressBarControl m_progressBar{ m_panel.GetHwnd(), L"", 10, 10, 300, 30 };
+		ProgressBarControl m_progressBar{ 
+			m_panel.GetHwnd(), 
+			L"", 
+			10, 
+			10, 
+			300, 
+			30 
+		};
 
 		ButtonControl m_button{ 
 			m_panel.GetHwnd(),
@@ -94,6 +101,11 @@ export namespace MultiControlSamples
 			[this] { m_progressBar.AdvanceIncrement(); } 
 		};
 		
-		StatusBarControl m_statusBar{ m_mainWindow.GetHwnd(), L"", 0, 0, 800, 20 };
+		StatusBarControl m_statusBar{ 
+			m_panel.GetHwnd(), 
+			L"", 
+			0, 0, 
+			800, 20 
+		};
 	};
 }

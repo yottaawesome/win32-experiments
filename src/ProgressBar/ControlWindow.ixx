@@ -72,7 +72,7 @@ export namespace MultiControlSamples
 				args.ExtendedStyle,
 				args.ClassName.data(),
 				args.Title.data(),
-				Win32::WindowStyles::WsChild | Win32::WindowStyles::WsVisible | args.Style,
+				Win32::WindowStyles::Child | Win32::WindowStyles::Visible | Win32::WindowStyles::ClipChildren | args.Style,
 				args.X,
 				args.Y,
 				args.Width,

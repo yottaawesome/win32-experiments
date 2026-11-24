@@ -38,7 +38,7 @@ export namespace MultiControlSamples
 		{
 			return {
 				.ClassName = std::wstring{ L"ProgressBarSamplesMainWindow" },
-				.Style = Win32::WindowStyles::WsOverlappedWindow | Win32::WindowStyles::WsVisible,
+				.Style = Win32::WindowStyles::OverlappedWindow | Win32::WindowStyles::Visible,
 				.ExtendedStyle = 0
 			};
 		}
