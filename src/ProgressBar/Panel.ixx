@@ -99,6 +99,22 @@ export namespace MultiControlSamples
 			return self;
 		}
 
+		auto Show(this auto&& self) -> decltype(self)
+		{
+			if (not self.GetHwnd())
+				return self;
+			Win32::ShowWindow(self.GetHwnd(), Win32::ShowWindowFlags::Show);
+			return self;
+		}
+
+		auto Hide(this auto&& self) -> decltype(self)
+		{
+			if (not self.GetHwnd())
+				return self;
+			Win32::ShowWindow(self.GetHwnd(), Win32::ShowWindowFlags::Hide);
+			return self;
+		}
+
 	protected:
 		auto HandleMessage(
 			this auto&& self,

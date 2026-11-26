@@ -70,6 +70,7 @@ export namespace Win32
 		::HFONT,
 		::NONCLIENTMETRICS,
 		::BOOL,
+		::ShowWindow,
 		::SetWindowPos,
 		::GetParent,
 		::SetParent,
@@ -107,6 +108,15 @@ export namespace Win32
 	
 	constexpr auto DefaultCharset = DEFAULT_CHARSET;
 	constexpr auto SpiGetNonClientMetrics = SPI_GETNONCLIENTMETRICS;
+
+	namespace ShowWindowFlags
+	{
+		enum
+		{
+			Show = SW_SHOW,
+			Hide = SW_HIDE
+		};
+	}
 
 	namespace SetWindowPosFlags
 	{

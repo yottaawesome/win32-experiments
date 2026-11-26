@@ -162,6 +162,7 @@
     <ClCompile Include="Raii.ixx" />
     <ClCompile Include="RichEdit.ixx" />
     <ClCompile Include="StatusBar.ixx" />
+    <ClCompile Include="stdx.ixx" />
     <ClCompile Include="TopLevelWindow.ixx" />
     <ClCompile Include="ProgressBarControl.ixx" />
     <ClCompile Include="MultiControlSamples.ixx" />
